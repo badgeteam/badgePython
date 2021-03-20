@@ -1,0 +1,4 @@
+.vscode/
+firmware/components/micropython/mpconfigoverrides.h
+firmware/build
+firmware/sdkconfig.old
