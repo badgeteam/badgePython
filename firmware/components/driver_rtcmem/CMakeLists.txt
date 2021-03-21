@@ -1,5 +1,6 @@
 set(srcs
     "driver_rtcmem.c"
+    "modrtcmem.c"
 )
 
 set(includes
@@ -8,4 +9,4 @@ set(includes
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}
-                       REQUIRES lwip)
+                       REQUIRES lwip micropython)
