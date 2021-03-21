@@ -7,7 +7,7 @@
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
 
-#include "esp_event_loop.h"
+#include "esp_event.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_partition.h"

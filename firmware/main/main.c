@@ -37,8 +37,7 @@ void app_main()
 	bool is_first_boot = nvs_init();
 
 	platform_init();
-	printf("Finished platform");
-	fflush(stdout);
+
 	if (is_first_boot) {
 		#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
 			driver_framebuffer_fill(NULL, COLOR_BLACK);

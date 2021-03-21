@@ -2,6 +2,7 @@
 #include "include/platform_gen.h"
 
 void platform_gen_init( void ) {
-    INIT_DRIVER(i2c, "I2C BUS")
+    INIT_DRIVER(hub75, "hub75 DISPLAY")
+INIT_DRIVER(rtcmem, "rtcmem")
 
     }

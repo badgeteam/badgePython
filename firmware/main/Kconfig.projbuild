@@ -13,13 +13,7 @@ menu "Firmware & device configuration"
 		help
                 A semantic name for your badge
 
-	config INFO_HARDWARE_FOLDER
-		string "MicroPython modules directory"
-		default "generic"
-		help
-                The name of the directory in /python_modules to load into firmware image as static micropython modules.
-
-	config INFO_HARDWARE_MANIFEST
+	config MICROPY_FROZEN_MANIFEST
 		string "Manifest to load modules from stored in the manifests folder"
 		default "manifest.py"
 
@@ -76,7 +70,3 @@ menu "Firmware & device configuration"
 		bool "Enable partition table upgrade function for SHA2017 and Disobey 2019 badges"
 		default n
 endmenu
-
-#menu "Drivers"
-#    source "../components/driver_*/Kconfig"
-#endmenu
