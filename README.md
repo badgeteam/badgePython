@@ -52,8 +52,6 @@ The $(PORT_DIR) var is linked to the modules folder. The $(BOARD_DIR) is in pyth
 
 
 ## Issues
-1. QSTR regeneration is currently not performed and requires a idf.py clean
+1. QSTR regeneration may or may not be supported
 2. uPy configuration options need to be readded.
-3. QSTR generation is still done by calling the uPy makefile this should be ported to cmake but is a bit of black magic
-4. Some parts of micropython still need to be compiled with certain flags set.
-5. Expect a lot of bugs ;)
+3. Expect a lot of bugs ;)
