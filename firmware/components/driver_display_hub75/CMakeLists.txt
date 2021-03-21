@@ -5,12 +5,17 @@ set(srcs
     "font_7x5.c"
     "i2s_parallel.c"
     "val2pwm.c"
+    "modhub75.c"
 )
 
 set(includes
     "include"
     )
 
+set(IDF_COMPONENTS
+    micropython
+)
+
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}
-                       )
+                       REQUIRES ${IDF_COMPONENTS} )
