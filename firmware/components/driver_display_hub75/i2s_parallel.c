@@ -90,7 +90,7 @@ static void fill_dma_desc(volatile lldesc_t *dmadesc, i2s_parallel_buffer_desc_t
     }
     //Loop last back to first
     dmadesc[n-1].qe.stqe_next=(lldesc_t*)&dmadesc[0];
-    printf("fill_dma_desc: filled %d descriptors\n", n);
+    //printf("fill_dma_desc: filled %d descriptors\n", n);
 }
 
 static void gpio_setup_out(int gpio, int sig) {
