@@ -57,7 +57,7 @@ set(MICROPY_SOURCE_EXTMOD
     ${COMPONENT_DIR}/vfs_fat/vfs.c
 )
 
-set(MICROPY_FROZEN_MANIFEST ${COMPONENT_DIR}/manifest.py)
+set(MICROPY_FROZEN_MANIFEST ${PROJECT_DIR}/manifests/${CONFIG_MICROPY_FROZEN_MANIFEST})
 
 set(MICROPY_QSTRDEFS_PORT
     ${MICROPY_PORT_DIR}/qstrdefsport.h
@@ -88,6 +88,7 @@ set(MICROPY_SOURCE_DRIVERS
 set(MICROPY_SOURCE_PORT
     ${COMPONENT_DIR}/main.c
     ${COMPONENT_DIR}/vfs_fat/moduos.c
+    ${COMPONENT_DIR}/modconsts.c
     ${MICROPY_PORT_DIR}/uart.c
     ${MICROPY_PORT_DIR}/gccollect.c
     ${MICROPY_PORT_DIR}/mphalport.c
@@ -129,6 +130,7 @@ set(MICROPY_SOURCE_QSTR
     ${MICROPY_SOURCE_LIB}
     ${MICROPY_SOURCE_PORT}
     ${COMPONENT_DIR}/vfs_fat/
+    ${COMPONENT_DIR}/modconsts.c
     ${EXTMODS}
     ${COMPONENT_DIR}/mpconfigoverrides.h
 )
@@ -208,6 +210,7 @@ add_custom_command(
             python3 mpconfigover_generator.py -b ./ \"${EXTMODS_NAMES}\" &&
             cp mpconfigport.h micropython/ports/esp32/
     WORKING_DIRECTORY ${COMPONENT_DIR}
+    DEPENDS ${EXTMODS}
 )
 
 # Set the MicroPython target as the current (main) IDF component target.

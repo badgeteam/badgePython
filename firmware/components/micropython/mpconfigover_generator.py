@@ -12,8 +12,8 @@ parser.add_argument('-b', help='folder to store header file')
 args = parser.parse_args()
 modules = args.modules[0].split(" ")
 
-consts = ""
-strs = ""
+consts = "extern const struct _mp_obj_module_t {}_module;\n".format("consts")
+strs = "{{MP_OBJ_NEW_QSTR(MP_QSTR_{0}), (mp_obj_t)&{0}_module }}, \\\n".format(("consts"))
 for mod in list(dict.fromkeys(modules)):    #remove any duplicates
     if mod is not None and mod != "":
         consts += "extern const struct _mp_obj_module_t {}_module;\n".format(mod)
