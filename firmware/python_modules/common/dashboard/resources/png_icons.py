@@ -1,0 +1,1 @@
+../../../resources/png_icons_black_on_white.py
