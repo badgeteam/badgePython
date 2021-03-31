@@ -1,4 +1,5 @@
 import network, time, machine, consts
+import ntp as ntpsync
 import esp32
 
 _STA_IF = network.WLAN(network.STA_IF)
@@ -50,7 +51,8 @@ def disconnect():
 	'''
 	Disconnect from the WiFi network
 	'''
-	_STA_IF.disconnect()
+	if status():
+		_STA_IF.disconnect()
 
 def stop():
 	'''
@@ -150,4 +152,4 @@ def ntp(onlyIfNeeded=True, server='pool.ntp.org'):
 	rtc = machine.RTC()
 	if not status():
 		return False # Not connected to a WiFi network
-	return rtc.ntp_sync(server)
+	return ntpsync.set_NTP_time()

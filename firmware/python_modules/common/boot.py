@@ -10,7 +10,10 @@ device.prepareForWakeup()
 
 __chk_recovery = False
 nvs = esp32.NVS("system")
-fc_level = nvs.get_i32('factory_checked') or 0
+try:
+	fc_level = nvs.get_i32('factory_checked')
+except Exception as e:
+	fc_level = 0
 recovery_button = None
 
 if fc_level >= 3:
