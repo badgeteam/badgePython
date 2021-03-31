@@ -125,10 +125,10 @@
 
 // extended modules
 #ifndef MICROPY_PY_BLUETOOTH
-#define MICROPY_PY_BLUETOOTH                (1)
-#define MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE (1)
-#define MICROPY_BLUETOOTH_NIMBLE            (1)
-#define MICROPY_BLUETOOTH_NIMBLE_BINDINGS_ONLY (1)
+#define MICROPY_PY_BLUETOOTH                (0)
+#define MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE (0)
+#define MICROPY_BLUETOOTH_NIMBLE            (0)
+#define MICROPY_BLUETOOTH_NIMBLE_BINDINGS_ONLY (0)
 #endif
 #define MICROPY_PY_UASYNCIO                 (1)
 #define MICROPY_PY_UCTYPES                  (1)
