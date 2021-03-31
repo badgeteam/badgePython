@@ -1,6 +1,7 @@
 import uos, gc, sys, system, virtualtimers, machine
 
 folders = ['lib', 'apps', 'cache', 'cache/woezel', 'config']
+print("Running _boot.py")
 for folder in folders:
     try:
         uos.mkdir(folder)
@@ -9,7 +10,7 @@ for folder in folders:
 
 # This doesn't work in micropython/main.c because micropython can't handle
 # slash characters before single characters that are also HTML elements,
-# like <a> or <s> (e.g. /apps or /sdcard won't work.)
+# like <a> or <s> (e.g. /apps or /sdcard won't work.)mi
 sys.path.append('apps')
 
 # Hijack the system start function to fix some CZ19 screen issues
@@ -36,10 +37,6 @@ def _vcc_callback():
         return 10000
 
 virtualtimers.new(10000, _vcc_callback, hfpm=True)
-
-## Dirty fix for upgrade path of existing CZ19 badges
-if machine.nvs_getint("system", 'factory_checked') == 1:
-    machine.nvs_setint("system", 'factory_checked', 2)
 
 del folders, uos
 gc.collect(); gc.mem_free()

@@ -5,8 +5,6 @@ PANEL_WIDTH = 32
 PANEL_HEIGHT = 8
 MAX_BRIGHTNESS = PANEL_WIDTH
 
-MAX_BRIGHTNESS = PANEL_WIDTH
-
 FONT_7x5 = 0
 FONT_6x3 = 1
 current_framerate = 20
@@ -66,7 +64,10 @@ def image(data, pos=(0,0), size=(8,8)):
 
 
 def getbrightness():
-    return nvs.get_i32('brightness')
+    try:
+        return nvs.get_i32('brightness')
+    except Exception as e:
+        return 20
 
 
 def setbrightness(brightness=(MAX_BRIGHTNESS - 2)):

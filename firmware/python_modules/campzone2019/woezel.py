@@ -1,6 +1,9 @@
 import sys, gc, uos as os, uerrno as errno, ujson as json, uzlib, urequests, upip_utarfile as tarfile, time, wifi, machine
 import consts, rtc
+from esp32 import NVS
 gc.collect()
+
+nvs = NVS("system")
 
 debug = False
 install_path = None
@@ -101,50 +104,6 @@ def _expandhome(s):
         s = s.replace("~/", h + "/")
     return s
 
-import ussl
-import usocket
-def _url_open(url):
-    if debug:
-        print(url)
-
-    proto, _, host, urlpath = url.split('/', 3)
-    try:
-        ai = usocket.getaddrinfo(host, 443)
-    except OSError as e:
-        _fatal("Unable to resolve %s (no Internet?)" % host, e)
-    #print("Address infos:", ai)
-    if len(ai) == 0:
-        _fatal("Unable to resolve %s (no Internet?)" % host, errno.EHOSTUNREACH)
-    addr = ai[0][4]
-
-    s = usocket.socket(ai[0][0])
-    try:
-        #print("Connect address:", addr)
-        s.connect(addr)
-
-        if proto == "https:":
-            s = ussl.wrap_socket(s, server_hostname=host)
-
-        # MicroPython rawsocket module supports file interface directly
-        s.write("GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n" % (urlpath, host))
-        l = s.readline()
-        protover, status, msg = l.split(None, 2)
-        if status != b"200":
-            if status == b"404" or status == b"301":
-                raise NotFoundError("Package not found")
-            raise ValueError(status)
-        while 1:
-            l = s.readline()
-            if not l:
-                raise ValueError("Unexpected EOF in HTTP headers")
-            if l == b'\r\n':
-                break
-    except Exception as e:
-        s.close()
-        raise e
-
-    return s
-
 
 def _fatal(msg, exc=None):
     print("Error:", msg)
@@ -158,18 +117,22 @@ def set_progress_callback(callback):
 
 def _show_progress(text, error=False):
     if error:
-        machine.nvs_setint('system', 'lastUpdate', 0)
+        nvs.set_i32('lastUpdate', 0)
+        nvs.commit()
 
     if callable(_progress_callback):
         _progress_callback(text, error)
 
 def _get_last_updated():
-    last_updated = -1
-    return machine.nvs_getint('system', 'lastUpdate') or last_updated
+    try:
+        return nvs.get_i32('lastUpdate')
+    except Exception as e:
+        return -1
 
 def _set_last_updated():
     try:
-        return machine.nvs_setint('system', 'lastUpdate', int(time.time()))
+        nvs.set_i32('lastUpdate', int(time.time()))
+        nvs.commit()
     except:
         pass
 
@@ -204,7 +167,8 @@ def update_cache():
             return False
 
     print('Updating woezel cache..')
-
+    #os.remove(cache_path + '/categories.json')
+    
     _show_progress("Downloading package list...")
     packages = get_pkg_list()
     categories = set(item['category'] for item in packages)
@@ -254,28 +218,31 @@ def get_category(category_name):
         return json.load(category_file)
 
 def get_pkg_metadata(name):
-    f = _url_open("https://badge.team/eggs/get/%s/json" % name)
+    import gc
+    gc.collect()
+    print('http://%s/eggs/get/%s/json' % (woezel_domain, name))
     try:
-        return json.load(f)
-    finally:
-        f.close()
-        del f
+        response = urequests.get('http://%s/eggs/get/%s/json' % (woezel_domain, name))
+    except BaseException as e:
+        import sys
+        sys.print_exception(e)
+        print('Exception getting package metadata')
+        return None
+
+
+    return response.json()
 
 def get_pkg_list():
-    f = _url_open("https://badge.team/basket/campzone2019/list/json")
-    try:
-        return json.load(f)
-    finally:
-        f.close()
-        del f
+    import dumbstreamjson
+    return list(dumbstreamjson.from_url('http://%s/basket/%s/list/json' % (woezel_domain, device_name),
+                                   keys=['name', 'slug', 'category', 'revision']))
 
 def search_pkg_list(query):
-    f = _url_open("https://badge.team/basket/campzone2019/search/%s/json" % query)
-    try:
-        return json.load(f)
-    finally:
-        f.close()
-        del f
+    import dumbstreamjson
+    return list(dumbstreamjson.from_url('http://%s/basket/%s/search/%s/json' % (woezel_domain, device_name, query),
+                                        keys=['name', 'slug', 'category', 'revision']))
+    response = urequests.get()
+    return response.json()
 
 def is_installed(app_name, path=None):
     if path == None:
@@ -301,6 +268,8 @@ def is_installed(app_name, path=None):
 
 def install_pkg(pkg_spec, install_path, force_reinstall):
     data = get_pkg_metadata(pkg_spec)
+    if data is None:
+        return None
     already_installed = is_installed(pkg_spec, install_path)
     latest_ver = data["info"]["version"]
     verf = "%s%s/version" % (install_path, pkg_spec)
@@ -322,11 +291,13 @@ def install_pkg(pkg_spec, install_path, force_reinstall):
     del data
     gc.collect()
     assert len(packages) == 1
-    package_url = packages[0]["url"]
+    package_url = packages[0]["url"].replace('https', 'http')
     print("Installing %s rev. %s from %s" % (pkg_spec, latest_ver, package_url))
     package_fname = op_basename(package_url)
-    f1 = _url_open(package_url)
+    f1 = urequests.get(package_url).raw
     try:
+        gc.collect()
+        print('mem_free:', gc.mem_free())
         f2 = uzlib.DecompIO(f1, gzdict_sz)
         f3 = tarfile.TarFile(fileobj=f2)
         meta = _install_tar(f3, "%s%s/" % (install_path, pkg_spec))
@@ -379,6 +350,8 @@ def install(to_install, install_path=None, force_reinstall=False):
                 to_install.extend(deps)
         return True
     except Exception as e:
+        import sys
+        sys.print_exception(e)
         print("Error installing '{}': {}, packages may be partially installed".format(
                 pkg_spec, e),
             file=sys.stderr)

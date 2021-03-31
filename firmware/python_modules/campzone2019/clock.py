@@ -1,5 +1,6 @@
 import time, ntp, rgb, wifi, buttons, defines, system, machine
 from default_icons import animation_connecting_wifi, icon_no_wifi
+import esp32
 
 direction = 0
 
@@ -34,8 +35,12 @@ wifi.disconnect()
 ## Get your timezone from
 ## https://remotemonitoringsystems.ca/time-zone-abbreviations.php
 rtc=machine.RTC()
-timezone = machine.nvs_getstr('system', 'timezone')
-if timezone is None:
+try:
+    nvs = esp32.NVS("system")
+    timezoneba = bytearray(50)
+    nvs.get_blob("timezone", timezoneba)
+    timezone = timezoneba.decode("utf-8")
+except Exception as e:
     timezone = 'CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00'
 machine.RTC().timezone(timezone)
 

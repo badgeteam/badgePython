@@ -149,7 +149,6 @@ def uninstall(app):
 # Run app
 
 def run():
-    print("test")
     system.start(apps[current_index]["file"], status=True)
 
 

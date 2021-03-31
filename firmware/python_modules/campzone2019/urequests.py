@@ -59,7 +59,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, timeout=
         s.connect(addr)
     if proto == "https:":
         s = ussl.wrap_socket(s, server_hostname=host)
-    s.write(b"%s /%s HTTP/1.0\r\n" % (method, path))
+    s.write(b"%s /%s HTTP/1.1\r\n" % (method, path))
     if not "Host" in headers:
         s.write(b"Host: %s\r\n" % host)
     # Iterate over keys to avoid tuple alloc
