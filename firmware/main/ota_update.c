@@ -180,13 +180,13 @@ static void badge_ota_initialise_wifi(void)
 
 	nvs_handle my_handle;
 	ESP_ERROR_CHECK(nvs_open("system", NVS_READWRITE, &my_handle));
-	err = nvs_get_str(my_handle, "wifi.ssid", (char *) wifi_config.sta.ssid, &len);
+	err = nvs_get_blob(my_handle, "wifi.ssid", (char *) wifi_config.sta.ssid, &len);
 	if (err != ESP_OK || len == 0) {
 		strncpy((char *) wifi_config.sta.ssid, CONFIG_WIFI_SSID, sizeof(wifi_config.sta.ssid));
 	}
 
 	len = sizeof(wifi_config.sta.password);
-	err = nvs_get_str(my_handle, "wifi.password", (char *) wifi_config.sta.password, &len);
+	err = nvs_get_blob(my_handle, "wifi.password", (char *) wifi_config.sta.password, &len);
 	if (err != ESP_OK || len == 0) {
 		strncpy((char *) wifi_config.sta.password, CONFIG_WIFI_PASSWORD, sizeof(wifi_config.sta.password));
 	}
