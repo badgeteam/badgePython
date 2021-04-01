@@ -67,12 +67,24 @@
 #endif
 
 // MicroPython runs as a task under FreeRTOS
-#define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
-#define MP_TASK_STACK_SIZE      (16 * 1024)
+#define MP_TASK_PRIORITY        (CONFIG_MICROPY_TASK_PRIORITY)
+#define MP_TASK_STACK_SIZE      (CONFIG_MICROPY_STACK_SIZE * 1024)
 
 int vprintf_null(const char *format, va_list ap) {
     // do nothing: this is used as a log target during raw repl mode
     return 0;
+}
+
+size_t mp_task_heap_size = 0;
+void *mp_task_heap = NULL;
+
+size_t mp_preallocate_heap() {
+    #if !(CONFIG_ESP32_SPIRAM_SUPPORT || CONFIG_SPIRAM_SUPPORT)
+        mp_task_heap_size = MIN(heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT), CONFIG_MICROPY_HEAP_SIZE*1024);
+        mp_task_heap = malloc(mp_task_heap_size);
+        return mp_task_heap_size;
+    #endif
+    return -1;
 }
 
 void mp_task(void *pvParameter) {
@@ -102,11 +114,6 @@ void mp_task(void *pvParameter) {
             mp_task_heap = malloc(mp_task_heap_size);
             break;
     }
-    #else
-    // Allocate the uPy heap using malloc and get the largest available region
-    size_t mp_task_heap_size = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
-    mp_task_heap_size = 80*1024;
-    void *mp_task_heap = malloc(mp_task_heap_size);
     #endif
 
 soft_reset:

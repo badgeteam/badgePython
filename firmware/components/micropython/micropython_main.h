@@ -8,5 +8,6 @@
 #define _MICROPYTHON_MAIN_H_
 
 void start_mp(void);
+int mp_preallocate_heap();
 
 #endif
