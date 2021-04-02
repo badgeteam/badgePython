@@ -1,5 +1,5 @@
 import sys, uos as os, time, ujson, gc, term, deepsleep
-import machine, system, term_menu, virtualtimers, powermanagement as pm, buttons, defines, woezel
+import machine, system, term_menu, virtualtimers, tasks.powermanagement as pm, buttons, defines, woezel
 import rgb, uinterface, uinstaller
 from default_icons import icon_snake, icon_clock, icon_settings, icon_appstore, icon_activities, icon_nickname, \
                             icon_slider, icon_unknown

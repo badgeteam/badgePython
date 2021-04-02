@@ -1,4 +1,7 @@
 import wifi, time, consts
+import esp32
+
+nvs = NVS("system")
 
 def download_info(show=False):
 	import urequests as req
@@ -19,12 +22,14 @@ def download_info(show=False):
 def available(update=False, show=False):
 	if update:
 		if not wifi.status():
-			return machine.nvs_get_u8('system','OTA.ready') == 1
+			return nvs.get_i32('OTA.ready') == 1
 		info = download_info(show)
 		if info:
 			if info["build"] > consts.INFO_FIRMWARE_BUILD:
-				machine.nvs_set_u8('system', 'OTA.ready', 1)
+				nvs.set_i32('OTA.ready', 1)
+				nvs.commit()
 				return True
 
-		machine.nvs_set_u8('system', 'OTA.ready', 0)
-	return machine.nvs_get_u8('system', 'OTA.ready') == 1
+		nvs.set_i32('OTA.ready', 0)
+		nvs.commit()
+	return nvs.get_i32('OTA.ready') == 1
