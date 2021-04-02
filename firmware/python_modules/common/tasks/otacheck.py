@@ -1,5 +1,5 @@
 import wifi, time, consts
-import esp32
+from esp32 import NVS
 
 nvs = NVS("system")
 
@@ -22,7 +22,10 @@ def download_info(show=False):
 def available(update=False, show=False):
 	if update:
 		if not wifi.status():
-			return nvs.get_i32('OTA.ready') == 1
+			try:
+				return nvs.get_i32('OTA.ready') == 1
+			except Exception:
+				return False
 		info = download_info(show)
 		if info:
 			if info["build"] > consts.INFO_FIRMWARE_BUILD:
@@ -32,4 +35,7 @@ def available(update=False, show=False):
 
 		nvs.set_i32('OTA.ready', 0)
 		nvs.commit()
-	return nvs.get_i32('OTA.ready') == 1
+	try:
+		return nvs.get_i32('OTA.ready') == 1
+	except Exception:
+		return False
