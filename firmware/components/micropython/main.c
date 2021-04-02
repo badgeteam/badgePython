@@ -75,17 +75,21 @@ int vprintf_null(const char *format, va_list ap) {
     return 0;
 }
 
+#if !(CONFIG_ESP32_SPIRAM_SUPPORT || CONFIG_SPIRAM_SUPPORT)
 size_t mp_task_heap_size = 0;
 void *mp_task_heap = NULL;
 
 size_t mp_preallocate_heap() {
-    #if !(CONFIG_ESP32_SPIRAM_SUPPORT || CONFIG_SPIRAM_SUPPORT)
-        mp_task_heap_size = MIN(heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT), CONFIG_MICROPY_HEAP_SIZE*1024);
-        mp_task_heap = malloc(mp_task_heap_size);
-        return mp_task_heap_size;
-    #endif
-    return -1;
+    mp_task_heap_size = MIN(heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT), CONFIG_MICROPY_HEAP_SIZE*1024);
+    mp_task_heap = malloc(mp_task_heap_size);
+    return mp_task_heap_size;
 }
+
+#else
+size_t mp_preallocate_heap() {
+    return -1;  //Dont preallocate when SPIRAM is used
+}
+#endif
 
 void mp_task(void *pvParameter) {
     volatile uint32_t sp = (uint32_t)get_sp();
