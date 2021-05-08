@@ -166,6 +166,8 @@ set(IDF_COMPONENTS
     wear_levelling
     spiffs
     driver_sdcard
+    driver_rtcmem
+    driver_touchbuttons
 )
 
 if(IDF_VERSION_MINOR GREATER_EQUAL 1)
