@@ -17,9 +17,9 @@
 #include "driver_framebuffer_text.h"
 
 //PNG library
-#include "mem_reader.h"
-#include "file_reader.h"
-#include "png_reader.h"
+#include "../png/mem_reader.h"
+#include "../png/file_reader.h"
+#include "../png/png_reader.h"
 
 /* Flags */
 #define FB_FLAG_FORCE          1

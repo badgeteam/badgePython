@@ -5,7 +5,7 @@ set(srcs
     "driver_framebuffer_orientation.cpp"
     "driver_framebuffer_text.cpp"
     "driver_framebuffer_window.cpp"
-
+    "moddisplay.c"
     "png/adler32.c"
     "png/crc32.c"
     "png/deflate_reader.c"
@@ -13,13 +13,57 @@ set(srcs
     "png/flash_reader.c"
     "png/mem_reader.c"
     "png/png_reader.c"
+    "fonts/font_org_01_8pt7b.c"
+	"fonts/font_org_01_8pt7b.c"
+	"fonts/font_fairlight_8pt7b.c"
+	"fonts/font_fairlight_12pt7b.c"
+	"fonts/font_dejavusans_20pt7b.c"
+	"fonts/font_permanentmarker_22pt7b.c"
+	"fonts/font_permanentmarker_36pt7b.c"
+	"fonts/font_roboto-Black_22pt7b.c"
+	"fonts/font_roboto-BlackItalic_24pt7b.c"
+	"fonts/font_roboto_12pt7b.c"
+	"fonts/font_roboto_18pt7b.c"
+	"fonts/font_roboto_22pt7b.c"
+	"fonts/font_weather42pt8b.c"
+	"fonts/font_roboto_12pt7b.c"
+	"fonts/font_ipane7x5.c"
+	"fonts/font_ocra_16pt7b.c"
+	"fonts/font_ocra_22pt7b.c"
+	"fonts/font_Exo2-Regular_22pt7b.c"
+	"fonts/font_Exo2-Thin_22pt7b.c"
+	"fonts/font_Exo2-Bold_22pt7b.c"
+	"fonts/font_Exo2-Regular_18pt7b.c"
+	"fonts/font_Exo2-Thin_18pt7b.c"
+	"fonts/font_Exo2-Bold_18pt7b.c"
+	"fonts/font_Exo2-Regular_12pt7b.c"
+	"fonts/font_Exo2-Thin_12pt7b.c"
+	"fonts/font_Exo2-Bold_12pt7b.c"
 )
+
+set(IDF_COMPONENTS
+    micropython
+    driver_bus_i2c
+    driver_display_erc12864
+    driver_display_flipdotter
+    driver_display_fri3d
+    driver_display_generic_i2c
+    driver_display_gxgde0213b1
+    driver_display_ili9341
+    driver_display_ledmatrix
+    driver_display_nokia6100
+    driver_display_ssd1306
+    driver_display_st7735
+    driver_display_st7789v
+    driver_display_eink
+    driver_display_hub75
+    driver_io_disobey_samd
+    )
 
 set(includes
     "include"
-    "png"
-    )
+    "png")
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}
-                       REQUIRES spi_flash)
+                       REQUIRES ${IDF_COMPONENTS})

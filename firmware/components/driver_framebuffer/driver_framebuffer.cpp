@@ -10,7 +10,6 @@
 #include "esp_system.h"
 
 
-#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
 #include "include/driver_framebuffer_internal.h"
 #define TAG "fb"
 
@@ -658,8 +657,3 @@ uint8_t driver_framebuffer_getBacklight()
 {
 	return currentBrightness;
 }
-
-#else
-#include "include/driver_framebuffer_disabled.h"
-esp_err_t driver_framebuffer_init() { return ESP_OK; }
-#endif
