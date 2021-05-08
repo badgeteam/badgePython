@@ -1,4 +1,4 @@
-if(CONFIG_DRIVER_DISPLAY_I2C_ENABLE)
+if(CONFIG_DRIVER_SNDMIXER_ENABLE)
     set(srcs
         "driver_i2s.c"
         "snd_source_mod.c"
@@ -24,6 +24,7 @@ if(CONFIG_DRIVER_DISPLAY_I2C_ENABLE)
         "libhelix-mp3/stproc.c"
         "libhelix-mp3/subband.c"
         "libhelix-mp3/trigtabs.c"
+        "modsndmixer.c"
     )
 else()
     set(srcs "")
@@ -37,7 +38,8 @@ set(includes
 
 set(IDF_COMPONENTS
     nvs_flash
-    libopus)
+    libopus
+    micropython)
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}
