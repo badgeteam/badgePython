@@ -22,8 +22,6 @@
 	#include "driver_mpr121.h"
 #endif
 
-#ifdef CONFIG_DRIVER_SDCARD_ENABLE
-
 #define TAG "sdcard"
 
 //SDMMC HOST peripheral pin mapping (note: these are bound by the chip and can NOT be changed!)
@@ -61,48 +59,26 @@ esp_err_t driver_sdcard_mount(const char* mount_point, bool format_if_mount_fail
 	
 	#ifdef CONFIG_DRIVER_SDCARD_MODE_SPI
 		sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-		
 		#ifdef CONFIG_DRIVER_SDCARD_BUS_HSPI
 			host.slot = HSPI_HOST;
 		#else
 			host.slot = VSPI_HOST;
 		#endif
 		
-		sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
-		slot_config.gpio_miso   = CONFIG_DRIVER_SDCARD_PIN_MISO;
+		sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+		slot_config.gpio_cs = CONFIG_DRIVER_SDCARD_PIN_CS;
+		slot_config.host_id = host.slot;
 
-		slot_config.gpio_mosi   = CONFIG_DRIVER_SDCARD_PIN_MOSI;
+		spi_bus_config_t bus_cfg = {
+			.mosi_io_num = CONFIG_DRIVER_SDCARD_PIN_MOSI,
+			.miso_io_num = CONFIG_DRIVER_SDCARD_PIN_MISO,
+			.sclk_io_num = CONFIG_DRIVER_SDCARD_PIN_CLK,
+			.quadwp_io_num = -1,
+			.quadhd_io_num = -1,
+			.max_transfer_sz = 4000,
+		};
 
-		slot_config.gpio_sck    = CONFIG_DRIVER_SDCARD_PIN_CLK;
-
-		slot_config.gpio_cs     = CONFIG_DRIVER_SDCARD_PIN_CS;
-		slot_config.dma_channel = CONFIG_DRIVER_SDCARD_DMA_CHANNEL;
-		
-		gpio_pad_select_gpio(CONFIG_DRIVER_SDCARD_PIN_MISO);
-
-		gpio_pad_select_gpio(CONFIG_DRIVER_SDCARD_PIN_MOSI);
-		gpio_pad_select_gpio(CONFIG_DRIVER_SDCARD_PIN_CLK);
-		gpio_pad_select_gpio(CONFIG_DRIVER_SDCARD_PIN_CS);
-		
-		gpio_set_direction(CONFIG_DRIVER_SDCARD_PIN_MISO, GPIO_MODE_INPUT_OUTPUT_OD);
-
-		gpio_set_direction(CONFIG_DRIVER_SDCARD_PIN_MOSI, GPIO_MODE_INPUT_OUTPUT_OD);
-		gpio_set_direction(CONFIG_DRIVER_SDCARD_PIN_CLK,  GPIO_MODE_INPUT_OUTPUT_OD);
-		gpio_set_direction(CONFIG_DRIVER_SDCARD_PIN_CS,   GPIO_MODE_INPUT_OUTPUT);
-		
-		gpio_set_pull_mode(CONFIG_DRIVER_SDCARD_PIN_MISO, GPIO_PULLUP_ONLY);
-
-		gpio_set_pull_mode(CONFIG_DRIVER_SDCARD_PIN_MOSI, GPIO_PULLUP_ONLY);
-
-		gpio_set_pull_mode(CONFIG_DRIVER_SDCARD_PIN_CLK,  GPIO_PULLUP_ONLY);
-
-		gpio_set_pull_mode(CONFIG_DRIVER_SDCARD_PIN_CS,   GPIO_PULLUP_ONLY);
-
-		
-		gpio_set_level(CONFIG_DRIVER_SDCARD_PIN_MISO, 1);
-		gpio_set_level(CONFIG_DRIVER_SDCARD_PIN_MOSI, 1);
-		gpio_set_level(CONFIG_DRIVER_SDCARD_PIN_CLK,  1);
-		gpio_set_level(CONFIG_DRIVER_SDCARD_PIN_CS,   1);
+		esp_err_t ret = spi_bus_initialize(host.slot, &bus_cfg, CONFIG_DRIVER_SDCARD_DMA_CHANNEL);
 		
 	#else //1-line or 4-line SD mode
 		sdmmc_host_t host = SDMMC_HOST_DEFAULT();
@@ -167,9 +143,13 @@ esp_err_t driver_sdcard_mount(const char* mount_point, bool format_if_mount_fail
 	};
 	
 	sdmmc_card_t* card;
-
-	esp_err_t res = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
-	
+	#ifdef CONFIG_DRIVER_SDCARD_MODE_SPI
+		//heap_caps_malloc_extmem_enable(-1);
+		esp_err_t res = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+		//heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
+	#else
+		esp_err_t res = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
+	#endif
 	if (res != ESP_OK) {
 
 		if (res == ESP_FAIL) {
@@ -212,7 +192,3 @@ esp_err_t driver_sdcard_init(void)
 	ESP_LOGD(TAG, "init done");
 	return ESP_OK;
 }
-
-#else // CONFIG_DRIVER_SDCARD_ENABLE
-esp_err_t driver_sdcard_init(void) { return ESP_OK; } // Dummy function, leave empty!
-#endif

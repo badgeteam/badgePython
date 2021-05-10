@@ -27,23 +27,23 @@ if not app:
 # 	app = "bootsplash"
 
 try:
-	import os
-	os.mountsd()
-	del os
+	import sdcard
+	sdcard.mountsd()
+	del sdcard
 except:
 	print('Could not mount SD card')
 	pass
 
 if app and not app == "shell":
-	try:
-		print("Starting app '%s'..." % app)
-		system.__current_app__ = app
-		if app:
-			__import__(app) if not app.endswith('.py') else execfile(app)
-	except BaseException as e:
-		sys.print_exception(e)
-		# if not machine.nvs_get_u8("system", "ignore_crash"):
-        print("Fatal exception in the running app!")
-        system.crashedWarning()
-        time.sleep(3)
-        system.launcher()
+	# try:
+	print("Starting app '%s'..." % app)
+	system.__current_app__ = app
+	if app:
+		__import__(app) if not app.endswith('.py') else execfile(app)
+	# except Exception as e:
+	# 	print(e)
+	# 	# if not machine.nvs_get_u8("system", "ignore_crash"):
+    #     print("Fatal exception in the running app!")
+    #     system.crashedWarning()
+    #     time.sleep(3)
+    #     system.launcher()

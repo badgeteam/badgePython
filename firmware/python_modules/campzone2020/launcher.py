@@ -3,7 +3,7 @@ import os, ugTTS, term_menu, time, machine
 
 LONG_PRESS_MS = const(1000)
 
-wifi.connect()
+#wifi.connect()
 
 def download_tts(app):
     tts_text = app['name']
@@ -17,32 +17,32 @@ def download_tts(app):
 
 
 def update_mp3_cache():
-    global apps
-    # freediskpercent = int(os.statvfs('/cache')[3] / (os.statvfs('/cache')[2] / 100))
-    freediskpercent = 100  # Above free disk space check doesn't work
-    if freediskpercent > 25: # do not fill filesystem when free space < 25%
-        if not wifi.status():
-            wifi.connect()
-            return 2000
-        mp3files = os.listdir('/cache/appnames')
-        for app_index in apps:
-            try:
-                app = apps[app_index]
-                mp3file = '%s.mp3' % app['slug']
-                if mp3file not in mp3files:
-                    try:
-                        audio.play('/cache/system/generating_app_name.mp3')
-                    except:
-                        pass
-                    download_tts(app)
-                    try:
-                        audio.play('/cache/appnames/%s' % mp3file)
-                    except:
-                        pass
-            except:
-                pass
-    else:
-        print("Flash almost full, skipping text-to-speech")
+    # global apps
+    # # freediskpercent = int(os.statvfs('/cache')[3] / (os.statvfs('/cache')[2] / 100))
+    # freediskpercent = 100  # Above free disk space check doesn't work
+    # if freediskpercent > 25: # do not fill filesystem when free space < 25%
+    #     if not wifi.status():
+    #         wifi.connect()
+    #         return 2000
+    #     mp3files = os.listdir('/cache/appnames')
+    #     for app_index in apps:
+    #         try:
+    #             app = apps[app_index]
+    #             mp3file = '%s.mp3' % app['slug']
+    #             if mp3file not in mp3files:
+    #                 try:
+    #                     audio.play('/cache/system/generating_app_name.mp3')
+    #                 except:
+    #                     pass
+    #                 download_tts(app)
+    #                 try:
+    #                     audio.play('/cache/appnames/%s' % mp3file)
+    #                 except:
+    #                     pass
+    #         except:
+    #             pass
+    # else:
+    #     print("Flash almost full, skipping text-to-speech")
     return 2000
 
 # Application list
@@ -141,12 +141,12 @@ def on_right(pressed):
 touchpads.on(touchpads.LEFT, on_left)
 touchpads.on(touchpads.RIGHT, on_right)
 
-if not machine.nvs_getint('system', 'welcome_done'):
-    machine.nvs_setint('system', 'welcome_done', 1)
-    audio.play('/cache/system/welcome.mp3')
-    time.sleep(3)
-    audio.play('/cache/system/press.mp3')
-    time.sleep(3)
+# if not machine.nvs_getint('system', 'welcome_done'):
+#     machine.nvs_setint('system', 'welcome_done', 1)
+#     audio.play('/cache/system/welcome.mp3')
+#     time.sleep(3)
+#     audio.play('/cache/system/press.mp3')
+#     time.sleep(3)
 
 virtualtimers.activate(500)
 keypad.add_handler(on_key)
