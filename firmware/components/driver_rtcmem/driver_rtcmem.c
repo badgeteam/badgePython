@@ -18,7 +18,7 @@
 #define TAG "rtcmem"
 
 #define RTC_MEM_INT_SIZE 64
-#define RTC_MEM_STR_SIZE 2048
+#define RTC_MEM_STR_SIZE 512
 
 static int      RTC_DATA_ATTR rtc_mem_int[RTC_MEM_INT_SIZE] = { 0 };
 static uint16_t RTC_DATA_ATTR rtc_mem_int_crc;
