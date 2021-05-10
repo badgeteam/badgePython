@@ -795,8 +795,9 @@ STATIC mp_obj_t native_vfs_mount(mp_obj_t self_in, mp_obj_t readonly, mp_obj_t m
 			.allocation_unit_size   = 0,
 		};
 		// Mount spi Flash filesystem using configuration from sdkconfig.h
+		//heap_caps_malloc_extmem_enable(-1);
 		esp_err_t err = esp_vfs_fat_spiflash_mount(VFS_NATIVE_MOUNT_POINT, VFS_NATIVE_INTERNAL_PART_LABEL, &mount_config, &s_wl_handle);
-
+		//heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
 		if (err != ESP_OK) {
 			ESP_LOGE(TAG, "Failed to mount Flash partition as FatFS(%d)", err);
 			return mp_const_none;
