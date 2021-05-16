@@ -6,6 +6,7 @@
 #ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
 
 #include "driver_ssd1306.h"
+#include "driver_sh1106.h"
 #include "driver_erc12864.h"
 #include "driver_eink.h"
 #include "driver_ili9341.h"
