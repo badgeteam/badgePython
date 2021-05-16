@@ -53,6 +53,7 @@ set(IDF_COMPONENTS
     driver_display_ledmatrix
     driver_display_nokia6100
     driver_display_ssd1306
+    driver_display_sh1106
     driver_display_st7735
     driver_display_st7789v
     driver_display_eink
