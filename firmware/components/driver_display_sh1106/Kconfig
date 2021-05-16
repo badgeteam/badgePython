@@ -1,0 +1,15 @@
+menu "Driver: SH1106 OLED display"
+	config DRIVER_SH1106_ENABLE
+		depends on DRIVER_I2C_ENABLE
+		bool "Enable the SH1106 display driver"
+		default n
+	
+	config I2C_ADDR_SH1106
+		depends on DRIVER_SH1106_ENABLE
+		int "SH1106 I2C address"
+		default 60
+	
+	config PIN_NUM_SH1106_RESET
+		depends on DRIVER_SH1106_ENABLE
+		int "GPIO pin used for SH1106 reset"
+endmenu
