@@ -1,3 +1,4 @@
+if(CONFIG_DRIVER_FRAMEBUFFER_ENABLE)
 set(srcs
     "driver_framebuffer.cpp"
     "driver_framebuffer_dirty.cpp"
@@ -40,6 +41,16 @@ set(srcs
 	"fonts/font_Exo2-Thin_12pt7b.c"
 	"fonts/font_Exo2-Bold_12pt7b.c"
 )
+else()
+set(srcs
+    "png/adler32.c"
+    "png/crc32.c"
+    "png/deflate_reader.c"
+    "png/file_reader.c"
+    "png/flash_reader.c"
+    "png/mem_reader.c"
+    "png/png_reader.c")
+endif()
 
 set(IDF_COMPONENTS
     micropython
