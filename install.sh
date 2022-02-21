@@ -2,5 +2,5 @@
 
 cd esp-idf
 ./install.sh
-cd ../firmware/components/micropython/mpy-cross
+cd ../firmware/components/micropython/micropython/mpy-cross
 make
