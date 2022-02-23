@@ -13,7 +13,7 @@ set(includes
 
 set(IDF_COMPONENTS
     driver_framebuffer
-    driver_bus_i2c)
+    buses)
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}

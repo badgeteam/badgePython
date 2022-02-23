@@ -195,6 +195,7 @@ idf_component_register(
         ${MICROPY_BOARD_DIR}
         ${CMAKE_BINARY_DIR}
         "./"
+        "vfs_fat/"
     REQUIRES
         ${IDF_COMPONENTS}
 )

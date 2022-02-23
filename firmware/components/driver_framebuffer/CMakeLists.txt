@@ -54,7 +54,7 @@ endif()
 
 set(IDF_COMPONENTS
     micropython
-    driver_bus_i2c
+    buses
     driver_display_erc12864
     driver_display_flipdotter
     driver_display_fri3d

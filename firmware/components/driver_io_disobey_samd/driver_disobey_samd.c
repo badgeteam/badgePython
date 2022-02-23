@@ -10,7 +10,7 @@
 #include <esp_log.h>
 #include <driver/gpio.h>
 
-#include "driver_i2c.h"
+#include "buses.h"
 #include "include/driver_disobey_samd.h"
 
 #ifdef CONFIG_DRIVER_DISOBEY_SAMD_ENABLE

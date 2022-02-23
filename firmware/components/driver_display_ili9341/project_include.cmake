@@ -1,13 +1,13 @@
 #Include all files that contain MP bindings
 
 #Define the name of your module here
-set(mod_name "sh1106")
-set(driver_name "sh1106")
-set(mod_register "sh1106 DISPLAY")
+set(mod_name "ili9341")
+set(driver_name "ili9341")
+set(mod_register "ili9341 DISPLAY")
 
-if(CONFIG_DRIVER_SH1106_ENABLE)
-    message(STATUS "sh1106 enabled")
+if(CONFIG_DRIVER_ILI9341_ENABLE)
+    message(STATUS "ili9341 enabled")
     set(EXTMODS_INIT "${EXTMODS_INIT}" "\"${driver_name}\"@\"${mod_register}\"^" CACHE INTERNAL "")
 else()
-    message(STATUS "sh1106 disabled")
+    message(STATUS "ili9341 disabled")
 endif()
