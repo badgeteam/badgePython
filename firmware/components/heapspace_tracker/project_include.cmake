@@ -7,7 +7,8 @@ set(mods
 set(mod_name "heapspace")
 set(mod_register "heapspace")
 
-message(STATUS "heapspace enabled")
-set(EXTMODS "${EXTMODS}" "${mods}" CACHE INTERNAL "")
-set(EXTMODS_NAMES "${EXTMODS_NAMES}" "${mod_name}" CACHE INTERNAL "")
-#set(EXTMODS_INIT "${EXTMODS_INIT}" "\"${mod_name}\"@\"${mod_register}\"^" CACHE INTERNAL "")
+if(CONFIG_DRIVER_HEAPSPACE_ENABLE)
+    message(STATUS "heapspace enabled")
+    set(EXTMODS "${EXTMODS}" "${mods}" CACHE INTERNAL "")
+    set(EXTMODS_NAMES "${EXTMODS_NAMES}" "${mod_name}" CACHE INTERNAL "")
+endif()

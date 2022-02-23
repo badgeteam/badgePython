@@ -1,3 +1,5 @@
-menu "Driver: RTC memory"
-
+menu "Driver: Heapspace tracker"
+    config DRIVER_HEAPSPACE_ENABLE
+            bool "Enable the heapspace tracker driver"
+            default n
 endmenu

@@ -1,7 +1,12 @@
+if(CONFIG_DRIVER_HEAPSPACE_ENABLE)
 set(srcs
     "modheapspace.c"
 )
-
+else()
+set(srcs
+    ""
+)
+endif()
 set(includes
     ""
     )
