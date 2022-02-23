@@ -1,5 +1,6 @@
 #include "include/nvs_init.h"
 #include "include/platform.h"
+#include "include/system.h"
 #include "include/ota_update.h"
 #include "include/factory_reset.h"
 #include "driver_framebuffer.h"
@@ -11,6 +12,7 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "micropython_main.h"
+
 
 extern void micropython_entry(void);
 
@@ -36,45 +38,47 @@ void app_main()
 	size_t mp_task_heap_size = mp_preallocate_heap();
     ESP_LOGI("MP", "Heap size: %d", mp_task_heap_size);
 	
-	logo();
-	bool is_first_boot = nvs_init();
+	// logo();
+	// bool is_first_boot = nvs_init();
 
+	fflush(stdout);
 	platform_init();
 
-	if (is_first_boot) {
-		#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
-			driver_framebuffer_fill(NULL, COLOR_BLACK);
-			driver_framebuffer_print(NULL, "Extracting ZIP...\n", 0, 0, 1, 1, COLOR_WHITE, &roboto_12pt7b);
-			driver_framebuffer_flush(0);
-		#endif
-		printf("Attempting to unpack FAT initialization ZIP file...\b");
-		if (unpack_first_boot_zip() != ESP_OK) { //Error
-			#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
-				driver_framebuffer_fill(NULL, COLOR_BLACK);
-				driver_framebuffer_print(NULL, "ZIP error!\n", 0, 0, 1, 1, COLOR_WHITE, &roboto_12pt7b);
-				driver_framebuffer_flush(0);
-			#endif
-			printf("An error occured while unpacking the ZIP file!");
-			nvs_write_zip_status(false);
-		} else {
-			nvs_write_zip_status(true);
-		}
-		esp_restart();
-	}
+	// if (is_first_boot) {
+	// 	#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
+	// 		driver_framebuffer_fill(NULL, COLOR_BLACK);
+	// 		driver_framebuffer_print(NULL, "Extracting ZIP...\n", 0, 0, 1, 1, COLOR_WHITE, &roboto_12pt7b);
+	// 		driver_framebuffer_flush(0);
+	// 	#endif
+	// 	printf("Attempting to unpack FAT initialization ZIP file...\b");
+	// 	if (unpack_first_boot_zip() != ESP_OK) { //Error
+	// 		#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
+	// 			driver_framebuffer_fill(NULL, COLOR_BLACK);
+	// 			driver_framebuffer_print(NULL, "ZIP error!\n", 0, 0, 1, 1, COLOR_WHITE, &roboto_12pt7b);
+	// 			driver_framebuffer_flush(0);
+	// 		#endif
+	// 		printf("An error occured while unpacking the ZIP file!");
+	// 		nvs_write_zip_status(false);
+	// 	} else {
+	// 		nvs_write_zip_status(true);
+	// 	}
+	// 	esp_restart();
+	// }
 
-	 int magic = get_magic();
+	//  int magic = get_magic();
 	
-	 switch(magic) {
-	 	case MAGIC_OTA:
-	 	  // This triggers an Over-the-Air firmware update
-	 		badge_ota_update();
-	 		break;
-	 	case MAGIC_FACTORY_RESET:
-	 	  // This clears any FAT data partitions
-	 		factory_reset();
-	 		break;
-	 	default:
-	 	  // This starts the MicroPython FreeRTOS task
-      	start_mp();
-	 }
+	//  switch(magic) {
+	//  	case MAGIC_OTA:
+	//  	  // This triggers an Over-the-Air firmware update
+	//  		badge_ota_update();
+	//  		break;
+	//  	case MAGIC_FACTORY_RESET:
+	//  	  // This clears any FAT data partitions
+	//  		factory_reset();
+	//  		break;
+	//  	default:
+	//  	  // This starts the MicroPython FreeRTOS task
+       	start_mp();
+	// 	  while(1){}
+	//  }
 }

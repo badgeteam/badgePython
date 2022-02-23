@@ -10,7 +10,7 @@ set(srcs
 )
 
 idf_component_register(SRCS "${srcs}"
-                    INCLUDE_DIRS "./")
+                    INCLUDE_DIRS ".")
 
 add_custom_command(
     OUTPUT "${COMPONENT_DIR}/platform_gen.c"
