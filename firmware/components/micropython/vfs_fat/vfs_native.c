@@ -60,7 +60,7 @@
 #include "py/runtime.h"
 #include "py/mperrno.h"
 #include "vfs_native.h"
-#include "lib/timeutils/timeutils.h"
+#include "shared/timeutils/timeutils.h"
 #include "sdkconfig.h"
 
 #include "driver_sdcard.h"

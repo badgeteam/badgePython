@@ -10,7 +10,7 @@
 #include "py/stream.h"
 #include "py/smallint.h"
 #include "py/runtime.h"
-#include "lib/utils/pyexec.h"
+#include "shared/runtime/pyexec.h"
 
 #define INT_TO_STR_EX(number) #number
 #define INT_TO_STR(number) INT_TO_STR_EX(number)
