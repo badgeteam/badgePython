@@ -70,6 +70,7 @@ set(IDF_COMPONENTS
     driver_display_eink
     driver_display_hub75
     driver_io_disobey_samd
+    spi_flash
     )
 
 set(includes
