@@ -104,8 +104,8 @@ void mp_task(void *pvParameter) {
     // Try to use the entire external SPIRAM directly for the heap
     size_t mp_task_heap_size = 0x00;
     void *mp_task_heap = (void *)0x00;
-    ESP_LOGI(TAG, "SPIRAM: %d\n", esp_spiram_get_chip_size());
-    ESP_LOGI(TAG, "Max free: %d\n", heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+    ESP_LOGI(TAG, "SPIRAM: %d", esp_spiram_get_chip_size());
+    ESP_LOGI(TAG, "Max free: %d", heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
     switch (esp_spiram_get_chip_size()) {
         case ESP_SPIRAM_SIZE_16MBITS:
             mp_task_heap_size = 2 * 1024 * 1024;
@@ -121,8 +121,8 @@ void mp_task(void *pvParameter) {
             mp_task_heap_size = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
             mp_task_heap = malloc(mp_task_heap_size);
     }
-    ESP_LOGI(TAG, "Heap adress: %p\n", mp_task_heap);
-    ESP_LOGI(TAG, "Heap size: %d\n", mp_task_heap_size);
+    ESP_LOGI(TAG, "Heap adress: %p", mp_task_heap);
+    ESP_LOGI(TAG, "Heap size: %d", mp_task_heap_size);
     #endif
 
 soft_reset:
