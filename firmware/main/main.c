@@ -13,6 +13,7 @@
 #include "nvs.h"
 #include "micropython_main.h"
 
+#define TAG "MAIN"
 
 extern void micropython_entry(void);
 
@@ -36,7 +37,7 @@ void nvs_write_zip_status(bool status)
 void app_main()
 {
 	size_t mp_task_heap_size = mp_preallocate_heap();
-    ESP_LOGI("MP", "Heap size: %d", mp_task_heap_size);
+    ESP_LOGI(TAG, "Heap size: %d", mp_task_heap_size);
 	
 	// logo();
 	// bool is_first_boot = nvs_init();
