@@ -69,7 +69,7 @@
 // MicroPython runs as a task under FreeRTOS
 #define MP_TASK_PRIORITY        (CONFIG_MICROPY_TASK_PRIORITY)
 #define MP_TASK_STACK_SIZE      (CONFIG_MICROPY_STACK_SIZE * 1024)
-
+#define TAG "MP"
 int vprintf_null(const char *format, va_list ap) {
     // do nothing: this is used as a log target during raw repl mode
     return 0;
@@ -100,26 +100,29 @@ void mp_task(void *pvParameter) {
     machine_init();
 
     // TODO: CONFIG_SPIRAM_SUPPORT is for 3.3 compatibility, remove after move to 4.0.
-    #if CONFIG_ESP32_SPIRAM_SUPPORT || CONFIG_SPIRAM_SUPPORT
+    #if CONFIG_ESP32_SPIRAM_SUPPORT
     // Try to use the entire external SPIRAM directly for the heap
-    size_t mp_task_heap_size;
-    void *mp_task_heap = (void *)0x3f800000;
+    size_t mp_task_heap_size = 0x00;
+    void *mp_task_heap = (void *)0x00;
+    ESP_LOGI(TAG, "SPIRAM: %d\n", esp_spiram_get_chip_size());
+    ESP_LOGI(TAG, "Max free: %d\n", heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
     switch (esp_spiram_get_chip_size()) {
         case ESP_SPIRAM_SIZE_16MBITS:
             mp_task_heap_size = 2 * 1024 * 1024;
+            mp_task_heap = heap_caps_malloc(mp_task_heap_size, MALLOC_CAP_SPIRAM);
             break;
         case ESP_SPIRAM_SIZE_32MBITS:
         case ESP_SPIRAM_SIZE_64MBITS:
-            mp_task_heap_size = 4 * 1024 * 1024;
+            mp_task_heap_size = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
             mp_task_heap = heap_caps_malloc(mp_task_heap_size, MALLOC_CAP_SPIRAM);
             break;
         default:
             // No SPIRAM, fallback to normal allocation
             mp_task_heap_size = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
             mp_task_heap = malloc(mp_task_heap_size);
-            break;
     }
-    
+    ESP_LOGI(TAG, "Heap adress: %p\n", mp_task_heap);
+    ESP_LOGI(TAG, "Heap size: %d\n", mp_task_heap_size);
     #endif
 
 soft_reset:
