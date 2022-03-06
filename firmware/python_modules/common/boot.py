@@ -39,8 +39,8 @@ else:
 			app = "factory_checks"
 		else:
 			app = rtcmem.read_string()
-			if not app:
-				app = 'dashboard.home'
+			# if not app:
+			# 	app = 'dashboard.home'
         del fc_level
 
 del __chk_recovery
