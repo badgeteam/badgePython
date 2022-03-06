@@ -1,4 +1,4 @@
-import uos, gc
+import uos, gc, sys
 
 try:
 	uos.mkdir('/lib')
@@ -16,5 +16,5 @@ try:
 	uos.mkdir('/config')
 except:
 	pass
-
+sys.path.append(".frozen")
 gc.collect()
