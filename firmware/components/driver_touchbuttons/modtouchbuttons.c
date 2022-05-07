@@ -6,7 +6,7 @@
 #include "py/mphal.h"
 #include "py/mperrno.h"
 #include "py/runtime.h"
-#include "lib/utils/pyexec.h"
+#include "shared/runtime/pyexec.h"
 
 #include "include/driver_touchbuttons.h"
 
