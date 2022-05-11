@@ -554,8 +554,8 @@ bool driver_framebuffer_flush(uint32_t flags)
 		if (flags & FB_FLAG_LUT_FASTEST) {
 			eink_flags |= DRIVER_EINK_LUT_FASTEST << DISPLAY_FLAG_LUT_BIT;
 		}
-#else
-#error "NO LUT BIT"
+	#else
+	#warning "NO LUT BIT"
 	#endif
 
 	#ifdef FB_FLUSH_GS

@@ -21,7 +21,9 @@
 #include "driver_framebuffer.h"
 #include "driver_framebuffer_devices.h"
 
+#ifdef CONFIG_DRIVER_HUB75_ENABLE
 #include "compositor.h"
+#endif
 
 #include "esp_partition.h"
 #include "esp_spi_flash.h"

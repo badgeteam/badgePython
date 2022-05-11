@@ -55,20 +55,7 @@ endif()
 set(IDF_COMPONENTS
     micropython
     buses
-    driver_display_erc12864
-    driver_display_flipdotter
-    driver_display_fri3d
-    driver_display_generic_i2c
-    driver_display_gxgde0213b1
     driver_display_ili9341
-    driver_display_ledmatrix
-    driver_display_nokia6100
-    driver_display_ssd1306
-    driver_display_sh1106
-    driver_display_st7735
-    driver_display_st7789v
-    driver_display_eink
-    driver_display_hub75
     driver_io_disobey_samd
     spi_flash
     )
