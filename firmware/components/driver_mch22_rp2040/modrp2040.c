@@ -14,14 +14,16 @@
 static RP2040 rp2040;
 static mp_obj_t touch_callback = mp_const_none;
 
-
+static void button_handler(void *parameter);
 
 void driver_rp2040_init() {
     rp2040.i2c_bus = 0;
     rp2040.i2c_address = RP2040_ADDR;
     rp2040.pin_interrupt = GPIO_INT_RP2040;
+    rp2040.queue = xQueueCreate(15, sizeof(rp2040_input_message_t));
 
     rp2040_init(&rp2040);
+    xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
 }
 
 static mp_obj_t buttons() {
@@ -31,14 +33,19 @@ static mp_obj_t buttons() {
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(buttons_obj, buttons);
 
-static void button_handler(uint16_t touch_state) {
-    if (touch_callback != mp_const_none) {
+static void button_handler(void *parameter) {
+    rp2040_input_message_t message;
+    while(1) {
+        xQueueReceive(rp2040.queue, &message, portMAX_DELAY);
         // uPy scheduler tends to get full for unknown reasons, so to not lose any interrupts,
         // we try until the schedule succeeds.
-        bool succeeded = mp_sched_schedule(touch_callback, mp_obj_new_int(touch_state));
-        while (!succeeded) {
-            ESP_LOGW(TAG, "Failed to call touch callback, retrying");
-            succeeded = mp_sched_schedule(touch_callback, mp_obj_new_int(touch_state));
+        if (touch_callback != mp_const_none) {
+            mp_obj_t res = mp_obj_new_int(message.input << 1 | message.state);
+            bool succeeded = mp_sched_schedule(touch_callback, res);
+            while (!succeeded) {
+                ESP_LOGW(TAG, "Failed to call touch callback, retrying");
+                succeeded = mp_sched_schedule(touch_callback, res);
+            }
         }
     }
 }
