@@ -75,6 +75,7 @@ void driver_i2s_sound_start() {
 #endif
 #else
   static const i2s_pin_config_t pin_config = {.bck_io_num   = CONFIG_DRIVER_SNDMIXER_PIN_BCK,
+                                              .mck_io_num   = CONFIG_DRIVER_SNDMIXER_PIN_MCK,
                                               .ws_io_num    = CONFIG_DRIVER_SNDMIXER_PIN_WS,
                                               .data_out_num = CONFIG_DRIVER_SNDMIXER_PIN_DATA_OUT,
                                               .data_in_num  = I2S_PIN_NO_CHANGE};

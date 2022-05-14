@@ -41,7 +41,11 @@ menu "Driver: Audio mixer"
 	config DRIVER_SNDMIXER_I2S_INTERNAL_DAC_BOTH
 		bool "Both enabled"
 	endchoice
-	
+	config DRIVER_SNDMIXER_PIN_MCK
+		depends on DRIVER_SNDMIXER_ENABLE && (DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_MSB || DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_LSB || DRIVER_SNDMIXER_I2S_DAC_EXTERNAL)
+		int "GPIO to use as MCK pin"
+		default -1
+
 	config DRIVER_SNDMIXER_PIN_BCK
 		depends on DRIVER_SNDMIXER_ENABLE && (DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_MSB || DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_LSB || DRIVER_SNDMIXER_I2S_DAC_EXTERNAL)
 		int "GPIO to use as BCK pin"
@@ -83,7 +87,7 @@ menu "Driver: Audio mixer"
 	config DRIVER_SNDMIXER_SAMPLE_RATE
 		depends on DRIVER_SNDMIXER_ENABLE
 		int "Sample rate"
-	
+		default 20000
 	config DRIVER_SNDMIXER_BITS_PER_SAMPLE
 		depends on DRIVER_SNDMIXER_ENABLE
 		int "Bits per sample"
@@ -92,6 +96,7 @@ menu "Driver: Audio mixer"
 	config DRIVER_SNDMIXER_BUFFZIE
 		depends on DRIVER_SNDMIXER_ENABLE
 		int "Buffer size"
+		default 4096
 
 	config DRIVER_SNDMIXER_DEBUG
 		depends on DRIVER_SNDMIXER_ENABLE
