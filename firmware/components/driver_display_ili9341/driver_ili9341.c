@@ -282,9 +282,6 @@ esp_err_t driver_ili9341_init(void)
 	res = spi_bus_add_device(VSPI_HOST, &devcfg, &spi_bus);
 	if (res != ESP_OK) return res;
 
-	res = gpio_set_direction(26, GPIO_MODE_OUTPUT);
-	gpio_set_level(26, 0);
-
 	//Reset the LCD display
 	res = driver_ili9341_reset();
 	if (res != ESP_OK) return res;
