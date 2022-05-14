@@ -1,4 +1,4 @@
-if(CONFIG_DRIVER_NEOPIXEL_ENABLE)
+if(CONFIG_DRIVER_MCH22_RP2040_ENABLE)
     set(srcs
         "esp32-component-mch2022-rp2040/rp2040.c"
         "modmch22.c"

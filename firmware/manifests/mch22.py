@@ -1,6 +1,7 @@
 freeze("$(MPY_DIR)/tools", ("upip.py", "upip_utarfile.py"))
 freeze("$(MPY_DIR)/drivers/dht", "dht.py")
 freeze("$(MPY_DIR)/drivers/onewire")
+freeze("$(MPY_DIR)/drivers/neopixel")
 include("$(MPY_DIR)/extmod/uasyncio/manifest.py")
 include("$(MPY_DIR)/extmod/webrepl/manifest.py")
 freeze("../python_modules/common", ("rtc.py", "upysh.py", "valuestore.py", "shell.py", "term.py", "virtualtimers.py", "wifi.py", "system.py", "ntp.py", "boot.py", "_boot.py"))
