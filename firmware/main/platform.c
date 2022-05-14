@@ -11,6 +11,7 @@
 #include <esp_vfs_fat.h>
 #include <esp_log.h>
 #include "buses.h"
+#include <driver/uart.h>
 
 #define TAG "platform"
 
@@ -58,7 +59,21 @@ void fatal_error(const char *message) {
 void platform_init()
 {
 	//if (isr_init() != ESP_OK) restart();
-	//Static inits can be performed here
+  //Init UART0 temporarly until upstream uPy is fixed. TODO: Remove this when uPy 1.19 is released
+  uart_config_t uartcfg = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .rx_flow_ctrl_thresh = 0
+  };
+  uart_param_config(0, &uartcfg);
+  uart_driver_install(0, 129, 0, 0, NULL, 0);
+  uart_isr_free(0);
+
+
+  //Static inits can be performed here
   start_buses();
 
   //Init generated modules
