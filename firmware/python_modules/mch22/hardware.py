@@ -1,4 +1,5 @@
 from machine import Pin
+import sdcard
 
 PIN_SDPOWER = 19
 PIN_NEOPIXEL =  5
@@ -13,3 +14,7 @@ def enable_power():
 def disable_power():
     global power_pin
     power_pin.off()
+
+def mountsd():
+    enable_power()
+    sdcard.mountsd()
