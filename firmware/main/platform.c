@@ -58,7 +58,7 @@ void fatal_error(const char *message) {
 
 void platform_init()
 {
-	//if (isr_init() != ESP_OK) restart();
+	if (isr_init() != ESP_OK) restart();
   //Init UART0 temporarly until upstream uPy is fixed. TODO: Remove this when uPy 1.19 is released
   uart_config_t uartcfg = {
         .baud_rate = 115200,
