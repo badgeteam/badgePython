@@ -8,19 +8,23 @@
 
 #define TAG "RP2040_UPY"
 
-#define RP2040_ADDR 0x17
-#define GPIO_INT_RP2040  34
+#define RP2040_ADDR      (0x17)
+#define GPIO_INT_RP2040  (34)
+#define GPIO_LCD_MODE    (26)
 
 static RP2040 rp2040;
 static mp_obj_t touch_callback = mp_const_none;
 
 static void button_handler(void *parameter);
 
-void driver_rp2040_init() {
+void driver_mch22_init() {
     rp2040.i2c_bus = 0;
     rp2040.i2c_address = RP2040_ADDR;
     rp2040.pin_interrupt = GPIO_INT_RP2040;
     rp2040.queue = xQueueCreate(15, sizeof(rp2040_input_message_t));
+
+    gpio_set_direction(GPIO_LCD_MODE, GPIO_MODE_OUTPUT);
+	gpio_set_level(GPIO_LCD_MODE, 0);
 
     rp2040_init(&rp2040);
     xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
@@ -70,17 +74,17 @@ static mp_obj_t set_brightness(mp_obj_t brightness) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(set_brightness_obj, set_brightness);
 
-STATIC const mp_rom_map_elem_t rp2040_module_globals_table[] = {
+STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&get_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&set_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_handler), MP_ROM_PTR(&set_handler_obj)},
 };
 
-STATIC MP_DEFINE_CONST_DICT(rp2040_module_globals, rp2040_module_globals_table);
+STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
 
 //===================================
-const mp_obj_module_t rp2040_module = {
+const mp_obj_module_t mch22_module = {
     .base = {&mp_type_module},
-    .globals = (mp_obj_dict_t *)&rp2040_module_globals,
+    .globals = (mp_obj_dict_t *)&mch22_module_globals,
 };
