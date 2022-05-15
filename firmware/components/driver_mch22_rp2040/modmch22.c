@@ -74,10 +74,18 @@ static mp_obj_t set_brightness(mp_obj_t brightness) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(set_brightness_obj, set_brightness);
 
+static mp_obj_t fpga_reset(mp_obj_t enabled) {
+    bool value = mp_obj_get_int(enabled);
+    rp2040_set_fpga(&rp2040, value);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(fpga_reset_obj, fpga_reset);
+
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&get_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&set_brightness_obj)},
+    {MP_ROM_QSTR(MP_QSTR_fpga_reset), MP_ROM_PTR(&fpga_reset_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_handler), MP_ROM_PTR(&set_handler_obj)},
 };
 
