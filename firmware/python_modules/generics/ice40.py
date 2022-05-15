@@ -29,7 +29,7 @@ def load_bitstream(bitstream):
         print("Error resetting fpga")
         return False
     while True:
-        bitstreampart = filestream.read(TRANSFER_SIZE)
+        bitstreampart = filestream.read(TRANSFER_SIZE)  #TODO: change to readinto to resuse single buffer
         if not bitstreampart:
             break
         spi.write(bitstreampart)
