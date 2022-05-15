@@ -82,7 +82,7 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/machine_touchpad.c
     ${MICROPY_PORT_DIR}/machine_adc.c
     ${MICROPY_PORT_DIR}/machine_dac.c
-    ${MICROPY_PORT_DIR}/machine_i2c.c
+    ${COMPONENT_DIR}/esp32/machine_i2c.c
     ${MICROPY_PORT_DIR}/machine_i2s.c
     ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/modmachine.c
