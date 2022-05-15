@@ -35,5 +35,6 @@ def load_bitstream(bitstream):
         spi.write(bitstreampart)
     hwice40.chip_select(True)
     spi.write(bytes(10*[0]))
-    
+    spi.deinit()
+    del(spi)
     return hwice40.done_state()

@@ -98,7 +98,7 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/esp32_rmt.c
     ${MICROPY_PORT_DIR}/esp32_ulp.c
     ${MICROPY_PORT_DIR}/modesp32.c
-    ${MICROPY_PORT_DIR}/machine_hw_spi.c
+    ${COMPONENT_DIR}/esp32/machine_hw_spi.c
     ${MICROPY_PORT_DIR}/machine_wdt.c
     ${MICROPY_PORT_DIR}/mpthreadport.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
