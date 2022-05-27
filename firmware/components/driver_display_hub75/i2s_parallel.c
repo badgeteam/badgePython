@@ -1,6 +1,6 @@
 #include <sdkconfig.h>
 
-#ifdef CONFIG_DRIVER_HUB75_ENABLE
+// #ifdef CONFIG_DRIVER_HUB75_ENABLE
 
 // Copyright 2017 Espressif Systems (Shanghai) PTE LTD
 //
@@ -21,20 +21,19 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <soc/i2s_struct.h>
+
 #include "freertos/FreeRTOS.h"
+#include "soc/i2s_struct.h"
+#include "soc/i2s_reg.h"
+#include "soc/gpio_periph.h"
 #include "driver/periph_ctrl.h"
+#include "driver/gpio.h"
+#include "soc/io_mux_reg.h"
+#include "rom/lldesc.h"
 #include "esp_heap_caps.h"
 #include "include/val2pwm.h"
 #include "include/i2s_parallel.h"
-#include "driver/gpio.h"
-
-#include "soc/i2s_struct.h"
-#include "soc/gpio_sig_map.h"
-#include "soc/gpio_periph.h"
-#include "soc/lldesc.h"
-#include "soc/io_mux_reg.h"
-#include "soc/i2s_struct.h"
-#include "soc/i2s_reg.h"
 
 #define hw I2S1
 
@@ -53,7 +52,8 @@ int gpio_bus[32] = {CONFIG_PIN_NUM_HUB75_R0,
                     CONFIG_PIN_NUM_HUB75_LAT,
                     CONFIG_PIN_NUM_HUB75_OE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 int gpio_clk = CONFIG_PIN_NUM_HUB75_CLK;
-int clkspeed_hz = CONFIG_HUB75_CLOCK_SPEED;
+//int clkspeed_hz = CONFIG_HUB75_CLOCK_SPEED;
+int clkspeed_hz = 20000000;
 i2s_parallel_cfg_bits_t bits = I2S_PARALLEL_BITS_8;
 
 #define DMA_MAX (4096-4)
@@ -90,7 +90,7 @@ static void fill_dma_desc(volatile lldesc_t *dmadesc, i2s_parallel_buffer_desc_t
     }
     //Loop last back to first
     dmadesc[n-1].qe.stqe_next=(lldesc_t*)&dmadesc[0];
-    //printf("fill_dma_desc: filled %d descriptors\n", n);
+//    printf("fill_dma_desc: filled %d descriptors\n", n);
 }
 
 static void gpio_setup_out(int gpio, int sig) {
@@ -235,4 +235,4 @@ void i2sparallel_flipBuffer(int bufid) {
     i2s_state[no]->dmadesc_b[i2s_state[no]->desccount_b-1].qe.stqe_next=active_dma_chain;
 }
 
-#endif
+// #endif
