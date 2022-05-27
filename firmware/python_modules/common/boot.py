@@ -1,3 +1,4 @@
+from unicodedata import name
 import machine, sys, system, time
 import _device as device
 import rtcmem
@@ -7,6 +8,30 @@ rtcmem.write(0,0)
 rtcmem.write(1,0)
 
 device.prepareForWakeup()
+
+## Polyfill legacy APIs
+def legacy_nvs_getstr(namespace, key): 
+	print("machine.nvs_getstr() is deprecated, use valuestore.load(<namespace>, <key>) instead")
+	return str(valuestore.load(namespace, key))
+	
+def legacy_nvs_setstr(namespace, key, value): 
+	print("machine.nvs_setstr() is deprecated, use valuestore.save(<namespace>, <key>, <value>) instead")
+	return valuestore.save(namespace, key, value)
+
+def legacy_nvs_getint(namespace, key): 
+	print("machine.nvs_getint() is deprecated, use valuestore.load(<namespace>, <key>) instead")
+	return int(valuestore.load(namespace, key))
+	
+def legacy_nvs_setint(namespace, key, value): 
+	print("machine.nvs_setint() is deprecated, use valuestore.save(<namespace>, <key>, <value>) instead")
+	return valuestore.save(namespace, key, value)
+
+machine.nvs_getstr = legacy_nvs_getstr
+machine.nvs_setstr = legacy_nvs_setstr
+machine.nvs_getint = legacy_nvs_getint
+machine.nvs_setint = legacy_nvs_setint
+## End polyfills
+
 
 __chk_recovery = False
 nvs = esp32.NVS("system")

@@ -9,10 +9,10 @@ def load(namespace='system', keyname=''):
     """
     import ujson
     if namespace == '' or keyname is None:
-        print('nvs.load() called with empty namespace')
+        print('valuestore.load() called with empty namespace')
         return None
     if keyname == '' or keyname is None:
-        print('nvs.load() called with empty keyname')
+        print('valuestore.load() called with empty keyname')
         return None
 
     try:
@@ -33,13 +33,13 @@ def save(namespace='system', keyname='', value=None):
     """
     import ujson
     if namespace == '' or keyname is None:
-        print('nvs.save() called with empty namespace')
+        print('valuestore.save() called with empty namespace')
         return None
     if keyname == '' or keyname is None:
-        print('nvs.save() called with empty keyname')
+        print('valuestore.save() called with empty keyname')
         return None
     if value == None:
-        print('nvs.save() called with empty value')
+        print('valuestore.save() called with empty value')
         return None
 
     try:
@@ -58,10 +58,10 @@ def stat(namespace='system', keyname=''):
     """
     import os
     if namespace == '' or keyname is None:
-        print('nvs.load() called with empty namespace')
+        print('valuestore.load() called with empty namespace')
         return None
     if keyname == '' or keyname is None:
-        print('nvs.load() called with empty keyname')
+        print('valuestore.load() called with empty keyname')
         return None
 
     try:
