@@ -1,4 +1,4 @@
-import system, term, sys, time, version, buttons
+import system, term, sys, time, buttons
 import defines, rgb, uinterface
 
 names = [

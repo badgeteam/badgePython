@@ -1,4 +1,4 @@
-import uos, gc, sys, system, virtualtimers, machine
+import uos, gc, sys, machine
 
 folders = ['lib', 'apps', 'cache', 'cache/woezel', 'config']
 print("Running _boot.py")
@@ -8,10 +8,12 @@ for folder in folders:
     except Exception as error:
         pass
 
+import system, virtualtimers
 # This doesn't work in micropython/main.c because micropython can't handle
 # slash characters before single characters that are also HTML elements,
 # like <a> or <s> (e.g. /apps or /sdcard won't work.)mi
-sys.path.append('apps')
+sys.path.append('/apps')
+sys.path.append('/lib')
 
 # Hijack the system start function to fix some CZ19 screen issues
 orig_start = system.start

@@ -1,4 +1,4 @@
-import system, rgb, time, gc, urequests as requests, version
+import system, rgb, time, gc, urequests as requests
 import uinterface, consts
 from uinterface import confirmation_dialog, connect_wifi
 

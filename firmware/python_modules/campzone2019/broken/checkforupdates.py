@@ -1,4 +1,4 @@
-import tasks.otacheck as otacheck, term, system, time, version, wifi, machine, consts
+import tasks.otacheck as otacheck, term, system, time, wifi, machine, consts
 
 current_build = int(consts.INFO_FIRMWARE_BUILD)
 current_name = consts.INFO_FIRMWARE_NAME

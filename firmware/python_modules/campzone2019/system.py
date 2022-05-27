@@ -49,6 +49,7 @@ def start(app, status=True):
             term.header(True, "Loading menu...")
         else:
             term.header(True, "Loading application "+app+"...")
+    print("starting app: "+app)
     rtcmem.write_string(app)
     machine.deepsleep(1)
 
