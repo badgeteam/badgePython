@@ -1,4 +1,4 @@
-import rgb, network, machine, time, buttons, defines, system, uinterface
+import rgb, network, esp32, valuestore, system, uinterface
 from default_icons import animation_connecting_wifi
 
 def scan_access_point_list():
@@ -35,7 +35,13 @@ if not (choice is None):
 
         chosen_pass = uinterface.text_input() if pw_required else ''
         if not pw_required or chosen_pass:
-                machine.nvs_setstr("system", "wifi.ssid", chosen_ssid)
-                machine.nvs_setstr("system", "wifi.password", chosen_pass)
+                # For OTA
+                nvs = esp32.NVS("system")
+                nvs.set_blob("wifi.ssid", chosen_ssid)
+                nvs.set_blob("wifi.password", chosen_pass)
+                nvs.commit()
+                # For apps
+                valuestore.save("system", "wifi.ssid", chosen_ssid)
+                valuestore.save("system", "wifi.password", chosen_pass)
 
 system.reboot()

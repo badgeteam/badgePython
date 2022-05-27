@@ -1,4 +1,4 @@
-import network, term, sys, system, machine
+import network, term, sys, system, valuestore
 import esp32
 
 nvs = esp32.NVS("system")
@@ -62,9 +62,13 @@ def password(ssidName, ssidType):
 
 def confirm(ssid, password):
 	term.header(True, "WiFi setup")
+	# For OTA
 	nvs.set_blob("wifi.ssid", ssid)
 	nvs.set_blob("wifi.password", password)
 	nvs.commit()
+	# For apps
+	valuestore.save("system", "wifi.ssid", ssid)
+	valuestore.save("system", "wifi.password", password)
 	print("New configuration has been saved.")
 	print("")
 	print("SSID:\t\t"+ssid)

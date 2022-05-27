@@ -1,5 +1,5 @@
 set(srcs
-    "letsencrypt.c"
+    "pinned_certs.c"
 )
 
 set(includes

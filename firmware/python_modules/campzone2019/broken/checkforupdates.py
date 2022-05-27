@@ -10,7 +10,9 @@ print("Currently installed:",current_name,"(Build "+str(current_build)+")")
 
 available = 0
 
-machine.nvs_setint('badge','OTA.ready', 0)
+nvs = esp32.NVS("badge")
+nvs.set_i32('OTA.ready', 0)
+nvs.commit()
 
 def start(pressed):
 	if pressed:
@@ -29,9 +31,8 @@ if wifi.status():
 	if info:
 			print("Server has: ",info['name']," (Build "+str(info['build'])+")")
 			if info["build"] > current_build:
-				machine.nvs_setint('badge','OTA.ready',0)
-				print("Update available!")
-				machine.nvs_setint('badge','OTA.ready',1)
+				nvs.set_i32('OTA.ready', 1)
+				nvs.commit()
 				print("Update available!")
 				print(str(info["build"])+") "+info["name"])
 				print("Update now?")
@@ -40,9 +41,9 @@ if wifi.status():
 				message += "Currently installed: "+current_name+" (Build "+str(current_build)+")\n"
 				message += "Available          : "+info["name"]+" (Build "+str(info["build"])+")"
 			elif info["build"] < current_build:
-				machine.nvs_setint('badge','OTA.ready',0)
 				print("Server has an older version.")
-				machine.nvs_setint('badge','OTA.ready',1)
+				nvs.set_i32('OTA.ready', 1)
+				nvs.commit()
 				print("Downgrade available!")
 				print(str(info["build"])+") "+info["name"])
 				print("Downgrade now?")

@@ -7,7 +7,7 @@
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
 
-#include "esp_event.h"
+#include "esp_event_loop.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
@@ -32,15 +32,13 @@
 #include "mbedtls/ssl.h"
 #include "mbedtls/esp_debug.h"
 
-#include "letsencrypt.h"
+#include "pinned_certs.h"
 
 #include "include/ota_update.h"
 #include "driver_framebuffer.h"
 #include "driver_framebuffer_devices.h"
 
-#ifdef CONFIG_DRIVER_HUB75_ENABLE
 #include "compositor.h"
-#endif
 
 #define TAG "ota-update"
 
@@ -182,13 +180,13 @@ static void badge_ota_initialise_wifi(void)
 
 	nvs_handle my_handle;
 	ESP_ERROR_CHECK(nvs_open("system", NVS_READWRITE, &my_handle));
-	err = nvs_get_blob(my_handle, "wifi.ssid", (char *) wifi_config.sta.ssid, &len);
+	err = nvs_get_blob(my_handle, "wifi.ssid", (void *) wifi_config.sta.ssid, &len);
 	if (err != ESP_OK || len == 0) {
 		strncpy((char *) wifi_config.sta.ssid, CONFIG_WIFI_SSID, sizeof(wifi_config.sta.ssid));
 	}
 
 	len = sizeof(wifi_config.sta.password);
-	err = nvs_get_blob(my_handle, "wifi.password", (char *) wifi_config.sta.password, &len);
+	err = nvs_get_blob(my_handle, "wifi.password", (void *) wifi_config.sta.password, &len);
 	if (err != ESP_OK || len == 0) {
 		strncpy((char *) wifi_config.sta.password, CONFIG_WIFI_PASSWORD, sizeof(wifi_config.sta.password));
 	}
@@ -352,12 +350,17 @@ badge_ota_task(void *pvParameter)
 		abort();
 	}
 
-	ESP_LOGW(TAG, "Loading the CA root certificate...");
-	ret = mbedtls_x509_crt_parse_der(&cacert, letsencrypt, LETSENCRYPT_LENGTH);
-	if (ret < 0) {
-		ESP_LOGE(TAG, "mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
-		abort();
-	}
+	ESP_LOGW(TAG, "Loading the CA root certificates...");
+
+        // Pinned certificates (letsencrypt and digicert, see pinned_certs.h)
+        for(int i = 0; i < NUM_PINNED_CERTS; i++) {
+            cert_t certificate = pinned_certificates[i];
+            ret = mbedtls_x509_crt_parse_der(&cacert, certificate.data, certificate.data_len);
+            if(ret != 0) {
+                ESP_LOGE(TAG, "mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
+                abort();
+            }
+        }
 
 	ESP_LOGW(TAG, "Setting hostname for TLS session...");
 
@@ -482,7 +485,7 @@ badge_ota_task(void *pvParameter)
 		}
 		const char *code = index((const char *) buffer, ' ');
 		if (code == NULL || strncmp((const char *) code, " 200 ", 5) != 0) {
-			ESP_LOGE(TAG, "did not receive 200 code.");
+			ESP_LOGE(TAG, "did not receive 200 code, but instead got: %s", code);
 			task_fatal_error();
 		}
 		ESP_LOGW(TAG, "Status '%s', OK", (const char *) buffer);

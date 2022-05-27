@@ -12,7 +12,7 @@ device.prepareForWakeup()
 ## Polyfill legacy APIs
 def legacy_nvs_getstr(namespace, key): 
 	print("machine.nvs_getstr() is deprecated, use valuestore.load(<namespace>, <key>) instead")
-	return str(valuestore.load(namespace, key))
+	return valuestore.load(namespace, key).decode("utf-8")
 	
 def legacy_nvs_setstr(namespace, key, value): 
 	print("machine.nvs_setstr() is deprecated, use valuestore.save(<namespace>, <key>, <value>) instead")
