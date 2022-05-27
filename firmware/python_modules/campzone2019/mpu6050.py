@@ -1,5 +1,5 @@
 import machine,utime,ustruct
-i2c = machine.I2C(scl=machine.Pin(5),sda=machine.Pin(4),freq=100000)
+i2c = machine.SoftI2C(scl=machine.Pin(5),sda=machine.Pin(4),freq=100000)
 sensor = i2c.scan()[0] if len(i2c.scan()) >= 1 else None
 
 def cmd_i2c(sensor,addr,val):
