@@ -2,7 +2,9 @@ import machine, time, term, buttons, esp32
 import rtcmem
 
 # Deep sleep wakeup button
-esp32.wake_on_ext0(pin=buttons._buttons._pins[buttons.BTN_A], level=0)
+gpio = buttons._gpioMap[buttons.BTN_A]
+pin = buttons._buttons.pin(gpio)
+esp32.wake_on_ext0(pin=pin, level=0)
 
 def clear_boot_magic():
     rtcmem.write(0,0)
