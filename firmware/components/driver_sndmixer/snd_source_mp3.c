@@ -8,6 +8,8 @@
 #include <stdbool.h>
 
 #include <esp_log.h>
+#include <esp_attr.h>
+#include <esp_heap_caps.h>
 
 #include "sndmixer.h"
 #include "libhelix-mp3/mp3dec.h"
@@ -16,9 +18,9 @@
 
 #define MAX_SAMPLES_PER_FRAME (1152 * 2)
 #define CHUNK_SIZE            32
-#define INTERNAL_BUFFER_SIZE  1024 * 20
+#define INTERNAL_BUFFER_SIZE  1024 * 8
 #define INTERNAL_BUFFER_FETCH_WHEN \
-  8192  // new data will be fetched when there is less than this amount of data
+  4096  // new data will be fetched when there is less than this amount of data
 
 #define TAG "snd_source_mp3"
 
@@ -41,7 +43,7 @@ typedef struct {
 
 void mp3_deinit_source(void *ctx);
 
-void _readData(mp3_ctx_t *mp3) {
+inline void _readData(mp3_ctx_t *mp3) {
   // Fetch data for internal buffer
   int dataAvailable   = mp3->dataEnd - mp3->dataCurr;
   int bufferAvailable = INTERNAL_BUFFER_SIZE - (mp3->dataEnd - mp3->dataStart);
@@ -65,7 +67,7 @@ void _readData(mp3_ctx_t *mp3) {
   // printf("_readData: %d, %d, %d\n", dataAvailable, bufferAvailable, amountFetched);
 }
 
-int mp3_decode(void *ctx) {
+int IRAM_ATTR mp3_decode(void *ctx) {
   mp3_ctx_t *mp3 = (mp3_ctx_t *)ctx;
 
   if (mp3->stream)
@@ -99,12 +101,13 @@ int mp3_decode(void *ctx) {
 
     return 1;
   } else {
-    // printf("No syncword found\n");
+    mp3->dataCurr += available;
+    ESP_LOGE(TAG, "No syncword found\n");
     return 0;
   }
 }
 
-int mp3_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
+int IRAM_ATTR mp3_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
                     int *stereo) {
   // Allocate space for the information struct
   mp3_ctx_t *mp3 = calloc(sizeof(mp3_ctx_t), 1);
@@ -132,6 +135,11 @@ int mp3_init_source(const void *data_start, const void *data_end, int req_sample
   mp3->stream_read  = NULL;
   mp3->stream       = NULL;
 
+  if (!mp3->buffer) {
+    ESP_LOGE(TAG, "Out of memory error! mp3->buffer is NULL\n");
+    goto err;
+  }
+
   uint32_t length = data_end - data_start + 1;
 
   ESP_LOGD(TAG, "MP3 source started, data at %p with size %u!\n", mp3->dataStart, length);
@@ -148,12 +156,14 @@ err:
   return -1;
 }
 
-int mp3_init_source_stream(const void *stream_read_fn, const void *stream, int req_sample_rate,
+int IRAM_ATTR mp3_init_source_stream(const void *stream_read_fn, const void *stream, int req_sample_rate,
                            void **ctx, int *stereo, const void *seek_func) {
   // Allocate space for the information struct
   mp3_ctx_t *mp3 = calloc(sizeof(mp3_ctx_t), 1);
-  if (!mp3)
+  if (!mp3) {
+    ESP_LOGE(TAG, "Out of memory error! mp3 is NULL\n");
     goto err;
+  }
 
   // Start the MP3 library
   mp3->hMP3Decoder = MP3InitDecoder();
@@ -173,12 +183,18 @@ int mp3_init_source_stream(const void *stream_read_fn, const void *stream, int r
   mp3->seek_func   = (stream_seek_type)seek_func;
   mp3->stream      = (void *)stream;
   ESP_LOGD(TAG, "stream read fn @ %p and stream at %p\n", mp3->stream_read, mp3->stream);
-  mp3->dataPtr   = malloc(INTERNAL_BUFFER_SIZE);
+  mp3->dataPtr   = heap_caps_malloc(INTERNAL_BUFFER_SIZE, MALLOC_CAP_DMA);
   mp3->dataStart = mp3->dataPtr;
   mp3->dataCurr  = mp3->dataPtr;
   mp3->dataEnd   = mp3->dataPtr;
 
+  if (!mp3->buffer) {
+    ESP_LOGE(TAG, "Out of memory error! mp3->buffer is NULL\n");
+    goto err;
+  }
+
   if (!mp3->dataPtr) {
+    ESP_LOGE(TAG, "Out of memory error! mp3->dataPtr is NULL\n");
     goto err;
   }
 
@@ -202,12 +218,12 @@ err:
   return -1;
 }
 
-int mp3_get_sample_rate(void *ctx) {
+int IRAM_ATTR mp3_get_sample_rate(void *ctx) {
   mp3_ctx_t *mp3 = (mp3_ctx_t *)ctx;
   return mp3->lastRate;
 }
 
-int mp3_fill_buffer(void *ctx, int16_t *buffer, int stereo) {
+int IRAM_ATTR mp3_fill_buffer(void *ctx, int16_t *buffer, int stereo) {
   mp3_ctx_t *mp3 = (mp3_ctx_t *)ctx;
   if (mp3->bufferValid <= 0)
     mp3_decode(ctx);
