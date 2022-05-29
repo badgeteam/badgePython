@@ -43,7 +43,7 @@ typedef struct {
 
 void mp3_deinit_source(void *ctx);
 
-inline void _readData(mp3_ctx_t *mp3) {
+void _readData(mp3_ctx_t *mp3) {
   // Fetch data for internal buffer
   int dataAvailable   = mp3->dataEnd - mp3->dataCurr;
   int bufferAvailable = INTERNAL_BUFFER_SIZE - (mp3->dataEnd - mp3->dataStart);

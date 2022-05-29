@@ -183,7 +183,7 @@ int IRAM_ATTR wav_get_sample_rate(void *ctx) {
   return wav->rate;
 }
 
-inline int8_t get_sample_byte(wav_ctx_t *wav) {
+int8_t get_sample_byte(wav_ctx_t *wav) {
   int8_t rv = 0;
   if(wav->stream) {
     int read = wav->stream_read(wav->stream, &rv, 1);
