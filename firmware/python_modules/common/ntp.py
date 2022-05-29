@@ -46,12 +46,6 @@ def set_NTP_time():
 
 	tm = time.localtime(t)
 	tm = tm[0:8]
-	
-	offset = 1
-	if tm[1] > 3 and tm[1] < 11:
-		offset = 2
-	tm = time.localtime(t+offset*3600)
-	tm = tm[0:8]
 
 	rtc = RTC()
 	rtc.init(tm)
