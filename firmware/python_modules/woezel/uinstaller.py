@@ -1,4 +1,4 @@
-import woezel, rgb, wifi, uinterface, system, gc, time
+import woezel, wifi, uinterface, system, gc, time
 from default_icons import icon_no_wifi, animation_connecting_wifi
 from esp32 import NVS
 
@@ -26,10 +26,10 @@ if system.__current_app__ == 'uinstaller':
     ### odd workaround of connecting twice.
     wifi.connect()
 
-    rgb.clear()
-    data, size, frames = animation_connecting_wifi
-    rgb.framerate(3)
-    rgb.gif(data, (12, 0), size, frames)
+    # rgb.clear()
+    # data, size, frames = animation_connecting_wifi
+    # rgb.framerate(3)
+    # rgb.gif(data, (12, 0), size, frames)
 
     del data, size, frames, animation_connecting_wifi
     gc.collect()
@@ -39,13 +39,13 @@ if system.__current_app__ == 'uinstaller':
 
     if not wifi.status():
         data, frames = icon_no_wifi
-        rgb.gif(data, (12, 0), (8, 8), frames)
+        #rgb.gif(data, (12, 0), (8, 8), frames)
         time.sleep(3)
         system.reboot()
     ###
 
-    rgb.clear()
-    rgb.framerate(20)
+    # rgb.clear()
+    # rgb.framerate(20)
     uinterface.loading_text('Installing %s' % to_install)
     del icon_no_wifi
     gc.collect()
@@ -53,10 +53,10 @@ if system.__current_app__ == 'uinstaller':
         # Reset launcher's selected index to newly installed app
         nvs_launcher.set_i32('index', 0)
         nvs_launcher.commit()
-        rgb.clear()
+        #rgb.clear()
         uinterface.skippabletext('Install succeeded')
     else:
-        rgb.clear()
+        #rgb.clear()
         uinterface.skippabletext('Failed to install "%s"' % to_install)
         
     system.reboot()
