@@ -1,4 +1,3 @@
-from unicodedata import name
 import machine, sys, system, time
 import _device as device
 import rtcmem
@@ -26,10 +25,10 @@ def legacy_nvs_setint(namespace, key, value):
 	print("machine.nvs_setint() is deprecated, use valuestore.save(<namespace>, <key>, <value>) instead")
 	return valuestore.save(namespace, key, value)
 
-machine.nvs_getstr = legacy_nvs_getstr
-machine.nvs_setstr = legacy_nvs_setstr
-machine.nvs_getint = legacy_nvs_getint
-machine.nvs_setint = legacy_nvs_setint
+# machine.nvs_getstr = legacy_nvs_getstr
+# machine.nvs_setstr = legacy_nvs_setstr
+# machine.nvs_getint = legacy_nvs_getint
+# machine.nvs_setint = legacy_nvs_setint
 ## End polyfills
 
 
