@@ -1,9 +1,11 @@
 if(CONFIG_DRIVER_ILI9341_ENABLE)
     set(srcs
         "driver_ili9341.c"
+        "esp32-component-spi-ili9341/ili9341.c"
     )
     set(includes
     "include"
+    "esp32-component-spi-ili9341/include"
     )
 else()
     set(srcs "")

@@ -10,3 +10,6 @@
 [submodule "firmware/components/driver_mch22_rp2040/esp32-component-mch2022-rp2040"]
 	path = firmware/components/driver_mch22_rp2040/esp32-component-mch2022-rp2040
 	url = https://github.com/badgeteam/esp32-component-mch2022-rp2040.git
+[submodule "firmware/components/driver_display_ili9341/esp32-component-spi-ili9341"]
+	path = firmware/components/driver_display_ili9341/esp32-component-spi-ili9341
+	url = https://github.com/Nicolai-Electronics/esp32-component-spi-ili9341.git

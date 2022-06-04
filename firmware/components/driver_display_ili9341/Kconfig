@@ -19,6 +19,11 @@ menu "Driver: ILI9341 LCD display"
 		int "GPIO pin used for CS"
 		default -1
 	
+	config PIN_NUM_ILI9341_MODE
+		depends on DRIVER_ILI9341_ENABLE
+		int "GPIO pin used for mode"
+		default -1
+
 	config PIN_NUM_ILI9341_BACKLIGHT
 		depends on DRIVER_ILI9341_ENABLE
 		int "GPIO pin used for backlight"

@@ -10,7 +10,6 @@
 
 #define RP2040_ADDR      (0x17)
 #define GPIO_INT_RP2040  (34)
-#define GPIO_LCD_MODE    (26)
 
 static RP2040 rp2040;
 static mp_obj_t touch_callback = mp_const_none;
@@ -22,9 +21,6 @@ void driver_mch22_init() {
     rp2040.i2c_address = RP2040_ADDR;
     rp2040.pin_interrupt = GPIO_INT_RP2040;
     rp2040.queue = xQueueCreate(15, sizeof(rp2040_input_message_t));
-
-    gpio_set_direction(GPIO_LCD_MODE, GPIO_MODE_OUTPUT);
-	gpio_set_level(GPIO_LCD_MODE, 0);
 
     rp2040_init(&rp2040);
     xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
