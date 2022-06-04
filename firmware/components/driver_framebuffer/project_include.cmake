@@ -4,7 +4,7 @@ set(mods
 )
 
 #Define the name of your module here
-set(mod_name "display")
+set(mod_name "udisplay")
 set(driver_name "framebuffer")
 set(mod_register "framebuffer DISPLAY")
 

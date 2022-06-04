@@ -858,7 +858,7 @@ static const mp_rom_map_elem_t framebuffer_module_globals_table[] = {
 
 static MP_DEFINE_CONST_DICT(framebuffer_module_globals, framebuffer_module_globals_table);
 
-const mp_obj_module_t display_module = {
+const mp_obj_module_t udisplay_module = {
 	.base = {&mp_type_module},
 	.globals = (mp_obj_dict_t *)&framebuffer_module_globals,
 };
