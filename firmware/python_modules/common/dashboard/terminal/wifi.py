@@ -1,12 +1,12 @@
-import network, term, sys, system, machine
+import network, term, sys, system, machine, esp32
 
 system.serialWarning()
 
 def main():
 	term.empty_lines()
 	items = ["Scan for networks", "Manual SSID entry", "Return to main menu"]
-	callbacks = [scan, manual, home]
-	callbacks[term.menu("WiFi setup", items)]()
+	fun = [scan, manual, home]
+	fun[term.menu("WiFi setup", items)]()
 
 def home():
 	system.home(True)
@@ -22,7 +22,7 @@ def scan():
 		ssid_list.append(ssid[0].decode('utf-8', 'ignore'))
 	ssid_list.append("< Back")
 	option = term.menu("WiFi setup - Select a network", ssid_list)
-	if option != len(ssid_list)-1:
+	if option != "< Back":
 		password(ssid_result[option][0].decode('utf-8', 'ignore'), ssid_result[option][4])
 
 def manual():
@@ -59,8 +59,10 @@ def password(ssidName, ssidType):
 
 def confirm(ssid, password):
 	term.header(True, "WiFi setup")
-	machine.nvs_setstr("system", "wifi.ssid", ssid)
-	machine.nvs_setstr("system", "wifi.password", password)
+	nvs = esp32.NVS("system")
+	nvs.set_blob("wifi.ssid", ssid)
+	nvs.set_blob("wifi.password", password)
+	nvs.commit()
 	print("New configuration has been saved.")
 	print("")
 	print("SSID:\t\t"+ssid)
