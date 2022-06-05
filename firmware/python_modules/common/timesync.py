@@ -2,7 +2,7 @@ import urequests
 import valuestore
 from machine import RTC
 
-def synctime():
+def timesync():
     timezone = valuestore.load("system", "timezone")
     if not timezone:
         timezone = "Europe/Amsterdam"

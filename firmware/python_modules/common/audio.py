@@ -1,4 +1,5 @@
 import machine, sndmixer, urequests, os
+from esp32 import NVS
 
 _no_channels = 4  # We can't play more than this number of channels concurrently without glitches
 _started = False
@@ -25,10 +26,10 @@ def _add_channel(filename_or_url, on_finished=None):
     if is_url:
         file = urequests.get(filename_or_url).raw
     else:
-        if not os.path.isfile(filename_or_url):
-            print('File %s does not exist' % filename_or_url)
+        try:
+            file = open(filename_or_url, 'rb')
+        except:
             return -1
-        file = open(filename_or_url, 'rb')
     lower = filename_or_url.lower()
     if(lower.endswith('.mp3')):
         channel_id = sndmixer.mp3_stream(file)
@@ -68,7 +69,10 @@ def _add_channel(filename_or_url, on_finished=None):
 
 def play(filename_or_url, volume=None, loop=False, sync_beat=None, start_at_next=None, on_finished=None):
     if volume is None:
-        volume = machine.nvs_getint('system', 'volume') or 255
+        try:
+            volume = NVS('system').get_i32('volume') 
+        except:
+            volume = 255
     _start_audio_if_needed()
     channel_id = _add_channel(filename_or_url, on_finished)
     if channel_id is None or channel_id < 0:

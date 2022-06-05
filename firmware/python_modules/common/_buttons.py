@@ -39,7 +39,11 @@ def attach(gpio, action):
 	return True
 	
 def detach(gpio):
-	return assign(gpio, None)
+	return attach(gpio, None)
+
+def detachAll():
+	for gpio in _gpios:
+		attach(gpio, None)
 
 def pin(gpio):
 	global _pins, _gpios, _callbacks
