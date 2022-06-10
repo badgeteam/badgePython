@@ -1,6 +1,7 @@
 .vscode/
-firmware/components/micropython/mpconfigoverrides.h
-firmware/build
-firmware/main/platform_gen.c
-firmware/sdkconfig.old
+components/micropython/mpconfigoverrides.h
+build
+main/platform_gen.c
 build/
+sdkconfig
+sdkconfig.old
