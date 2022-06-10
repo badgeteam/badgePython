@@ -5,3 +5,5 @@ main/platform_gen.c
 build/
 sdkconfig
 sdkconfig.old
+partitions.csv
+sdkconfig.defaults
