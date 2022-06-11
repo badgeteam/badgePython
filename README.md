@@ -1,27 +1,29 @@
-# new-ESP32-platform-firmware
-Experimental try at making esp idf v4.0 micropython project
+# BadgePython
+Experimental try at making an ESP-IDF v4.0 compatible Badge oriented Micropython firmware
 
 ## Supported environments
 * Linux
 * Mac OS
 * (Maybe WSL 2 on Windows?)
 
-## Setup
-1. Clone the repo  
-2. run git submodule update --init --recursive  
-3. run install.sh  
-4. source setenv.sh to get all the right environment variables
-5. ???  
-6. Profit  
+## Setup (generic, default configuration)
+1. Clone the repo
+2. Run `make prepare` to clone submodules and install the configuration files
+3. Run `make build` to build the firmware
+4. Run `make flash` to flash the firmware to the device
 
-## Build
-* ./build.sh for iteratively building changed code
-* ./clean.sh to clean build cache
-* ./flash.sh to flash to a badge
-* ./monitor.sh to open serial monitor
+## Setup (MCH2022 badge app)
+1. Clone the repo
+2. Run `make prepare-mch2022` to clone submodules and install the configuration files
+3. Run `make build` to build the firmware
+4. Install the file `build/badge_firmware.bin` as an app via WebUSB
 
-## Configuration
-* ./config.sh
+## Other make commands
+* `make clean` remove existing build files
+* `make erase` completely wipe clean the flash memory of the target device
+* `make flash` program the bootloader, partition table and firmware into the target device
+* `make monitor` to open the serial monitor and debugger application
+* `make menuconfig` to open the SDK menuconfig configuration interface
 
 ## Changes over old firmware
 1. python module bridges (e.g. modi2c.c) are now placed inside the driver folder. So the micropython folder stays untouched. You need to register the file for it to be include in the build. More on this later.  

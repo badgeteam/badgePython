@@ -299,6 +299,7 @@ mbedtls_ssl_write_(mbedtls_ssl_context *ssl, const unsigned char *buf, size_t le
 static void
 badge_ota_task(void *pvParameter)
 {
+#ifndef CONFIG_FW_DISABLE_OTA_AND_FIRSTBOOT
 	esp_err_t err;
 	uint8_t buffer[1024];
 	int buffer_len = 0;
@@ -624,6 +625,7 @@ badge_ota_task(void *pvParameter)
 	}
 	ESP_LOGW(TAG, "Prepare to restart system!");
 	esp_restart();
+#endif
 	return;
 }
 

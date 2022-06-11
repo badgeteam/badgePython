@@ -45,6 +45,7 @@ void app_main()
 	fflush(stdout);
 	platform_init();
 
+#ifndef CONFIG_FW_DISABLE_OTA_AND_FIRSTBOOT
 	if (is_first_boot) {
 		#ifdef CONFIG_DRIVER_FRAMEBUFFER_ENABLE
 			driver_framebuffer_fill(NULL, COLOR_BLACK);
@@ -65,10 +66,12 @@ void app_main()
 		}
 		esp_restart();
 	}
+#endif
 
 	 int magic = get_magic();
 	
 	 switch(magic) {
+#ifndef CONFIG_FW_DISABLE_OTA_AND_FIRSTBOOT
 	 	case MAGIC_OTA:
 	 	  // This triggers an Over-the-Air firmware update
 	 		badge_ota_update();
@@ -77,6 +80,7 @@ void app_main()
 	 	  // This clears any FAT data partitions
 	 		factory_reset();
 	 		break;
+#endif
 	 	default:
 	 	 	// This starts the MicroPython FreeRTOS task
        		start_mp();

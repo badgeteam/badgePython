@@ -13,6 +13,8 @@ BTN_DOWN=10
 BTN_UP=11
 BTN_RIGHT=12
 
+__orientation = 0
+
 _callbacks = dict()
 
 def _button_cb(pinstate):	
@@ -57,3 +59,10 @@ def __init():
 	mch22.set_handler(_button_cb)
 
 __init()
+
+def rotate(value):
+    '''
+    Change the orientation of the arrow keys (0, 90, 180, 270)
+    '''
+    global __orientation
+    __orientation = value
