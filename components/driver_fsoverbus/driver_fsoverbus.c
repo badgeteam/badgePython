@@ -30,7 +30,7 @@
 
 #ifdef CONFIG_DRIVER_FSOVERBUS_ENABLE
 
-void vTimeoutFunction( TimerHandle_t xTimer );
+void fsob_timeout_function( TimerHandle_t xTimer );
 
 #define TAG "FSoverBus"
 
@@ -75,7 +75,7 @@ void handleFSCommand(uint8_t *data, uint16_t command, uint32_t message_id, uint3
     }
 }
 
-void vTimeoutFunction( TimerHandle_t xTimer ) {
+void fsob_timeout_function( TimerHandle_t xTimer ) {
     ESP_LOGI(TAG, "Saw no message for 1s assuming task crashed. Resetting...");
     fsob_reset();
 }
@@ -93,7 +93,7 @@ esp_err_t driver_fsoverbus_init(void) {
 
     ESP_LOGI(TAG, "fs over bus registered.");
     
-    timeout = xTimerCreate("FSoverBUS_timeout", 100, false, 0, vTimeoutFunction);
+    timeout = xTimerCreate("FSoverBUS_timeout", 100, false, 0, fsob_timeout_function);
     return ESP_OK;
 } 
 
