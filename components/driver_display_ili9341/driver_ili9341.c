@@ -45,7 +45,11 @@ esp_err_t driver_ili9341_init(void)
     dev_ili9341.pin_dcx               = CONFIG_PIN_NUM_ILI9341_DCX;
     dev_ili9341.pin_reset             = CONFIG_PIN_NUM_ILI9341_RESET;
     dev_ili9341.rotation              = CONFIG_ILI9341_ORIENTATION;
-    dev_ili9341.color_mode            = CONFIG_ILI9341_COLOR_SWAP;      // Blue and red channels are swapped
+#ifdef CONFIG_ILI9341_COLOR_SWAP
+    dev_ili9341.color_mode            = true;      // Blue and red channels are swapped
+#else
+    dev_ili9341.color_mode            = false;
+#endif
     dev_ili9341.spi_speed             = 40000000;  // 40MHz
     dev_ili9341.spi_max_transfer_size = CONFIG_BUS_VSPI_MAX_TRANSFERSIZE;
     #if CONFIG_PIN_NUM_ILI9341_MODE >= 0
@@ -94,5 +98,9 @@ esp_err_t driver_ili9341_set_backlight(bool state)
 }
 
 esp_err_t driver_ili9341_write_partial(const uint8_t *buffer, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-	return ili9341_write_partial(&dev_ili9341, buffer, x0, y0, x1-x0, y1-y0);
+	if ((x0 == 0) && (y0 == 0) && (x1 >= ILI9341_WIDTH - 1) && (y1 >= ILI9341_HEIGHT - 1)) {
+		return ili9341_write(&dev_ili9341, buffer);
+	} else {
+		return ili9341_write_partial(&dev_ili9341, buffer, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+	}
 }
