@@ -105,9 +105,8 @@ static void button_handler(void *parameter) {
         if (touch_callback != mp_const_none) {
             mp_obj_t res = mp_obj_new_int(message.input << 1 | message.state);
             bool succeeded = mp_sched_schedule(touch_callback, res);
-            while (!succeeded) {
-                ESP_LOGW(TAG, "Failed to call touch callback, retrying");
-                succeeded = mp_sched_schedule(touch_callback, res);
+            if (!succeeded) {
+                ESP_LOGE(TAG, "Failed to call touch callback");
             }
         }
     }
