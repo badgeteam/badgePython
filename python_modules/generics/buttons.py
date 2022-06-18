@@ -31,7 +31,9 @@ def __cb_btn(btn, state):
         index = __arrows.index(btn)
         index = (index + __orientation // 90) % 4
         btn = __arrows[index]
-    if __cb[-1][btn]:
+    if btn not in __cb[-1]:
+        print("Missing button mapping")
+    elif __cb[-1][btn]:
         __cb[-1][btn](state)
         
 
