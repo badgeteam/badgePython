@@ -1,20 +1,16 @@
 # Generic button input wrapper
+from pyrsistent import s
 from hardware.buttonconsts import *
 import hardware.buttons as hwButtons
 import system
 
-# In case buttons are not present set to -1
-if "BTN_LEFT" not in globals():
-    BTN_LEFT = -1
-if "BTN_RIGHT" not in globals():
-    BTN_RIGHT = -1
-if "BTN_UP" not in globals():
-    BTN_UP = -1
-if "BTN_DOWN" not in globals():
-    BTN_DOWN = -1
+# Check if all arrow keys are definied to enable rotation support
+if "BTN_LEFT" in globals() and "BTN_RIGHT" in globals() and "BTN_UP" in globals() and "BTN_DOWN" in globals():
+    __arrows = [BTN_DOWN, BTN_LEFT, BTN_UP, BTN_RIGHT]
+else:
+    __arrows = []
 
 # Internal variables
-__arrows = [BTN_DOWN, BTN_LEFT, BTN_UP, BTN_RIGHT]
 __orientation = 0
 __cb = []
 
