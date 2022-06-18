@@ -13,7 +13,7 @@ def value(button):
     """
     Returns the value of a button
     """
-    return (mch22.buttons() & button) > 0
+    return (mch22.buttons() & (1 << button)) > 0
 
 def __callback(pinstate):
     global __button_callback
