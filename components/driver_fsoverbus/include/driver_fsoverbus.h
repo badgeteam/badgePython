@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <esp_err.h>
 
-esp_err_t driver_fsoveruart_init(void);
+esp_err_t driver_fsoverbus_init(void);
 
 void handleFSCommand(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length);
 void fsob_start_timeout();

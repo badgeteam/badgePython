@@ -1,7 +1,3 @@
-set(includes
-    "include"
-    )
-
 if(CONFIG_DRIVER_FSOVERBUS_ENABLE)
     set(srcs
         "backend.c"
@@ -10,12 +6,16 @@ if(CONFIG_DRIVER_FSOVERBUS_ENABLE)
         "packetutils.c"
         "specialfunctions.c"
         "uart_backend.c"
+        "uartnaive_backend.c"
     )
 else()
     set(srcs "")
 endif()
 
+if(CONFIG_DRIVER_FSOVERBUS_APPFS_SUPPORT)
+    list(APPEND srcs "appfsfunctions.c")
+endif()
 
 idf_component_register(SRCS "${srcs}"
-                       INCLUDE_DIRS ${includes}
-                       REQUIRES driver_rtcmem)
+                       INCLUDE_DIRS "include"
+                       REQUIRES spi_flash)

@@ -23,51 +23,46 @@
 #include "include/packetutils.h"
 #include "include/specialfunctions.h"
 #include "include/fsob_backend.h"
+#include "include/appfsfunctions.h"
+#include "include/functions.h"
 
-//TEMP
-#include <driver/spi_master.h>
-
-
-#ifdef CONFIG_DRIVER_FSOVERBUS_ENABLE
-
-void fsob_timeout_function( TimerHandle_t xTimer );
-
-#define TAG "FSoverBus"
+#define TAG "fsob"
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define CACHE_SIZE (2048)
 
 TimerHandle_t timeout;
-RingbufHandle_t buf_handle[2];
 
-uint8_t command_in[1024];
+uint8_t command_in[CACHE_SIZE];
+void fsob_timeout_function( TimerHandle_t xTimer );
 
-#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 //Function lookup tables
 
-int (*specialfunction[])(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length) = {execfile, heartbeat, pythonstdin};
-int specialfunction_size = 3;
-                         //                                                                                  4096    4097      4098       4099     4100      4101    4102
-int (*filefunction[])(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length) = {getdir, readfile, writefile, delfile, duplfile, mvfile, makedir};
-int filefunction_size = 7;
+int (*specialfunction[SPECIALFUNCTIONSLEN])(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length);
+int (*filefunction[FILEFUNCTIONSLEN])(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length);
 
 void handleFSCommand(uint8_t *data, uint16_t command, uint32_t message_id, uint32_t size, uint32_t received, uint32_t length) {
     static uint32_t write_pos;
     if(received == length) { //First data of the packet
         write_pos = 0;
     }
-
-    if(length > 0) {
+    uint8_t *buffer = command_in;
+    
+    if(length > CACHE_SIZE){  //Incoming buffer exceeds local cache, directly use buffer instead of copying
+        buffer = data;
+    } else if(length > 0) {
         memcpy(&command_in[write_pos], data, length);
         write_pos += length;
     }
 
     int return_val = 0;
-    if(command < 4096) {
-        if(command < specialfunction_size) {
-            return_val = specialfunction[command](command_in, command, message_id, size, received, length);
+    if(command < FILEFUNCTIONSBASE) {
+        if(command < SPECIALFUNCTIONSLEN) {
+            return_val = specialfunction[command](buffer, command, message_id, size, received, length);
         }
-    } else if(command < 8192) {
-        if((command-4096) < filefunction_size) {
-            return_val = filefunction[command-4096](command_in, command, message_id, size, received, length);
+    } else if(command < BADGEFUNCTIONSBASE) {
+        if((command-FILEFUNCTIONSBASE) < FILEFUNCTIONSLEN) {
+            return_val = filefunction[command-FILEFUNCTIONSBASE](buffer, command, message_id, size, received, length);
         }
     }
     if(return_val) {    //Function has indicated that next payload should write at start of buffer.
@@ -89,6 +84,30 @@ void fsob_start_timeout() {
 }
 
 esp_err_t driver_fsoverbus_init(void) { 
+    specialfunction[EXECFILE] = execfile;
+    specialfunction[HEARTBEAT] = heartbeat;
+    specialfunction[PYTHONSTDIN] = pythonstdin;
+    
+    filefunction[GETDIR] = getdir;
+    filefunction[READFILE] = readfile;
+    filefunction[WRITEFILE] = writefile;
+    filefunction[DELFILE] = delfile;
+    filefunction[DUPLFILE] = duplfile;
+    filefunction[MVFILE] = mvfile;
+    filefunction[MAKEDIR] = makedir;
+
+    #if CONFIG_DRIVER_FSOVERBUS_APPFS_SUPPORT
+    specialfunction[APPFSBOOT] = appfsboot;
+    filefunction[APPFSDIR] = appfslist;
+    filefunction[APPFSDEL] = appfsdel;
+    filefunction[APPFSWRITE] = appfswrite;
+    #else
+    specialfunction[APPFSBOOT] = notsupported;
+    filefunction[APPFSDIR] = notsupported;
+    filefunction[APPFSDEL] = notsupported;
+    filefunction[APPFSWRITE] = notsupported;
+    #endif
+        
     fsob_init();
 
     ESP_LOGI(TAG, "fs over bus registered.");
@@ -96,5 +115,3 @@ esp_err_t driver_fsoverbus_init(void) {
     timeout = xTimerCreate("FSoverBUS_timeout", 100, false, 0, fsob_timeout_function);
     return ESP_OK;
 } 
-
-#endif
