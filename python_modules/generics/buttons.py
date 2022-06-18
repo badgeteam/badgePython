@@ -16,7 +16,6 @@ if "BTN_DOWN" not in globals():
 # Internal variables
 __arrows = [BTN_DOWN, BTN_LEFT, BTN_UP, BTN_RIGHT]
 __orientation = 0
-__num = 0
 __cb = []
 
 # Internal functions
