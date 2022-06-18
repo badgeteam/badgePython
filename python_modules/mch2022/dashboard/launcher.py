@@ -221,7 +221,7 @@ def cbSleep(idleTime=None):
     #system.home()
 
 pm.callback(cbSleep)
-pm.enable()
+pm.disable()
 pm.feed()
 
 # Terminal menu
