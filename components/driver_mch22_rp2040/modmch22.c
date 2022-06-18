@@ -4,6 +4,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include <driver/uart.h>
 #endif
 
 #define TAG "RP2040_UPY"
@@ -77,12 +78,28 @@ static mp_obj_t fpga_reset(mp_obj_t enabled) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(fpga_reset_obj, fpga_reset);
 
+static mp_obj_t enable_webusb() {
+    uart_set_pin(UART_NUM_0, -1, -1, -1, -1);
+    uart_set_pin(CONFIG_DRIVER_FSOVERBUS_UART_NUM, 1, 3, -1, -1);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(enable_webusb_obj, enable_webusb);
+
+static mp_obj_t disable_webusb() {
+    uart_set_pin(CONFIG_DRIVER_FSOVERBUS_UART_NUM, -1, -1, -1, -1);
+    uart_set_pin(UART_NUM_0, 1, 3, -1, -1);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(disable_webusb_obj, enable_webusb);
+
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&get_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&set_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_fpga_reset), MP_ROM_PTR(&fpga_reset_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_handler), MP_ROM_PTR(&set_handler_obj)},
+    {MP_ROM_QSTR(MP_QSTR_enable_webusb), MP_ROM_PTR(&enable_webusb_obj)},
+    {MP_ROM_QSTR(MP_QSTR_disable_webusb), MP_ROM_PTR(&disable_webusb_obj)},
 };
 
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
