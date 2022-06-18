@@ -12,6 +12,8 @@
 #define RP2040_ADDR      (0x17)
 #define GPIO_INT_RP2040  (34)
 
+#define MAXIMUM_CALLBACK_RETRY (10)
+
 static RP2040 rp2040;
 static mp_obj_t touch_callback = mp_const_none;
 
@@ -105,9 +107,12 @@ static void button_handler(void *parameter) {
         if (touch_callback != mp_const_none) {
             mp_obj_t res = mp_obj_new_int(message.input << 1 | message.state);
             bool succeeded = mp_sched_schedule(touch_callback, res);
-            while (!succeeded) {
+            int retry = 0;
+            while (!succeeded && retry < MAXIMUM_CALLBACK_RETRY) {
                 ESP_LOGW(TAG, "Failed to call touch callback, retrying");
+                vTaskDelay(pdMS_TO_TICKS(50));
                 succeeded = mp_sched_schedule(touch_callback, res);
+                retry++;
             }
         }
     }
