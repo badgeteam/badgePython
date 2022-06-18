@@ -217,11 +217,10 @@ virtualtimers.activate(25)
 
 # Power management
 def cbSleep(idleTime=None):
-    pass
-    #system.home()
+    system.home()
 
 pm.callback(cbSleep)
-pm.disable()
+pm.enable()
 pm.feed()
 
 # Terminal menu
