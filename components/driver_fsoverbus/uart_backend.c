@@ -159,23 +159,6 @@ void fsoveruartTask(void *pvParameter) {
                 fsob_stop_timeout();
             }
             fixcts(false);
-       
-            uint32_t bytes_read = 0;
-            FILE *read_loopback;
-            read_loopback = fopen("/dev/fsou/1","r");
-            if(read_loopback) {
-                do {
-                    uint8_t strbuf[128];
-                    bytes_read = fread(strbuf, 1, 128, read_loopback);
-                    if(bytes_read > 0) {
-                        uint8_t header[12];
-                        createMessageHeader(header, 3, bytes_read, 0);
-                        uart_write_bytes(CONFIG_DRIVER_FSOVERBUS_UART_NUM, (const char*) header, 12);
-                        uart_write_bytes(CONFIG_DRIVER_FSOVERBUS_UART_NUM, (const char*) strbuf, bytes_read);
-                    } 
-                } while (bytes_read > 0);
-                fclose(read_loopback);
-            }
         }
     }
     free(dtmp);

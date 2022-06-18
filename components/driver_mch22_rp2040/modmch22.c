@@ -4,6 +4,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include <driver/uart.h>
 #endif
 
 #define TAG "RP2040_UPY"
@@ -15,6 +16,7 @@ static RP2040 rp2040;
 static mp_obj_t touch_callback = mp_const_none;
 
 static void button_handler(void *parameter);
+static void webusb_handler(void *parameter);
 
 void driver_mch22_init() {
     rp2040.i2c_bus = 0;
@@ -24,6 +26,7 @@ void driver_mch22_init() {
 
     rp2040_init(&rp2040);
     xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
+    xTaskCreatePinnedToCore(webusb_handler, "webusb_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
 }
 
 static mp_obj_t buttons() {
@@ -32,23 +35,6 @@ static mp_obj_t buttons() {
     return mp_obj_new_int(value);
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(buttons_obj, buttons);
-
-static void button_handler(void *parameter) {
-    rp2040_input_message_t message;
-    while(1) {
-        xQueueReceive(rp2040.queue, &message, portMAX_DELAY);
-        // uPy scheduler tends to get full for unknown reasons, so to not lose any interrupts,
-        // we try until the schedule succeeds.
-        if (touch_callback != mp_const_none) {
-            mp_obj_t res = mp_obj_new_int(message.input << 1 | message.state);
-            bool succeeded = mp_sched_schedule(touch_callback, res);
-            while (!succeeded) {
-                ESP_LOGW(TAG, "Failed to call touch callback, retrying");
-                succeeded = mp_sched_schedule(touch_callback, res);
-            }
-        }
-    }
-}
 
 static mp_obj_t set_handler(mp_obj_t handler) {
     touch_callback = handler;
@@ -77,12 +63,28 @@ static mp_obj_t fpga_reset(mp_obj_t enabled) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(fpga_reset_obj, fpga_reset);
 
+static mp_obj_t enable_webusb() {
+    uart_set_pin(UART_NUM_0, -1, -1, -1, -1);
+    uart_set_pin(CONFIG_DRIVER_FSOVERBUS_UART_NUM, 1, 3, -1, -1);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(enable_webusb_obj, enable_webusb);
+
+static mp_obj_t disable_webusb() {
+    uart_set_pin(CONFIG_DRIVER_FSOVERBUS_UART_NUM, -1, -1, -1, -1);
+    uart_set_pin(UART_NUM_0, 1, 3, -1, -1);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(disable_webusb_obj, enable_webusb);
+
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&get_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&set_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_fpga_reset), MP_ROM_PTR(&fpga_reset_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_handler), MP_ROM_PTR(&set_handler_obj)},
+    {MP_ROM_QSTR(MP_QSTR_enable_webusb), MP_ROM_PTR(&enable_webusb_obj)},
+    {MP_ROM_QSTR(MP_QSTR_disable_webusb), MP_ROM_PTR(&disable_webusb_obj)},
 };
 
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
@@ -92,3 +94,38 @@ const mp_obj_module_t mch22_module = {
     .base = {&mp_type_module},
     .globals = (mp_obj_dict_t *)&mch22_module_globals,
 };
+
+
+static void button_handler(void *parameter) {
+    rp2040_input_message_t message;
+    while(1) {
+        xQueueReceive(rp2040.queue, &message, portMAX_DELAY);
+        // uPy scheduler tends to get full for unknown reasons, so to not lose any interrupts,
+        // we try until the schedule succeeds.
+        if (touch_callback != mp_const_none) {
+            mp_obj_t res = mp_obj_new_int(message.input << 1 | message.state);
+            bool succeeded = mp_sched_schedule(touch_callback, res);
+            while (!succeeded) {
+                ESP_LOGW(TAG, "Failed to call touch callback, retrying");
+                succeeded = mp_sched_schedule(touch_callback, res);
+            }
+        }
+    }
+}
+
+static void webusb_handler(void *parameter) {
+    uint8_t modeCurrent = 0;
+    while(1) {
+        vTaskDelay(pdMS_TO_TICKS(100));
+        uint8_t mode;
+        rp2040_get_webusb_mode(&rp2040, &mode);
+        if (mode != modeCurrent) {
+            if (mode) {
+                enable_webusb();
+            } else {
+                disable_webusb();
+            }
+            modeCurrent = mode;
+        }
+    }
+}
