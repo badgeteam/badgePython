@@ -18,8 +18,8 @@ menu_text_color = 0xFFFFFF
 text_color = 0xFFFFFF
 scale = 1
 if consts.INFO_HARDWARE_NAME == "MCH2022":
-    extended_menu = False
-    scale = 2
+    extended_menu = True
+    scale = 1
     menu_title = consts.INFO_HARDWARE_NAME
     menu_color = 0x491D88
     menu_text_color = 0xFEC859
