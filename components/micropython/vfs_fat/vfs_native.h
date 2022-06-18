@@ -38,13 +38,13 @@
 #include "vfs.h"
 
 #if CONFIG_MICROPY_FILESYSTEM_TYPE == 0
-#define VFS_NATIVE_MOUNT_POINT			"/_#!#_spiffs"
+#define VFS_NATIVE_MOUNT_POINT			"/internal"
 #elif CONFIG_MICROPY_FILESYSTEM_TYPE == 2
-#define VFS_NATIVE_MOUNT_POINT			"/_#!#_littlefs"
+#define VFS_NATIVE_MOUNT_POINT			"/internal"
 #else
-#define VFS_NATIVE_MOUNT_POINT			"/_#!#_spiflash"
+#define VFS_NATIVE_MOUNT_POINT			"/internal"
 #endif
-#define VFS_NATIVE_SDCARD_MOUNT_POINT	"/_#!#_sdcard"
+#define VFS_NATIVE_SDCARD_MOUNT_POINT	"/sd"
 #define VFS_NATIVE_INTERNAL_PART_LABEL	"locfd"
 #define VFS_NATIVE_INTERNAL_MP			"/"
 #define VFS_NATIVE_EXTERNAL_MP			"/sd"
