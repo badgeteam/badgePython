@@ -1,5 +1,4 @@
 # Generic button input wrapper
-from pyrsistent import s
 from hardware.buttonconsts import *
 import hardware.buttons as hwButtons
 import system
