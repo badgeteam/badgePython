@@ -149,6 +149,7 @@ set(IDF_COMPONENTS
     spiffs
     driver_sdcard
     buses
+    wpa_supplicant
 )
 
 if(IDF_VERSION_MINOR GREATER_EQUAL 1 OR IDF_VERSION_MAJOR GREATER_EQUAL 5)

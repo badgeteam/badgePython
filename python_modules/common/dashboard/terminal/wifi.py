@@ -1,4 +1,4 @@
-import network, term, sys, system, machine, esp32
+import network, term, sys, system, nvs
 
 system.serialWarning()
 
@@ -59,10 +59,8 @@ def password(ssidName, ssidType):
 
 def confirm(ssid, password):
 	term.header(True, "WiFi setup")
-	nvs = esp32.NVS("system")
-	nvs.set_blob("wifi.ssid", ssid)
-	nvs.set_blob("wifi.password", password)
-	nvs.commit()
+	nvs.nvs_setstr("system", "wifi.ssid", ssid)
+	nvs.nvs_setstr("system", "wifi.password", password)
 	print("New configuration has been saved.")
 	print("")
 	print("SSID:\t\t"+ssid)
