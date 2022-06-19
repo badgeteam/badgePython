@@ -17,4 +17,6 @@ try:
 except:
 	pass
 sys.path.append(".frozen")
+sys.path.append("/apps")
+sys.path.append("/sd/apps")
 gc.collect()

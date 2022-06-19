@@ -1,27 +1,15 @@
-import network, time, machine, consts
+import network, time, machine, nvs, consts
 import ntp as ntpsync
 import esp32
 
 _STA_IF = network.WLAN(network.STA_IF)
 _AP_IF  = network.WLAN(network.AP_IF)
 
-nvs = esp32.NVS("system")
-_DEFAULT_TIMEOUT = 20
-try:
-	_DEFAULT_TIMEOUT = nvs.get_i32("wifi.timeout")
-except Exception as e:
-	_DEFAULT_TIMEOUT = 20
+_DEFAULT_TIMEOUT  = nvs.nvs_getint("system", "wifi.timeout") or 20
+_DEFAULT_SSID     = nvs.nvs_getstr("system", "wifi.ssid")
+_DEFAULT_PASSWORD = nvs.nvs_getstr("system", "wifi.password")
 
-_DEFAULT_SSID     = consts.WIFI_SSID
-_DEFAULT_PASSWORD = consts.WIFI_PASSWORD
-try:
-	ssid = bytearray(50)
-	nvs.get_blob("wifi.ssid", ssid)
-	_DEFAULT_SSID = ssid.decode("utf-8")
-	password = bytearray(50)
-	nvs.get_blob("wifi.password", password)
-	_DEFAULT_PASSWORD = password.decode("utf-8")
-except Exception as e:
+if not _DEFAULT_SSID:
 	_DEFAULT_SSID     = consts.WIFI_SSID
 	_DEFAULT_PASSWORD = consts.WIFI_PASSWORD
 

@@ -109,7 +109,7 @@ def url_open(url):
         print(url)
     
     # Enforce Letsencrypt certificate checking
-    ussl.verify_letsencrypt(True)
+    #ussl.verify_letsencrypt(True)
 
     proto, _, host, urlpath = url.split('/', 3)
     try:

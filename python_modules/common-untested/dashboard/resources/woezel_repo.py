@@ -1,6 +1,6 @@
 import time, machine, gc, easydraw, term, uos, json, urequests, gc, sys, wifi, consts, ussl
 
-ussl.verify_letsencrypt(True) # Use Letsencrypt for the HTTPS connection
+#ussl.verify_letsencrypt(True) # Use Letsencrypt for the HTTPS connection
 
 path = "/cache/woezel"
 categories = []

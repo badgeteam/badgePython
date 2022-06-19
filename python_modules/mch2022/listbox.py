@@ -94,7 +94,10 @@ class List():
                 self.offset = self.selected
         else:
             self.selected = len(self.items)-1
-            self.offset = self.selected - self.lines + 1
+            if len(self.items) >= self.lines:
+                self.offset = self.selected - self.lines + 1
+            else:
+                self.offset = self.selected - len(self.items) + 1
         self.draw()
             
     def moveDown(self):
