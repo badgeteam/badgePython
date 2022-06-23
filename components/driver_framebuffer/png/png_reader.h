@@ -32,6 +32,8 @@ enum lib_png_error_t {
 	LIB_PNG_ERROR_INVALID_DEFLATE_HEADER,
 	LIB_PNG_ERROR_INVALID_PNG_SCANLINE_TYPE,
 	LIB_PNG_ERROR_TOP,
+	LIB_PNG_ERROR_MULTIPLE_TRNS_FOUND,
+	LIB_PNG_ERROR_INVALID_TRNS_SIZE,
 };
 
 struct lib_png_chunk {
@@ -60,6 +62,8 @@ struct lib_png_reader {
 
 	uint8_t *palette;
 	int palette_len;
+	uint8_t *trns;
+	int trns_len;
 
 	uint8_t scanline_bpp; // 1, 2, 3, 4, 6 or 8
 	uint32_t scanline_width;

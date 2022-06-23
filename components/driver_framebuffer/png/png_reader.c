@@ -20,6 +20,7 @@
 
  #define TYPE_IHDR      0x52444849
  #define TYPE_PLTE      0x45544C50
+ #define TYPE_TRNS      0x534E5274
  #define TYPE_IDAT      0x54414449
  #define TYPE_IEND      0x444E4549
 
@@ -30,6 +31,7 @@
 
  #define TYPE_IHDR      0x49484452
  #define TYPE_PLTE      0x504C5445
+ #define TYPE_TRNS      0x74524E53
  #define TYPE_IDAT      0x49444154
  #define TYPE_IEND      0x49454E44
 #endif
@@ -328,6 +330,7 @@ lib_png_decode(Window* window, struct lib_png_reader *pr, uint32_t width, uint32
 					}
 					break;
 				case 3:
+					// if trns does not exist or is shorter than the palette, the remaining alpha channels are the default 0xffff
 					a = 0xffff;
 					switch (pr->ihdr.bit_depth)
 					{
@@ -343,6 +346,10 @@ lib_png_decode(Window* window, struct lib_png_reader *pr, uint32_t width, uint32
 						case 1:
 							b = (pr->scanline[x>>3] >> ((x^7)&7)) & 1;
 							break;
+					}
+					if (pr->trns != NULL && b < pr->trns_len)
+					{
+						a = pr->trns[b] * 0x0101;
 					}
 					if (b < pr->palette_len)
 					{
@@ -527,6 +534,24 @@ int lib_png_load_image(Window* window, struct lib_png_reader *pr, uint16_t offse
 			pr->palette_len = pr->chunk.len / 3;
 
 			res = lib_png_chunk_read_data(pr, pr->palette, pr->chunk.len);
+			if (res < 0)
+				return res;
+			continue;
+		}
+
+		if (pr->chunk.type == TYPE_TRNS)
+		{
+			if (pr->trns != NULL)
+				return -LIB_PNG_ERROR_MULTIPLE_TRNS_FOUND;
+			if (pr->chunk.len > 768 || (pr->palette != NULL && pr->palette_len < pr->chunk.len))
+				return -LIB_PNG_ERROR_INVALID_TRNS_SIZE;
+
+			pr->trns = (uint8_t *) malloc(pr->chunk.len);
+			if (pr->trns == NULL)
+				return -LIB_PNG_ERROR_OUT_OF_MEMORY;
+			pr->trns_len = pr->chunk.len;
+
+			res = lib_png_chunk_read_data(pr, pr->trns, pr->chunk.len);
 			if (res < 0)
 				return res;
 			continue;
