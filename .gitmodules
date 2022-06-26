@@ -13,3 +13,6 @@
 [submodule "firmware/components/driver_display_ili9341/esp32-component-spi-ili9341"]
 	path = components/driver_display_ili9341/esp32-component-spi-ili9341
 	url = https://github.com/Nicolai-Electronics/esp32-component-spi-ili9341.git
+[submodule "components/driver_mch22/esp32-component-spi-ice40"]
+	path = components/driver_mch22/esp32-component-spi-ice40
+	url = https://github.com/Nicolai-Electronics/esp32-component-spi-ice40.git
