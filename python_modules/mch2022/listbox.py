@@ -15,7 +15,7 @@ class List():
         self.selected = 0
         global _activeList
         _activeList = self
-        self.lines = self.h // (display.getTextHeight(" ", "roboto_regular12")+6)
+        self.lines = self.h // (display.getTextHeight(" ", "roboto_regular18")+6)
         self.offset = 0
         self.visible(True)
         self.enabled(True)
@@ -29,9 +29,9 @@ class List():
             for i in range(len(self.items)-self.offset):
                 cursor = (self.x+1,cursor[1])
                 item = self.items[self.offset+i]
-                lineHeight = display.getTextHeight(item, "roboto_regular12")
+                lineHeight = display.getTextHeight(item, "roboto_regular18")
                 
-                while display.getTextWidth(item, "roboto_regular12") > self.w:
+                while display.getTextWidth(item, "roboto_regular18") > self.w:
                     item = item[:-1]
                 
                 totalHeight += lineHeight+6
@@ -42,8 +42,8 @@ class List():
                     display.drawRect(self.x, cursor[1], self.w, lineHeight+6, True, self.fgColor)
                     color = self.bgColor
                 cursor = (self.x,cursor[1]+3)
-                display.drawText(cursor[0]+2, cursor[1], item+"\n", color, "roboto_regular12")
-                cursor = (self.x,cursor[1]+3+display.getTextHeight(item+"\n", "roboto_regular12"))
+                display.drawText(cursor[0]+2, cursor[1], item+"\n", color, "roboto_regular18")
+                cursor = (self.x,cursor[1]+3+display.getTextHeight(item+"\n", "roboto_regular18"))
     
     def add_item(self, caption):
         if type(caption) == type(""):

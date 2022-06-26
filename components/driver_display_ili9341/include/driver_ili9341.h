@@ -19,6 +19,7 @@ __BEGIN_DECLS
 extern esp_err_t driver_ili9341_init(void);
 extern esp_err_t driver_ili9341_set_backlight(bool state);
 extern esp_err_t driver_ili9341_write_partial(const uint8_t *buffer, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+extern esp_err_t driver_ili9341_set_mode(bool mode);
 
 __END_DECLS
 

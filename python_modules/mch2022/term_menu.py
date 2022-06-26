@@ -32,17 +32,11 @@ class UartMenu():
 	def go_to_sleep(self):
 		self.gts()
 		
-	def opt_change_nickname(self):
-		system.start("dashboard.terminal.nickname", True)
-		
 	def opt_installer(self):
 		system.start("dashboard.terminal.installer", True)
 	
 	def opt_launcher(self):
 		system.start("dashboard.terminal.launcher", True)
-	
-	def opt_configure_wifi(self):
-		system.start("dashboard.terminal.wifi", True)
 		
 	def opt_configure_orientation(self):
 		system.start("dashboard.terminal.orientation", True)
@@ -51,8 +45,8 @@ class UartMenu():
 		system.start("dashboard.terminal.downloader", True)
 		
 	def menu_settings(self):
-		items = ["Change nickname", "WiFi configuration", "Change display orientation", "< Return to main menu"]
-		callbacks = [self.opt_change_nickname, self.opt_configure_wifi, self.opt_configure_orientation, self.menu_main, self.menu_main]
+		items = ["Change display orientation", "< Return to main menu"]
+		callbacks = [self.opt_configure_orientation, self.menu_main, self.menu_main]
 		cb = term.menu("Settings", items)
 		self.menu = callbacks[cb]
 	

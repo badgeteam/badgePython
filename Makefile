@@ -4,7 +4,7 @@ IDF_PATH ?= $(shell pwd)/esp-idf
 IDF_EXPORT_QUIET ?= 0
 SHELL := /usr/bin/env bash
 
-.PHONY: prepare clean build flash erase monitor menuconfig image qemu install prepare-mch2022 prepare-cz19 mch2022
+.PHONY: prepare clean build flash erase monitor menuconfig image qemu install prepare-mch2022 prepare-cz19 mch2022 clean-frozen
 
 all: prepare build
 
@@ -45,3 +45,6 @@ menuconfig:
 install: flash
 
 mch2022: prepare-mch2022 build
+
+clean-frozen:
+	rm -rf build/frozen_content.c

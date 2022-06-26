@@ -36,10 +36,6 @@ void ili9341_set_lcd_mode(bool mode) {
 
 esp_err_t driver_ili9341_init(void)
 {
-	static bool driver_ili9341_init_done = false;
-	if (driver_ili9341_init_done) return ESP_OK;
-	ESP_LOGD(TAG, "init called");
-	
 	dev_ili9341.spi_bus               = VSPI_HOST;
     dev_ili9341.pin_cs                = CONFIG_PIN_NUM_ILI9341_CS;
     dev_ili9341.pin_dcx               = CONFIG_PIN_NUM_ILI9341_DCX;
@@ -68,10 +64,6 @@ esp_err_t driver_ili9341_init(void)
 		res = gpio_set_direction(CONFIG_PIN_NUM_ILI9341_BACKLIGHT, GPIO_MODE_OUTPUT);
 		if (res != ESP_OK) return res;
 	#endif
-
-	//Turn off backlight
-	res = driver_ili9341_set_backlight(false);
-	if (res != ESP_OK) return res;
 	
 	res = ili9341_init(&dev_ili9341);
     if (res != ESP_OK) {
@@ -79,13 +71,15 @@ esp_err_t driver_ili9341_init(void)
         return res;
     }
 
-	//Turn on backlight
-	res = driver_ili9341_set_backlight(true);
-	if (res != ESP_OK) return res;
-
-	driver_ili9341_init_done = true;
-	ESP_LOGD(TAG, "init done");
 	return ESP_OK;
+}
+
+esp_err_t driver_ili9341_set_mode(bool mode) {
+	if (mode) {
+		return ili9341_deinit(&dev_ili9341);
+	} else {
+		return ili9341_init(&dev_ili9341);
+	}
 }
 
 esp_err_t driver_ili9341_set_backlight(bool state)

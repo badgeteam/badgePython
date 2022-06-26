@@ -1,4 +1,4 @@
-import orientation, dashboard.resources.woezel_repo as woezel_repo, term, easydraw, system, time, gc, ugfx, wifi, uos, json, sys, woezel, display, errno, buttons
+import orientation, dashboard.resources.woezel_repo as woezel_repo, term, easydraw, system, time, gc, ugfx, wifi, uos, json, sys, woezel, display, errno, buttons, display
 
 repo = woezel_repo
 
@@ -7,17 +7,10 @@ orientation.default()
 def showMessage(msg, error=False, icon_wifi=False, icon_ok=False):
 	term.header(True, "Installer")
 	print(msg)
-	icon = "/media/busy.png"
-	if error:
-		icon = "/media/alert.png"
-	elif icon_wifi:
-		icon = "/media/wifi.png"
-	elif icon_ok:
-		icon = "/media/ok.png"
-	easydraw.messageCentered(msg, False, icon)
+	easydraw.messageCentered(msg, False, None)
 
 # Listbox element
-myList = ugfx.List(0,0,ugfx.width(),ugfx.height())
+myList = ugfx.List(0,28,ugfx.width(),ugfx.height()-28-28)
 
 # Generic actions
 def btn_unhandled(pressed):
@@ -43,7 +36,9 @@ def show_categories(pressed = True, fromAppInstall = False):
 	ugfx.input_attach(ugfx.JOY_RIGHT, btn_unhandled)
 	ugfx.input_attach(ugfx.BTN_A, btn_unhandled)
 	ugfx.input_attach(ugfx.BTN_B, btn_unhandled)
-	ugfx.clear(ugfx.WHITE)
+	display.drawFill(0xFFFFFF)
+	display.drawText(0, 4, "Hatchery - Categories", 0x000000, "roboto_regular18")
+	display.drawText(0, display.height() - 20, "[A] choose [B] back [H] exit [SE] update repo", 0x000000, "roboto_regular12")
 	myList.clear()
 	for category in repo.categories:
 		myList.add_item("%s (%d) >" % (category["name"], category["eggs"]))
@@ -58,6 +53,11 @@ def show_categories(pressed = True, fromAppInstall = False):
 	try:
 		buttons.BTN_START
 		ugfx.input_attach(ugfx.BTN_START, btn_exit)
+	except:
+		ugfx.input_attach(ugfx.BTN_B, btn_exit)
+	try:
+		buttons.BTN_HOME
+		ugfx.input_attach(ugfx.BTN_HOME, btn_exit)
 	except:
 		ugfx.input_attach(ugfx.BTN_B, btn_exit)
 	try:
@@ -83,12 +83,16 @@ def show_category(pressed=True, fromAppInstall = False):
 	ugfx.input_attach(ugfx.BTN_A, btn_unhandled)
 	ugfx.input_attach(ugfx.BTN_B, btn_unhandled)
 	ugfx.clear(ugfx.WHITE)
+	
 	global category
 	if not fromAppInstall:
 		lastCategory = myList.selected_index()
 	slug = repo.categories[lastCategory]["slug"]
-	showMessage("Loading "+slug+"...")
-	display.drawFill()
+	name = repo.categories[lastCategory]["name"]
+	showMessage("Loading "+name+"...")
+	display.drawFill(0xFFFFFF)
+	display.drawText(0, display.height() - 20, "[A] choose [B] back [H] exit [SE] update repo", 0x000000, "roboto_regular12")
+	display.drawText(0, 4, "Hatchery - " + name, 0x000000, "roboto_regular18")
 	myList.clear()
 	try:
 		try:
@@ -111,7 +115,11 @@ def show_category(pressed=True, fromAppInstall = False):
 		except:
 			pass
 		try:
-			ugfx.input_attach(ugfx.BTN_SELECT, btn_unhandled)
+			ugfx.input_attach(ugfx.BTN_HOME, btn_exit)
+		except:
+			pass
+		try:
+			ugfx.input_attach(ugfx.BTN_SELECT, btn_update)
 		except:
 			pass
 		ugfx.input_attach(ugfx.BTN_A, install_app)
@@ -120,6 +128,7 @@ def show_category(pressed=True, fromAppInstall = False):
 		ugfx.input_attach(ugfx.JOY_DOWN, btn_unhandled)
 		ugfx.input_attach(ugfx.JOY_LEFT, btn_unhandled)
 		ugfx.input_attach(ugfx.JOY_RIGHT, btn_unhandled)
+		
 		display.flush(display.FLAG_LUT_NORMAL)
 	except BaseException as e:
 		sys.print_exception(e)

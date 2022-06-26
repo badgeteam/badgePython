@@ -20,6 +20,7 @@ JOY_DOWN   = buttons.BTN_DOWN
 JOY_RIGHT  = buttons.BTN_RIGHT
 JOY_UP     = buttons.BTN_UP
 JOY_LEFT   = buttons.BTN_LEFT
+BTN_HOME   = buttons.BTN_HOME
 
 def input_attach(button, callback=None):
 	global activeList, listUpCallback, listDownCallback
@@ -72,7 +73,7 @@ WHITE = 0xFFFFFF
 
 def string(x,y,text,font,color):
 	if font == "Roboto_pixelade13":
-		font = "roboto_regular12"
+		font = "roboto_regular18"
 	if font == "fixed_10x20":
 		font = "roboto_regular18"
 	if not color:
@@ -194,7 +195,7 @@ class List():
 		self.selected = 0
 		global activeList
 		activeList = self
-		self.lines = self.h // (display.getTextHeight(" ", "roboto_regular12")+6)
+		self.lines = self.h // (display.getTextHeight(" ", "roboto_regular18")+6)
 		self.offset = 0
 		self.visible(True)
 		self.enabled(True)
@@ -208,9 +209,9 @@ class List():
 			for i in range(len(self.items)-self.offset):
 				cursor = (self.x+1,cursor[1])
 				item = self.items[self.offset+i]
-				lineHeight = display.getTextHeight(item, "roboto_regular12")
+				lineHeight = display.getTextHeight(item, "roboto_regular18")
 				
-				while display.getTextWidth(item, "roboto_regular12") > self.w:
+				while display.getTextWidth(item, "roboto_regular18") > self.w:
 					item = item[:-1]
 				
 				totalHeight += lineHeight+6
@@ -221,8 +222,8 @@ class List():
 					display.drawRect(self.x, cursor[1], self.w, lineHeight+6, True, 0x000000)
 					color = 0xFFFFFF
 				cursor = (self.x,cursor[1]+3)
-				display.drawText(cursor[0]+2, cursor[1], item+"\n", color, "roboto_regular12")
-				cursor = (self.x,cursor[1]+3+display.getTextHeight(item+"\n", "roboto_regular12"))
+				display.drawText(cursor[0]+2, cursor[1], item+"\n", color, "roboto_regular18")
+				cursor = (self.x,cursor[1]+3+display.getTextHeight(item+"\n", "roboto_regular18"))
 	
 	def add_item(self, caption):
 		if type(caption) == type(""):

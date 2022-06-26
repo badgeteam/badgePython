@@ -5,7 +5,7 @@ set(mods
 
 #Define the name of your module here
 set(mod_name "mch22")
-set(mod_register "MCH2022 RP2040")
+set(mod_register "MCH2022")
 
 if(CONFIG_DRIVER_MCH22_RP2040_ENABLE)
     message(STATUS "MCH22 enabled")

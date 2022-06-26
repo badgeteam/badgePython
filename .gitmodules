@@ -7,8 +7,8 @@
 [submodule "firmware/python_modules/micropython-lib"]
 	path = python_modules/micropython-lib
 	url = https://github.com/micropython/micropython-lib
-[submodule "firmware/components/driver_mch22_rp2040/esp32-component-mch2022-rp2040"]
-	path = components/driver_mch22_rp2040/esp32-component-mch2022-rp2040
+[submodule "firmware/components/driver_mch22/esp32-component-mch2022-rp2040"]
+	path = components/driver_mch22/esp32-component-mch2022-rp2040
 	url = https://github.com/badgeteam/esp32-component-mch2022-rp2040.git
 [submodule "firmware/components/driver_display_ili9341/esp32-component-spi-ili9341"]
 	path = components/driver_display_ili9341/esp32-component-spi-ili9341

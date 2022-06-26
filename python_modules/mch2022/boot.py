@@ -10,9 +10,7 @@ device.prepareForWakeup()
 
 app = rtcmem.read_string()
 if not app:
-	app = rtcmem.read_string()
-	if not app:
-		app = 'dashboard.launcher'
+	app = 'dashboard.launcher'
 
 if app and not app == "shell":
 	try:
