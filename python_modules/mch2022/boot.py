@@ -9,12 +9,18 @@ rtcmem.write(1,0)
 device.prepareForWakeup()
 
 app = rtcmem.read_string()
+
 if not app:
 	app = 'dashboard.launcher'
 
 if app and not app == "shell":
 	try:
-		print("Starting app '%s'..." % app)
+		if app.startswith("/internal"):
+			# /internal is mounted on / in Python
+			app = app[len("/internal"):]
+		if app.endswith("/__init__.py"):
+			app = app[len(:"/__init__.py")]
+		print("Starting app '{}'...".format(app))
 		system.__current_app__ = app
 		if app:
 			__import__(app)
