@@ -18,7 +18,7 @@ convert=../fontconvert
 header=../fontheader
 inpath=
 outpath=../../font_
-fonts=("ocra" "org_01" "fairlight" "dejavusans" "permanentmarker" "roboto" "Exo2")
+fonts=("ocra" "org_01" "fairlight" "dejavusans" "permanentmarker" "roboto" "Exo2", "PressStart2P")
 styles=("" "-Mono" "-Bold" "-BoldItalic" "-ExtraBold" "-ExtraBoldItalic" "-Italic" "-Black" "-Italic" "-BlackItalic" "-ExtraLight" "-ExtraLightItalic" "-Light" "-LightItalic" "-Medium" "-MediumItalic" "-Regular" "-SemiBold" "-SemiBoldItalic" "-Thin" "-ThinItalic")
 sizes=(6 8 9 12 13 16 18 20 22 24 36 42)
 

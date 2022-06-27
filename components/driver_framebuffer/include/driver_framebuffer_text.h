@@ -33,6 +33,12 @@ extern const GFXfont Exo2_Regular_12pt7b;
 extern const GFXfont Exo2_Thin_12pt7b;
 extern const GFXfont Exo2_Bold_12pt7b;
 extern const GFXfont ipane7x5;
+extern const GFXfont PressStart2P_6pt7b;
+extern const GFXfont PressStart2P_8pt7b;
+extern const GFXfont PressStart2P_9pt7b;
+extern const GFXfont PressStart2P_12pt7b;
+extern const GFXfont PressStart2P_18pt7b;
+extern const GFXfont PressStart2P_22pt7b;
 
 /* Functions */
 
