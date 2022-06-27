@@ -19,7 +19,7 @@ if app and not app == "shell":
 			# /internal is mounted on / in Python
 			app = app[len("/internal"):]
 		if app.endswith("/__init__.py"):
-			app = app[len(:"/__init__.py")]
+			app = app[:len("/__init__.py")]
 		print("Starting app '{}'...".format(app))
 		system.__current_app__ = app
 		if app:
