@@ -40,6 +40,12 @@ set(srcs
 	"fonts/font_Exo2-Regular_12pt7b.c"
 	"fonts/font_Exo2-Thin_12pt7b.c"
 	"fonts/font_Exo2-Bold_12pt7b.c"
+        "fonts/font_PressStart2P_6pt7b.c"
+        "fonts/font_PressStart2P_8pt7b.c"
+        "fonts/font_PressStart2P_9pt7b.c"
+        "fonts/font_PressStart2P_12pt7b.c"
+        "fonts/font_PressStart2P_18pt7b.c"
+        "fonts/font_PressStart2P_22pt7b.c"
 )
 else()
 set(srcs
