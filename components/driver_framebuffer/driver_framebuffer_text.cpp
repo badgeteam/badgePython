@@ -48,32 +48,38 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Fonts */
 
 const char* fontNames[] = {
-	"org18",                  //Legacy font name
-	"org01_8",                //
-	"fairlight8",             //
-	"fairlight12",            //
-	"dejavusans20",           //SHA2017
-	"permanentmarker22",      //SHA2017
-	"permanentmarker36",      //SHA2017
-	"roboto_black22",         //SHA2017
-	"roboto_blackitalic24",   //SHA2017
-	"roboto_regular12",       //SHA2017
-	"roboto_regular18",       //SHA2017 
-	"roboto_regular22",       //SHA2017
-	"weather42",              //SHA2017
-	"pixelade13",             //SHA2017
-	"7x5",                    //CAMPZONE2019
-	"ocra16",                 //CYBER
-	"ocra22",                 //CYBER
-	"exo2_regular22",         //TROOPERS
-	"exo2_thin22",            //TROOPERS
-	"exo2_bold22",            //TROOPERS
-	"exo2_regular18",         //TROOPERS
-	"exo2_thin18",            //TROOPERS
-	"exo2_bold18",            //TROOPERS
-	"exo2_regular12",         //TROOPERS
-	"exo2_thin12",            //TROOPERS
-	"exo2_bold12",            //TROOPERS
+	"org18",                //Legacy font name
+	"org01_8",              //
+	"fairlight8",           //
+	"fairlight12",          //
+	"dejavusans20",         //SHA2017
+	"permanentmarker22",    //SHA2017
+	"permanentmarker36",    //SHA2017
+	"roboto_black22",       //SHA2017
+	"roboto_blackitalic24", //SHA2017
+	"roboto_regular12",     //SHA2017
+	"roboto_regular18",     //SHA2017
+	"roboto_regular22",     //SHA2017
+	"weather42",            //SHA2017
+	"pixelade13",           //SHA2017
+	"7x5",                  //CAMPZONE2019
+	"ocra16",               //CYBER
+	"ocra22",               //CYBER
+	"exo2_regular22",       //TROOPERS
+	"exo2_thin22",          //TROOPERS
+	"exo2_bold22",          //TROOPERS
+	"exo2_regular18",       //TROOPERS
+	"exo2_thin18",          //TROOPERS
+	"exo2_bold18",          //TROOPERS
+	"exo2_regular12",       //TROOPERS
+	"exo2_thin12",          //TROOPERS
+	"exo2_bold12",          //TROOPERS
+	"press_start_2p6",      //MCH2022
+	"press_start_2p8",      //MCH2022
+	"press_start_2p9",      //MCH2022
+	"press_start_2p12",     //MCH2022
+	"press_start_2p18",     //MCH2022
+	"press_start_2p22",     //MCH2022
 	NULL
 };
 
@@ -104,6 +110,12 @@ const GFXfont* fontPointers[] = {
 	&Exo2_Regular_12pt7b,
 	&Exo2_Thin_12pt7b,
 	&Exo2_Bold_12pt7b,
+	&PressStart2P_6pt7b,
+	&PressStart2P_8pt7b,
+	&PressStart2P_9pt7b,
+	&PressStart2P_12pt7b,
+	&PressStart2P_18pt7b,
+	&PressStart2P_22pt7b,
 };
 
 /* Private functions */
