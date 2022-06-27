@@ -83,6 +83,12 @@ Window* driver_framebuffer_window_create(const char* name, uint16_t width, uint1
 		window->buffer = (uint8_t*) heap_caps_malloc(((width*height*PIXEL_SIZE)/8)+1, MALLOC_CAP_8BIT);
 	#endif
 	
+	#ifdef CONFIG_G_MATRIX_ENABLE
+	/* Initialise matrix stack */
+	window->stack_2d = new matrix_stack_2d();
+	matrix_stack_2d_init(window->stack_2d);
+	#endif
+
 	/* Linked list */
 	window->_prevWindow = driver_framebuffer_window_last();
 	window->_nextWindow = NULL;
@@ -93,6 +99,19 @@ Window* driver_framebuffer_window_create(const char* name, uint16_t width, uint1
 void driver_framebuffer_window_remove(Window* window)
 {
 	if (window->buffer) free(window->buffer);
+	#ifdef CONFIG_G_MATRIX_ENABLE
+	if (window->is_3d) {
+		matrix_stack_3d_clear(window->stack_3d);
+		free(window->stack_3d);
+		free(window->depth_buffer->buffer);
+		free(window->depth_buffer);
+	}
+	else
+	{
+		matrix_stack_2d_clear(window->stack_2d);
+		free(window->stack_2d);
+	}
+	#endif
 	_remove_window_from_linked_list(window);
 	free(window);
 }
@@ -116,6 +135,12 @@ Window* driver_framebuffer_window_first()
 	return windows;
 }
 
+Window* driver_framebuffer_window_next(Window* currentWindow)
+{
+    if (currentWindow == NULL) return NULL;
+    return currentWindow->_nextWindow;
+}
+
 Window* driver_framebuffer_window_last()
 {
 	Window* lastWindow = windows;
@@ -123,6 +148,17 @@ Window* driver_framebuffer_window_last()
 		lastWindow = lastWindow->_nextWindow;
 	}
 	return lastWindow;
+}
+
+bool driver_framebuffer_window_rename(Window* window, const char* newName) {
+	if (!window) return false;
+	char* newNameBuffer = (char*) malloc(strlen(newName) + 1);
+	if (newNameBuffer == NULL) return false;
+    memset(newNameBuffer, 0, strlen(newName) + 1);
+	strncpy(newNameBuffer, newName, strlen(newName));
+	free(window->name);
+	window->name = newNameBuffer;
+    return true;
 }
 
 void driver_framebuffer_window_focus(Window* window)

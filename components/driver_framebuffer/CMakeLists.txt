@@ -6,6 +6,8 @@ set(srcs
     "driver_framebuffer_orientation.cpp"
     "driver_framebuffer_text.cpp"
     "driver_framebuffer_window.cpp"
+    "driver_framebuffer_matrix.cpp"
+    "driver_framebuffer_matrix_drawing.cpp"
     "moddisplay.c"
     "png/adler32.c"
     "png/crc32.c"
