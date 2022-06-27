@@ -386,9 +386,11 @@ static mp_obj_t framebuffer_draw_pixel(mp_uint_t n_args, const mp_obj_t *args) {
 	float x = mp_obj_get_float(args[paramOffset]);
 	float y = mp_obj_get_float(args[paramOffset + 1]);
 	
+	#ifdef CONFIG_G_MATRIX_ENABLE
 	if (!raw) {
 		matrix_2d_transform_point(stack->current, &x, &y);
 	}
+	#endif
 
 	uint32_t color = mp_obj_get_int(args[paramOffset + 2]);
 	
