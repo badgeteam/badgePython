@@ -1,6 +1,6 @@
 import wifi, woezel, gc, time, system
 
-woezel.install_path = "/apps"
+woezel.install_path = "/apps/python"
 
 def showMessage(msg):
 	import term, easydraw
@@ -38,5 +38,5 @@ with open("/cache/installList", "w") as f:
 	f.write("")
 
 showMessage("App installed!")
-time.sleep(4)
+time.sleep(3)
 system.start("dashboard.installer")
