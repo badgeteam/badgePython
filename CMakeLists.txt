@@ -10,4 +10,4 @@ unset(EXTMODS_INIT CACHE)
 set(EXTRA_COMPONENT_DIRS ./obsolete_components)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(badge_firmware)
+project(badgepython)
