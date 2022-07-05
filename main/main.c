@@ -12,6 +12,8 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "micropython_main.h"
+#include "soc/rtc.h"
+#include "soc/rtc_cntl_reg.h"
 
 #define TAG "MAIN"
 
@@ -67,6 +69,13 @@ void app_main()
 		esp_restart();
 	}
 #endif
+
+	// Reset AppFS file descriptor so that BadgePython will be loaded again after reboot
+	// (The launcher sets magic value 0xA5, the bootloader changes this to 0xA6, we change it back)
+	uint32_t appfs_reg = REG_READ(RTC_CNTL_STORE0_REG);
+	if ((appfs_reg & 0xFF000000) == 0xA6000000) { // Check that we started from AppFS before writing
+		REG_WRITE(RTC_CNTL_STORE0_REG, 0xA5000000 | (appfs_reg & 0x00FFFFFF));
+	}
 
 	 int magic = get_magic();
 	
