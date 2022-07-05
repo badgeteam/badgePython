@@ -1,4 +1,5 @@
 import mch22
+import struct
 
 SPI_CMD_NOP1             = 0x00
 SPI_CMD_WISHBONE         = 0xf0
@@ -18,6 +19,7 @@ class FPGAWB:
         self.read_cnt = 0
 
     def queue_write(self, dev, addr, val):
+        if len(self.buf) + 8 > 4094: raise Exception("Send buffer exceeds maximum length")
         # Dev sel & Mode (Write, Re-Address)
         self.buf.append(0xc0 | (dev & 0xf))
 
@@ -33,6 +35,8 @@ class FPGAWB:
         self.buf.append((val) &0xff);
 
     def queue_read(self, dev, addr):
+        if len(self.buf) + 8 > 4094: raise Exception("Send buffer exceeds maximum length")
+        if self.read_cnt >= 64: raise Exception("Receive buffer exceeds maximum length")
         # Dev sel & Mode (Write, Re-Address)
         self.buf.append(0x40 | (dev & 0xf))
 
@@ -47,8 +51,10 @@ class FPGAWB:
 
     def exec(self):
         mch22.fpga_send(bytes(self.buf))
-        readcmd = bytearray(2+(self.read_cnt*4))
+        if not self.read_cnt: return
+        readlen = 2+(self.read_cnt*4)
+        readcmd = bytearray(readlen)
         readcmd[0] = SPI_CMD_RESP_ACK
         res = mch22.fpga_transaction(bytes(readcmd))
-        return [res[2+i*4:6+i*4] for i in range(self.read_cnt)]
+        return struct.unpack("!H"+("I"*self.read_cnt), res)[1:]
 
