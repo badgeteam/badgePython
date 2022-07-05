@@ -111,20 +111,26 @@ def listApps():
             except OSError:
                 files = []
             for name in files:
-                hidden = False
-                app = {"path":folder+"/"+name, "name":name, "icon":None, "category":"unknown"}
-                metadata = loadInfo(folder, name)
-                if metadata:
-                    if "name" in metadata:
-                        app["name"]     = metadata["name"]
-                    if "category" in metadata:
-                        app["category"] = metadata["category"]
-                    if "icon" in metadata:
-                        app["icon"] = metadata["icon"]
-                    if "hidden" in metadata:
-                        hidden = metadata["hidden"]
-                if not hidden:
-                    apps.append(app)
+
+                try:
+                    files_in_app_folder = os.listdir(folder + "/" + name)
+                    if "__init__.py" in files_in_app_folder:
+                        hidden = False
+                        app = {"path":folder+"/"+name, "name":name, "icon":None, "category":"unknown"}
+                        metadata = loadInfo(folder, name)
+                        if metadata:
+                            if "name" in metadata:
+                                app["name"]     = metadata["name"]
+                            if "category" in metadata:
+                                app["category"] = metadata["category"]
+                            if "icon" in metadata:
+                                app["icon"] = metadata["icon"]
+                            if "hidden" in metadata:
+                                hidden = metadata["hidden"]
+                        if not hidden:
+                            apps.append(app)
+                except OSError:
+                    pass
     return apps
 
 term.header(True, "Loading...")
