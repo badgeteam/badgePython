@@ -255,6 +255,26 @@ static mp_obj_t driver_mch22_return_to_launcher() {
 
 static MP_DEFINE_CONST_FUN_OBJ_0(mch22_return_to_launcher_obj, driver_mch22_return_to_launcher);
 
+static mp_obj_t read_vbat() {
+    float vbat = 0;
+    if (rp2040_read_vbat(&rp2040, &vbat) != ESP_OK) {
+        mp_raise_ValueError("Failed to get battery voltage");
+        return mp_const_none;
+    }
+    return mp_obj_new_float(vbat);
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(read_vbat_obj, read_vbat);
+
+static mp_obj_t read_vusb() {
+    float vusb = 0;
+    if (rp2040_read_vusb(&rp2040, &vusb) != ESP_OK) {
+        mp_raise_ValueError("Failed to get USB voltage");
+        return mp_const_none;
+    }
+    return mp_obj_new_float(vusb);
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(read_vusb_obj, read_vusb);
+
 
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
@@ -271,6 +291,8 @@ STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_fpga_send_turbo), MP_ROM_PTR(&ice40_send_turbo_obj)},
     {MP_ROM_QSTR(MP_QSTR_lcd_mode), MP_ROM_PTR(&mch22_set_lcd_mode_obj)},
     {MP_ROM_QSTR(MP_QSTR_exit_python), MP_ROM_PTR(&mch22_return_to_launcher_obj)},
+    {MP_ROM_QSTR(MP_QSTR_read_vbat), MP_ROM_PTR(&read_vbat_obj)},
+    {MP_ROM_QSTR(MP_QSTR_read_vusb), MP_ROM_PTR(&read_vusb_obj)},
 };
 
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
