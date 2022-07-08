@@ -23,26 +23,19 @@ STATIC mp_obj_t mod_wpa2enterprise_connect (mp_uint_t n_args, const mp_obj_t *ar
     int phase2 = mp_obj_get_int(args[4]);
     wifi_config_t wifi_config = {0};
     strncpy((char*) wifi_config.sta.ssid, aSsid, 32);
-    printf("stop\n");
     WIFI_SORT_ERRCHECK(esp_wifi_stop());
-    printf("sta\n");
     WIFI_SORT_ERRCHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    printf("conf\n");
     WIFI_SORT_ERRCHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     // Set WPA2 ENT config.
-    printf("ent\n");
     WIFI_SORT_ERRCHECK(esp_wifi_sta_wpa2_ent_set_identity((const uint8_t *) aAnonIdent, strlen(aAnonIdent)));
     WIFI_SORT_ERRCHECK(esp_wifi_sta_wpa2_ent_set_username((const uint8_t *) aIdent, strlen(aIdent)));
     WIFI_SORT_ERRCHECK(esp_wifi_sta_wpa2_ent_set_password((const uint8_t *) aPassword, strlen(aPassword)));
     WIFI_SORT_ERRCHECK(esp_wifi_sta_wpa2_ent_set_ttls_phase2_method(phase2));
     // Enable enterprise auth.
-    printf("ent enable\n");
     WIFI_SORT_ERRCHECK(esp_wifi_sta_wpa2_ent_enable());
     // Disable 11b as NOC asked.
-    printf("disable 11b\n");
     WIFI_SORT_ERRCHECK(esp_wifi_config_11b_rate(WIFI_IF_STA, true));
     // Start the connection.
-    printf("start\n");
     WIFI_SORT_ERRCHECK(esp_wifi_start());
     WIFI_SORT_ERRCHECK(esp_wifi_connect());
     
