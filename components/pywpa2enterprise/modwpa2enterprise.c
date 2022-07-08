@@ -44,6 +44,7 @@ STATIC mp_obj_t mod_wpa2enterprise_connect (mp_uint_t n_args, const mp_obj_t *ar
     // Start the connection.
     printf("start\n");
     WIFI_SORT_ERRCHECK(esp_wifi_start());
+    WIFI_SORT_ERRCHECK(esp_wifi_connect());
     
     return mp_const_none;
 }
