@@ -14,10 +14,9 @@ def prepareForWakeup():
     display.flush()
 
     hardware.enable_power()
+
     try:
         hardware.mountsd()
-        display.drawText(10, 20, "SD card mounted", 0xFFFFFF)
-        display.flush()
     except:
         pass
 

@@ -1,2 +1,2 @@
-#Boot directly to the launcher
-import launcher
+import mch22
+mch22.exit_python()

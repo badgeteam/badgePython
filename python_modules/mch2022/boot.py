@@ -1,4 +1,4 @@
-import machine, sys, system, time
+import machine, sys, system, time, display
 import _device as device
 import rtcmem
 import esp32
@@ -10,8 +10,8 @@ device.prepareForWakeup()
 
 app = rtcmem.read_string()
 
-if not app:
-	app = 'dashboard.launcher'
+#if not app:
+#	app = 'dashboard.launcher'
 
 if app and not app == "shell":
 	try:
@@ -38,3 +38,7 @@ if app and not app == "shell":
 			system.crashedWarning()
 			time.sleep(3)
 			system.launcher()
+else:
+	display.drawFill(0x0000FF)
+	display.drawText(10, 10, "Interactive Python shell now active\non USB console", 0xFFFFFF)
+	display.flush()
