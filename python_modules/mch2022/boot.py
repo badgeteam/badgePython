@@ -1,4 +1,4 @@
-import machine, sys, system, time, display
+import machine, sys, system, time, display, mascot
 import _device as device
 import rtcmem
 import esp32
@@ -39,6 +39,9 @@ if app and not app == "shell":
 			time.sleep(3)
 			system.launcher()
 else:
-	display.drawFill(0x0000FF)
-	display.drawText(10, 10, "Interactive Python shell now active\non USB console", 0xFFFFFF)
-	display.flush()
+    display.drawFill(0xFFFFFF)
+    snek_info = display.pngInfo(mascot.snek)
+    display.drawPng((display.width() - snek_info[0]) // 2, (display.height() - snek_info[1]) // 2 - (snek_info[1] // 2) - 10, mascot.snek)
+    text = "Interactive Python shell now active on USB console"
+    display.drawText((display.width() - display.getTextWidth(text)) // 2, (display.height() - snek_info[1]) // 2 + (snek_info[1] // 2) + 10, text, 0x000000)
+    display.flush()

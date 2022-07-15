@@ -1,4 +1,4 @@
-import display, hardware
+import display, hardware, mascot
 
 # Device specific system functions
 
@@ -9,20 +9,19 @@ def prepareForSleep():
     pass # Not supported
 
 def prepareForWakeup():
-    display.drawFill(0x0000FF)
-    display.drawText(10, 10, "Starting BadgePython...", 0xFFFFFF)
-    display.flush()
-
+    showLoadingScreen()
     hardware.enable_power()
-
     try:
         hardware.mountsd()
     except:
         pass
 
-def showLoadingScreen(app=""):
-    display.drawFill(0x0000FF)
-    display.drawText(10, 10, "Starting{}...".format("" if app == "" else " " + app), 0xFFFFFF)
+def showLoadingScreen(app="BadgePython"):
+    display.drawFill(0xFFFFFF)
+    snek_info = display.pngInfo(mascot.snek)
+    display.drawPng((display.width() - snek_info[0]) // 2, (display.height() - snek_info[1]) // 2 - (snek_info[1] // 2) - 10, mascot.snek)
+    text = "Starting{}...".format("" if app == "" else " " + app)
+    display.drawText((display.width() - display.getTextWidth(text)) // 2, (display.height() - snek_info[1]) // 2 + (snek_info[1] // 2) + 10, text, 0x000000)
     display.flush()
 
 def showMessage(message="", icon=None):
