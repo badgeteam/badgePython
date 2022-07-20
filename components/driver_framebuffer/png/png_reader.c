@@ -674,6 +674,10 @@ lib_png_destroy(struct lib_png_reader *pr)
 		free(pr->palette);
 	pr->palette = NULL;
 
+	if (pr->trns)
+		free(pr->trns);
+	pr->trns = NULL;
+
 	if (pr->scanline)
 		free(pr->scanline);
 	pr->scanline = NULL;
