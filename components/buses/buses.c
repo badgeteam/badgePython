@@ -72,6 +72,8 @@ esp_err_t start_buses() {
 
         res = i2c_param_config(I2C_NUM_0, &i2c0BusConfiguration);
         if (res != ESP_OK) return res;
+        res = i2c_set_timeout(I2C_NUM_0, 20000); // 250 us ( 20000 clock cycles @ APB freq = 80 MHz )
+        if (res != ESP_OK) return res;
         res = i2c_driver_install(I2C_NUM_0, i2c0BusConfiguration.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
         if (res != ESP_OK) return res;
         
@@ -97,6 +99,8 @@ esp_err_t start_buses() {
         #endif
 
         res = i2c_param_config(I2C_NUM_1, &i2c1BusConfiguration);
+        if (res != ESP_OK) return res;
+        res = i2c_set_timeout(I2C_NUM_1, 20000); // 250 us ( 20000 clock cycles @ APB freq = 80 MHz )
         if (res != ESP_OK) return res;
         res = i2c_driver_install(I2C_NUM_1, i2c1BusConfiguration.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
         if (res != ESP_OK) return res;
