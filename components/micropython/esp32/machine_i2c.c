@@ -49,32 +49,40 @@ STATIC void machine_hw_i2c_init(machine_hw_i2c_obj_t *self, uint32_t freq, uint3
 int machine_hw_i2c_transfer(mp_obj_base_t *self_in, uint16_t addr, size_t n, mp_machine_i2c_buf_t *bufs, unsigned int flags) {
     machine_hw_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);   
 
+    if (!(flags & MP_MACHINE_I2C_FLAG_STOP))
+        return -MP_EINVAL; /* Can't support unterminated commands ! */
+
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, addr << 1 | (flags & MP_MACHINE_I2C_FLAG_READ), true);
 
     int data_len = 0;
     for (; n--; ++bufs) {
-        esp_err_t res = ESP_FAIL;
         if (flags & MP_MACHINE_I2C_FLAG_READ) {
-            res = driver_i2c_read_bytes(self->port, addr, bufs->buf, bufs->len);
+            i2c_master_read(cmd, bufs->buf, bufs->len, n == 0 ? I2C_MASTER_LAST_NACK : I2C_MASTER_ACK);
         } else {
             if (bufs->len != 0) {
-                res = driver_i2c_write_buffer(self->port, addr, bufs->buf, bufs->len);
+                i2c_master_write(cmd, bufs->buf, bufs->len, true);
             }
         }
-        if (res == ESP_OK) {
-            data_len += bufs->len;
-        }
+        data_len += bufs->len;
     }
 
-    // if (err == ESP_FAIL) {
-    //     return -MP_ENODEV;
-    // } else if (err == ESP_ERR_TIMEOUT) {
-    //     return -MP_ETIMEDOUT;
-    // } else if (err != ESP_OK) {
-    //     return -abs(err);
-    // }
+    if (flags & MP_MACHINE_I2C_FLAG_STOP) {
+        i2c_master_stop(cmd);
+    }
+
+    // TODO proper timeout
+    esp_err_t err = i2c_master_cmd_begin(self->port, cmd, 100 * (1 + data_len) / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+
+    if (err == ESP_FAIL) {
+        return -MP_ENODEV;
+    } else if (err == ESP_ERR_TIMEOUT) {
+        return -MP_ETIMEDOUT;
+    } else if (err != ESP_OK) {
+        return -abs(err);
+    }
 
     return data_len;
 }
