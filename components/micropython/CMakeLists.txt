@@ -207,7 +207,8 @@ add_custom_command(
         ${COMPONENT_DIR}/mpconfigoverrides.h
     COMMAND echo extmods: ${EXTMODS} &&
             python3 mpconfigover_generator.py -b ./ \"${EXTMODS_NAMES}\" &&
-            cp mpconfigport.h micropython/ports/esp32/
+            cp mpconfigport.h micropython/ports/esp32/ &&
+            cp help.c micropython/ports/esp32/
     WORKING_DIRECTORY ${COMPONENT_DIR}
     DEPENDS ${EXTMODS}
 )
