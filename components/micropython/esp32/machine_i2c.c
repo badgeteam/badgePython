@@ -24,6 +24,8 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
+
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "py/mperrno.h"
@@ -38,6 +40,8 @@
 typedef struct _machine_hw_i2c_obj_t {
     mp_obj_base_t base;
     i2c_port_t port : 8;
+    uint8_t wh_buf[8];
+    uint8_t wh_len;
 } machine_hw_i2c_obj_t;
 
 STATIC machine_hw_i2c_obj_t machine_hw_i2c_obj[I2C_NUM_MAX];
@@ -49,10 +53,27 @@ STATIC void machine_hw_i2c_init(machine_hw_i2c_obj_t *self, uint32_t freq, uint3
 int machine_hw_i2c_transfer(mp_obj_base_t *self_in, uint16_t addr, size_t n, mp_machine_i2c_buf_t *bufs, unsigned int flags) {
     machine_hw_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);   
 
+    // We can't leave a command unterminated, so we 'hold' onto write data
+    // (Just enough to support the 'readfrom_mem' case)
+    if (!(flags & (MP_MACHINE_I2C_FLAG_STOP | MP_MACHINE_I2C_FLAG_READ)) && (n == 1) && (bufs[0].len <= 8)) {
+        self->wh_len = bufs[0].len;
+        memcpy(self->wh_buf, bufs[0].buf, bufs[0].len);
+        return bufs[0].len;
+    }
+
+    // If we got here, this is something we can't support
     if (!(flags & MP_MACHINE_I2C_FLAG_STOP))
-        return -MP_EINVAL; /* Can't support unterminated commands ! */
+        return -MP_EOPNOTSUPP;
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+
+    if (self->wh_len) {
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, addr << 1, true);
+        i2c_master_write(cmd, self->wh_buf, self->wh_len, true);
+        self->wh_len = 0;
+    }
+
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, addr << 1 | (flags & MP_MACHINE_I2C_FLAG_READ), true);
 
