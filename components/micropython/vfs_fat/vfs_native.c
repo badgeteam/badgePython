@@ -131,22 +131,22 @@ char cwd[MICROPY_ALLOC_PATH_MAX + 1] = { 0 };
 //-----------------------------------------------
 int physicalPath(const char *path, char *ph_path)
 {
-    if (path[0] == '/') {
-    	// absolute path
-    	if (strstr(path, VFS_NATIVE_INTERNAL_MP) == path) {
+	if (path[0] == '/') {
+		// absolute path
+		if (strstr(path, VFS_NATIVE_EXTERNAL_MP) == path) {
+			sprintf(ph_path, "%s%s", VFS_NATIVE_SDCARD_MOUNT_POINT, path+strlen(VFS_NATIVE_EXTERNAL_MP));
+		}
+		else if (strstr(path, VFS_NATIVE_INTERNAL_MP) == path) {
 			sprintf(ph_path, "%s%s", VFS_NATIVE_MOUNT_POINT, path+strlen(VFS_NATIVE_INTERNAL_MP)-1);
-    	}
-    	else if (strstr(path, VFS_NATIVE_EXTERNAL_MP) == path) {
-			sprintf(ph_path, "%s%s", VFS_NATIVE_SDCARD_MOUNT_POINT, path+strlen(VFS_NATIVE_EXTERNAL_MP)-1);
-    	}
-    	else return -3;
-    }
-    else {
-    	strcpy(ph_path, cwd);
-    	if (ph_path[strlen(ph_path)-1] != '/') strcat(ph_path, "/");
+		}
+		else return -3;
+	}
+	else {
+		strcpy(ph_path, cwd);
+		if (ph_path[strlen(ph_path)-1] != '/') strcat(ph_path, "/");
 		strcat(ph_path, path);
-    }
-    return 0;
+	}
+	return 0;
 }
 
 //-----------------------------------------------
@@ -154,11 +154,11 @@ int physicalPathN(const char *path, char *ph_path, size_t ph_path_maxlen)
 {
 	if (path[0] == '/') {
 		// absolute path
-		if (strncmp(path, VFS_NATIVE_INTERNAL_MP, strlen(VFS_NATIVE_INTERNAL_MP)) == 0) {
-			int res = snprintf(ph_path, ph_path_maxlen, "%s%s", VFS_NATIVE_MOUNT_POINT, path+strlen(VFS_NATIVE_INTERNAL_MP)-1);
+		if (strncmp(path, VFS_NATIVE_EXTERNAL_MP, strlen(VFS_NATIVE_EXTERNAL_MP)) == 0) {
+			int res = snprintf(ph_path, ph_path_maxlen, "%s%s", VFS_NATIVE_SDCARD_MOUNT_POINT, path+strlen(VFS_NATIVE_EXTERNAL_MP));
 			if (res >= ph_path_maxlen) return -3;
-		} else if (strncmp(path, VFS_NATIVE_EXTERNAL_MP, strlen(VFS_NATIVE_EXTERNAL_MP)) == 0) {
-			int res = snprintf(ph_path, ph_path_maxlen, "%s%s", VFS_NATIVE_SDCARD_MOUNT_POINT, path+strlen(VFS_NATIVE_EXTERNAL_MP)-1);
+		} else if (strncmp(path, VFS_NATIVE_INTERNAL_MP, strlen(VFS_NATIVE_INTERNAL_MP)) == 0) {
+			int res = snprintf(ph_path, ph_path_maxlen, "%s%s", VFS_NATIVE_MOUNT_POINT, path+strlen(VFS_NATIVE_INTERNAL_MP)-1);
 			if (res >= ph_path_maxlen) return -3;
 		} else {
 			return -3;
