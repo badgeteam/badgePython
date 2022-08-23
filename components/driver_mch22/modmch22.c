@@ -307,6 +307,7 @@ static mp_obj_t read_vusb() {
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(read_vusb_obj, read_vusb);
 
+typedef enum {SAO_IO0_PIN, SAO_IO1_PIN, PROTO_0_PIN, PROTO_1_PIN} gpio_name_t;
 
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
@@ -329,6 +330,11 @@ STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_exit_python), MP_ROM_PTR(&mch22_return_to_launcher_obj)},
     {MP_ROM_QSTR(MP_QSTR_read_vbat), MP_ROM_PTR(&read_vbat_obj)},
     {MP_ROM_QSTR(MP_QSTR_read_vusb), MP_ROM_PTR(&read_vusb_obj)},
+
+    { MP_ROM_QSTR(MP_QSTR_SAO_IO0_PIN), MP_ROM_INT(SAO_IO0_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_SAO_IO1_PIN), MP_ROM_INT(SAO_IO1_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_PROTO_0_PIN), MP_ROM_INT(PROTO_0_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_PROTO_1_PIN), MP_ROM_INT(PROTO_1_PIN) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
