@@ -53,7 +53,7 @@ void driver_mch22_init() {
     rp2040.pin_interrupt = GPIO_INT_RP2040;
     rp2040.queue = xQueueCreate(15, sizeof(rp2040_input_message_t));
     rp2040_init(&rp2040);
-    
+
     ice40.spi_bus               = SPI_BUS;
     ice40.pin_cs                = GPIO_SPI_CS_FPGA;
     ice40.pin_done              = -1;
@@ -90,6 +90,38 @@ static mp_obj_t buttons() {
     return mp_obj_new_int(value);
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(buttons_obj, buttons);
+
+static mp_obj_t get_gpio_dir(mp_obj_t gpio) {
+    uint8_t value_gpio = mp_obj_get_int(gpio);
+    uint8_t value_direction;
+    rp2040_get_gpio_dir(&rp2040, value_gpio, &value_direction);
+    return mp_obj_new_int(value_direction);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(get_gpio_dir_obj, get_gpio_dir);
+
+static mp_obj_t set_gpio_dir(mp_obj_t gpio, mp_obj_t value) {
+    uint8_t value_gpio = mp_obj_get_int(gpio);
+    bool value_value = (bool) mp_obj_get_int(value);
+    rp2040_set_gpio_dir(&rp2040, value_gpio, value_value);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(set_gpio_dir_obj, set_gpio_dir);
+
+static mp_obj_t get_gpio_value(mp_obj_t gpio) {
+    uint8_t value_gpio = mp_obj_get_int(gpio);
+    uint8_t value_value;
+    rp2040_get_gpio_value(&rp2040, value_gpio, &value_value);
+    return mp_obj_new_int(value_value);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(get_gpio_value_obj, get_gpio_value);
+
+static mp_obj_t set_gpio_value(mp_obj_t gpio, mp_obj_t value) {
+    uint8_t value_gpio = mp_obj_get_int(gpio);
+    bool value_value = (bool) mp_obj_get_int(value);
+    rp2040_set_gpio_value(&rp2040, value_gpio, value_value);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(set_gpio_value_obj, set_gpio_value);
 
 static mp_obj_t set_handler(mp_obj_t handler) {
     touch_callback = handler;
@@ -275,9 +307,14 @@ static mp_obj_t read_vusb() {
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(read_vusb_obj, read_vusb);
 
+typedef enum {SAO_IO0_PIN, SAO_IO1_PIN, PROTO_0_PIN, PROTO_1_PIN} gpio_name_t;
 
 STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&buttons_obj)},
+    {MP_ROM_QSTR(MP_QSTR_get_gpio_dir), MP_ROM_PTR(&get_gpio_dir_obj)},
+    {MP_ROM_QSTR(MP_QSTR_set_gpio_dir), MP_ROM_PTR(&set_gpio_dir_obj)},
+    {MP_ROM_QSTR(MP_QSTR_get_gpio_value), MP_ROM_PTR(&get_gpio_value_obj)},
+    {MP_ROM_QSTR(MP_QSTR_set_gpio_value), MP_ROM_PTR(&set_gpio_value_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&get_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&set_brightness_obj)},
     {MP_ROM_QSTR(MP_QSTR_set_handler), MP_ROM_PTR(&set_handler_obj)},
@@ -293,6 +330,11 @@ STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_exit_python), MP_ROM_PTR(&mch22_return_to_launcher_obj)},
     {MP_ROM_QSTR(MP_QSTR_read_vbat), MP_ROM_PTR(&read_vbat_obj)},
     {MP_ROM_QSTR(MP_QSTR_read_vusb), MP_ROM_PTR(&read_vusb_obj)},
+
+    { MP_ROM_QSTR(MP_QSTR_SAO_IO0_PIN), MP_ROM_INT(SAO_IO0_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_SAO_IO1_PIN), MP_ROM_INT(SAO_IO1_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_PROTO_0_PIN), MP_ROM_INT(PROTO_0_PIN) },
+    { MP_ROM_QSTR(MP_QSTR_PROTO_1_PIN), MP_ROM_INT(PROTO_1_PIN) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
