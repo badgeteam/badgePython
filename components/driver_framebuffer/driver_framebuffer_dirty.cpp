@@ -39,6 +39,10 @@ void driver_framebuffer_set_dirty_area(int16_t x0, int16_t y0, int16_t x1, int16
 	if (dirty_y0 > FB_HEIGHT-1) dirty_y0 = FB_HEIGHT - 1;
 	if (dirty_x1 > FB_WIDTH-1)  dirty_x1 = FB_WIDTH  - 1;
 	if (dirty_y1 > FB_HEIGHT-1) dirty_y1 = FB_HEIGHT - 1;
+	if (dirty_x0 < 0) dirty_x0 = 0;
+	if (dirty_y0 < 0) dirty_y0 = 0;
+	if (dirty_x1 < 0) dirty_x1 = 0;
+	if (dirty_y1 < 0) dirty_y1 = 0;
 }
 
 void driver_framebuffer_get_dirty_area(int16_t* x0, int16_t* y0, int16_t* x1, int16_t* y1)

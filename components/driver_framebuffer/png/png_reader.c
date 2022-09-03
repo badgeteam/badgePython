@@ -192,7 +192,7 @@ lib_png_paeth(uint8_t _a, uint8_t _b, uint8_t _c)
 }
 
 static inline int
-lib_png_decode(Window* window, struct lib_png_reader *pr, uint32_t width, uint32_t height, uint32_t scanline_width, uint16_t offset_x, uint16_t offset_y, uint32_t dst_min_x, uint32_t dst_min_y, uint32_t dst_width, uint32_t dst_height, uint32_t dst_pixlen, uint32_t dst_linelen)
+lib_png_decode(Window* window, struct lib_png_reader *pr, uint32_t width, uint32_t height, uint32_t scanline_width, int16_t offset_x, int16_t offset_y, uint32_t dst_min_x, uint32_t dst_min_y, uint32_t dst_width, uint32_t dst_height, uint32_t dst_pixlen, uint32_t dst_linelen)
 {
 	memset(pr->scanline, 0, scanline_width);
 
@@ -505,7 +505,7 @@ lib_png_read_header(struct lib_png_reader *pr)
 	return 0;
 }
 
-int lib_png_load_image(Window* window, struct lib_png_reader *pr, uint16_t offset_x, uint16_t offset_y, uint32_t dst_min_x, uint32_t dst_min_y, uint32_t dst_width, uint32_t dst_height, uint32_t dst_linelen)
+int lib_png_load_image(Window* window, struct lib_png_reader *pr, int16_t offset_x, int16_t offset_y, uint32_t dst_min_x, uint32_t dst_min_y, uint32_t dst_width, uint32_t dst_height, uint32_t dst_linelen)
 {
 	// read header
 	int res = lib_png_read_header(pr);
