@@ -23,6 +23,10 @@ prepare-campzone2019: prepare
 	cp configs/campzone2019_defconfig sdkconfig
 	cp partition_tables/campzone2019.csv partitions.csv
 
+prepare-pixel: prepare
+	cp configs/pixel_defconfig sdkconfig
+	cp partition_tables/pixel.csv partitions.csv
+
 clean:
 	rm -rf "$(BUILDDIR)"
 	source "$(IDF_PATH)/export.sh" && idf.py clean

@@ -76,7 +76,7 @@ menu "Driver: Audio mixer"
 
 	choice DRIVER_SNDMIXER_DATA_FORMAT
     		prompt "I2S data format"
-    		default DRIVER_SNDMIXER_DATA_FORMAT_UNSIGNED
+    		default DRIVER_SNDMIXER_I2S_DATA_FORMAT_UNSIGNED
     		depends on DRIVER_SNDMIXER_ENABLE
     	config DRIVER_SNDMIXER_I2S_DATA_FORMAT_UNSIGNED
     		bool "Unsigned integers (e.g. internal DAC)"

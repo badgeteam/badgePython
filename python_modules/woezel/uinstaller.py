@@ -1,4 +1,4 @@
-import woezel, interface, system, gc, time
+import woezel, uinterface, system, gc, time
 from esp32 import NVS
 
 nvs = NVS("uinstaller")
