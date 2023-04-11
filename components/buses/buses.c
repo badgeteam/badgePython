@@ -95,7 +95,7 @@ esp_err_t start_buses() {
         #ifdef CONFIG_PIN_PULL_I2C1_CLK
             i2c1BusConfiguration.scl_pullup_en = GPIO_PULLUP_ENABLE,
         #else
-            i2cqBusConfiguration.scl_pullup_en = GPIO_PULLUP_DISABLE,
+            i2c1BusConfiguration.scl_pullup_en = GPIO_PULLUP_DISABLE,
         #endif
 
         res = i2c_param_config(I2C_NUM_1, &i2c1BusConfiguration);
