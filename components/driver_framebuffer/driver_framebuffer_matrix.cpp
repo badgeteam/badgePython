@@ -15,7 +15,7 @@
 
 
 //creates a 2D matrix representing the given rotation in radians
-matrix_2d matrix_2d_rotate(float angle) {
+matrix_2d old_matrix_2d_rotate(float angle) {
     float dSin = sin(angle);
     float dCos = cos(angle);
     return (matrix_2d){ .arr = {
@@ -25,7 +25,7 @@ matrix_2d matrix_2d_rotate(float angle) {
 }
 
 //creates a 2D matrix representing the given translation
-matrix_2d matrix_2d_translate(float x, float y) {
+matrix_2d old_matrix_2d_translate(float x, float y) {
     return (matrix_2d){ .arr = {
             1, 0, x,
             0, 1, y
@@ -33,7 +33,7 @@ matrix_2d matrix_2d_translate(float x, float y) {
 }
 
 //creates a 2D matrix representing the given scaling
-matrix_2d matrix_2d_scale(float x, float y) {
+matrix_2d old_matrix_2d_scale(float x, float y) {
     return (matrix_2d){ .arr = {
             y, 0, 0,
             0, x, 0
@@ -41,12 +41,12 @@ matrix_2d matrix_2d_scale(float x, float y) {
 }
 
 // Potentially.
-// matrix_3x2_2d matrix_2d_shear(float x, float y);
+// matrix_3x2_2d old_matrix_2d_shear(float x, float y);
 
 
 //creates a 3D matrix representing the given rotation in radians
 //rotates in order z->y->x
-matrix_3d matrix_3d_rotate(float x, float y, float z) {
+matrix_3d old_matrix_3d_rotate(float x, float y, float z) {
     float xSin = sin(x);
     float xCos = cos(x);
     float ySin = sin(y);
@@ -69,11 +69,11 @@ matrix_3d matrix_3d_rotate(float x, float y, float z) {
         0,    0,     1, 0
     }};
     // Z * Y * X
-    return matrix_3d_multiply(matrix_3d_multiply(rotZ, rotY), rotX);
+    return old_matrix_3d_multiply(old_matrix_3d_multiply(rotZ, rotY), rotX);
 }
 
 //creates a 3D matrix representing the given translation
-matrix_3d matrix_3d_translate(float x, float y, float z) {
+matrix_3d old_matrix_3d_translate(float x, float y, float z) {
     return (matrix_3d){ .arr = {
             1, 0, 0, x,
             0, 1, 0, y,
@@ -82,7 +82,7 @@ matrix_3d matrix_3d_translate(float x, float y, float z) {
 }
 
 //creates a 3D matrix representing the given scaling
-matrix_3d matrix_3d_scale(float x, float y, float z) {
+matrix_3d old_matrix_3d_scale(float x, float y, float z) {
     return (matrix_3d){ .arr = {
             x, 0, 0, 0,
             0, y, 0, 0,
@@ -91,7 +91,7 @@ matrix_3d matrix_3d_scale(float x, float y, float z) {
 }
 
 // Potentially.
-// matrix_3d matrix_3d_shear(float x, float y, float z);
+// matrix_3d old_matrix_3d_shear(float x, float y, float z);
 
 
 /* MATRIX OPERATIONS */
@@ -99,7 +99,7 @@ matrix_3d matrix_3d_scale(float x, float y, float z) {
 
 //checks whether or not the matrix is an identity matrix
 //the identity matrix is a special transformation that represents no transformation being applied at all
-bool matrix_2d_is_identity(matrix_2d matrix) {
+bool old_matrix_2d_is_identity(matrix_2d matrix) {
     return matrix.var.a0 == 1 && matrix.var.a1 == 0 && matrix.var.a2 == 0 &&
            matrix.var.b0 == 0 && matrix.var.b1 == 1 && matrix.var.b2 == 0;
 }
@@ -133,7 +133,7 @@ bool matrix_2d_is_identity(matrix_2d matrix) {
  */
 //performs a matrix multiplication, internally factors in the bottom row which is omitted in storage
 //TODO: potentially convert to assembly for even faster hyperspeeds
-matrix_2d matrix_2d_multiply(matrix_2d left, matrix_2d right) {
+matrix_2d old_matrix_2d_multiply(matrix_2d left, matrix_2d right) {
 	return (matrix_2d) { .arr = {
 		left.var.a0*right.var.a0 + left.var.a1*right.var.b0, left.var.a0*right.var.a1 + left.var.a1*right.var.b1, left.var.a0*right.var.a2 + left.var.a1*right.var.b2 + left.var.a2, 
 		left.var.b0*right.var.a0 + left.var.b1*right.var.b0, left.var.b0*right.var.a1 + left.var.b1*right.var.b1, left.var.b0*right.var.a2 + left.var.b1*right.var.b2 + left.var.b2
@@ -160,7 +160,7 @@ matrix_2d matrix_2d_multiply(matrix_2d left, matrix_2d right) {
  */
 //transforms the point according to the matrix
 //TODO: potentially convert to assembly for even faster hyperspeeds
-void matrix_2d_transform_point(matrix_2d matrix, float *x, float *y) {
+void old_matrix_2d_transform_point(matrix_2d matrix, float *x, float *y) {
     float xIn = *x;
     float yIn = *y;
     x[0] = matrix.var.a0*xIn + matrix.var.a1*yIn + matrix.var.a2;
@@ -169,7 +169,7 @@ void matrix_2d_transform_point(matrix_2d matrix, float *x, float *y) {
 
 
 //checks whether or not the matrix is an identity matrix
-bool matrix_3d_is_identity(matrix_3d matrix) {
+bool old_matrix_3d_is_identity(matrix_3d matrix) {
     return matrix.var.a0 == 1 && matrix.var.a1 == 0 && matrix.var.a2 == 0 && matrix.var.a3 == 0 &&
            matrix.var.b0 == 0 && matrix.var.b1 == 1 && matrix.var.b2 == 0 && matrix.var.b3 == 0 &&
            matrix.var.c0 == 0 && matrix.var.c1 == 0 && matrix.var.c2 == 1 && matrix.var.c3 == 0;
@@ -181,7 +181,7 @@ bool matrix_3d_is_identity(matrix_3d matrix) {
  * [i  j  k  l] [w  x  y  z] [io + js + kw   ip + jt + kx   iq + ju + ky   ir + jv + kz + l]
  */
 //performs a matrix multiplication, internally factors in the bottom row which is omitted in storage
-matrix_3d matrix_3d_multiply(matrix_3d left, matrix_3d right) {
+matrix_3d old_matrix_3d_multiply(matrix_3d left, matrix_3d right) {
     return (matrix_3d) { .arr = {
         left.var.a0*right.var.a0 + left.var.a1*right.var.b0 + left.var.a2*right.var.c0, left.var.a0*right.var.a1 + left.var.a1*right.var.b1 + left.var.a2*right.var.c1, left.var.a0*right.var.a2 + left.var.a1*right.var.b2 + left.var.a2*right.var.c2, left.var.a0*right.var.a3 + left.var.a1*right.var.b3 + left.var.a2*right.var.c3 + left.var.a3,
         left.var.b0*right.var.a0 + left.var.b1*right.var.b0 + left.var.b2*right.var.c0, left.var.b0*right.var.a1 + left.var.b1*right.var.b1 + left.var.b2*right.var.c1, left.var.b0*right.var.a2 + left.var.b1*right.var.b2 + left.var.b2*right.var.c2, left.var.b0*right.var.a3 + left.var.b1*right.var.b3 + left.var.b2*right.var.c3 + left.var.b3,
@@ -195,7 +195,7 @@ matrix_3d matrix_3d_multiply(matrix_3d left, matrix_3d right) {
  * [i  j  k  l] [r]  [i]  [j]  [k] [l] [pi + qj + rk + l]
  */
 //transforms the point according to the matrix
-void matrix_3d_transform_point(matrix_3d matrix, float *x, float *y, float *z) {
+void old_matrix_3d_transform_point(matrix_3d matrix, float *x, float *y, float *z) {
     float xIn = *x;
     float yIn = *y;
     float zIn = *z;
@@ -216,8 +216,8 @@ void matrix_3d_transform_point(matrix_3d matrix, float *x, float *y, float *z) {
 
 
 //unlinks and deletes the entire stack
-void matrix_stack_2d_unlink_all(matrix_2d_link *link) {
-    matrix_2d_link *next;
+void matrix_stack_2d_unlink_all(old_matrix_2d_link *link) {
+    old_matrix_2d_link *next;
     while (link != NULL) {
         next = link->next;
         delete link;
@@ -226,8 +226,8 @@ void matrix_stack_2d_unlink_all(matrix_2d_link *link) {
 }
 
 //unlinks and deletes the entire stack
-void matrix_stack_3d_unlink_all(matrix_3d_link *link) {
-    matrix_3d_link *next;
+void matrix_stack_3d_unlink_all(old_matrix_3d_link *link) {
+    old_matrix_3d_link *next;
     while (link != NULL) {
         next = link->next;
         delete link;
@@ -239,7 +239,7 @@ void matrix_stack_3d_unlink_all(matrix_3d_link *link) {
 //initialises the given matrix stack so as to be ready for use
 void matrix_stack_2d_init(matrix_stack_2d *stack) {
     stack->capacity = CONFIG_MATRIX_STACK_SIZE;
-    stack->current = matrix_2d_identity();
+    stack->current = old_matrix_2d_identity();
     stack->matrices = NULL;
     stack->size = 0;
 }
@@ -253,7 +253,7 @@ void matrix_stack_2d_clear(matrix_stack_2d *stack) {
 
     stack->size = 0;
     stack->capacity = CONFIG_MATRIX_STACK_SIZE;
-    stack->current = matrix_2d_identity();
+    stack->current = old_matrix_2d_identity();
 }
 
 //returns 1 if the stack would become too big
@@ -262,8 +262,8 @@ esp_err_t matrix_stack_2d_push(matrix_stack_2d *stack) {
         return 1;
     }
     //enlink current matrix
-    matrix_2d_link *next = stack->matrices;
-    stack->matrices = new matrix_2d_link();
+    old_matrix_2d_link *next = stack->matrices;
+    stack->matrices = new old_matrix_2d_link();
     stack->matrices->matrix = stack->current;
     stack->matrices->next = next;
 
@@ -289,7 +289,7 @@ esp_err_t matrix_stack_2d_pop(matrix_stack_2d *stack) {
 //initialises the given matrix stack so as to be ready for use
 void matrix_stack_3d_init(matrix_stack_3d *stack) {
     stack->capacity = CONFIG_MATRIX_STACK_SIZE;
-    stack->current = matrix_3d_identity();
+    stack->current = old_matrix_3d_identity();
     stack->matrices = NULL;
     stack->size = 0;
 }
@@ -303,7 +303,7 @@ void matrix_stack_3d_clear(matrix_stack_3d *stack) {
 
     stack->size = 0;
     stack->capacity = CONFIG_MATRIX_STACK_SIZE;
-    stack->current = matrix_3d_identity();
+    stack->current = old_matrix_3d_identity();
 }
 
 //returns 1 if the stack would become too big
@@ -312,8 +312,8 @@ esp_err_t matrix_stack_3d_push(matrix_stack_3d *stack) {
         return 1;
     }
     //enlink current matrix
-    matrix_3d_link *next = stack->matrices;
-    stack->matrices = new matrix_3d_link();
+    old_matrix_3d_link *next = stack->matrices;
+    stack->matrices = new old_matrix_3d_link();
     stack->matrices->matrix = stack->current;
     stack->matrices->next = next;
 

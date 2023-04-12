@@ -282,29 +282,29 @@ void driver_framebuffer_quad(Window* window, float x0, float y0, float x1, float
 float circle_test_radius(matrix_stack_2d* stack, float radius)
 {
 	matrix_2d current = stack->current;
-	matrix_2d rotation = matrix_2d_rotate(M_PI * 0.25);
+	matrix_2d rotation = old_matrix_2d_rotate(M_PI * 0.25);
 	float maxSqr = 0;
 	float x = 0;
 	float y = radius;
-	matrix_2d_transform_point(current, &x, &y);
+	old_matrix_2d_transform_point(current, &x, &y);
 	float sqrDist = x * x + y * y;
 	if (sqrDist > maxSqr) {
 		maxSqr = sqrDist;
 	}
-	current = matrix_2d_multiply(current, rotation);
+	current = old_matrix_2d_multiply(current, rotation);
 	maxSqr = 0;
 	x = 0;
 	y = radius;
-	matrix_2d_transform_point(current, &x, &y);
+	old_matrix_2d_transform_point(current, &x, &y);
 	sqrDist = x * x + y * y;
 	if (sqrDist > maxSqr) {
 		maxSqr = sqrDist;
 	}
-	current = matrix_2d_multiply(current, rotation);
+	current = old_matrix_2d_multiply(current, rotation);
 	maxSqr = 0;
 	x = 0;
 	y = radius;
-	matrix_2d_transform_point(current, &x, &y);
+	old_matrix_2d_transform_point(current, &x, &y);
 	sqrDist = x * x + y * y;
 	if (sqrDist > maxSqr) {
 		maxSqr = sqrDist;
@@ -321,23 +321,23 @@ void driver_framebuffer_circle_new(Window* window, matrix_stack_2d* stack, float
 	// Make a copy of the matrix for later use
 	matrix_2d current = stack->current;
 	// Apply this multiple times instead of slow sin/cos
-	matrix_2d rotationStep = matrix_2d_rotate(anglePerStep);
-	current = matrix_2d_multiply(current, matrix_2d_translate(x, y));
+	matrix_2d rotationStep = old_matrix_2d_rotate(anglePerStep);
+	current = old_matrix_2d_multiply(current, old_matrix_2d_translate(x, y));
 	if (startAngle > 0.0000001) {
 		// Rotate to the starting angle
-		current = matrix_2d_multiply(current, matrix_2d_rotate(startAngle));
+		current = old_matrix_2d_multiply(current, old_matrix_2d_rotate(startAngle));
 	}
-	matrix_2d_transform_point(stack->current, &x, &y);
+	old_matrix_2d_transform_point(stack->current, &x, &y);
 	// Start circling!
 	if (fill) {
 		float lastX = 0;
 		float lastY = -radius;
-		matrix_2d_transform_point(current, &lastX, &lastY);
+		old_matrix_2d_transform_point(current, &lastX, &lastY);
 		for (int i = 0; i < nSteps; i++) {
 			float newX = 0;
 			float newY = -radius;
-			current = matrix_2d_multiply(current, rotationStep);
-			matrix_2d_transform_point(current, &newX, &newY);
+			current = old_matrix_2d_multiply(current, rotationStep);
+			old_matrix_2d_transform_point(current, &newX, &newY);
 			driver_framebuffer_triangle(window, x, y, lastX, lastY, newX, newY, color);
 			lastX = newX;
 			lastY = newY;
@@ -347,12 +347,12 @@ void driver_framebuffer_circle_new(Window* window, matrix_stack_2d* stack, float
 	{
 		float lastX = 0;
 		float lastY = -radius;
-		matrix_2d_transform_point(current, &lastX, &lastY);
+		old_matrix_2d_transform_point(current, &lastX, &lastY);
 		for (int i = 0; i < nSteps; i++) {
 			float newX = 0;
 			float newY = -radius;
-			current = matrix_2d_multiply(current, rotationStep);
-			matrix_2d_transform_point(current, &newX, &newY);
+			current = old_matrix_2d_multiply(current, rotationStep);
+			old_matrix_2d_transform_point(current, &newX, &newY);
 			driver_framebuffer_line(window, (int) (lastX + 0.5), (int) (lastY + 0.5), (int) (newX + 0.5), (int) (newY + 0.5), color);
 			lastX = newX;
 			lastY = newY;
@@ -400,9 +400,9 @@ void render_tri_colored(triangle_3d triangle, uint32_t color)
 	
 	// Temporary method to get 3D started and tested.
 	// First, transform all points...
-	matrix_3d_transform_point(stack_3d_global.current, &triangle.x0, &triangle.y0, &triangle.z0);
-	matrix_3d_transform_point(stack_3d_global.current, &triangle.x1, &triangle.y1, &triangle.z1);
-	matrix_3d_transform_point(stack_3d_global.current, &triangle.x2, &triangle.y2, &triangle.z2);
+	old_matrix_3d_transform_point(stack_3d_global.current, &triangle.x0, &triangle.y0, &triangle.z0);
+	old_matrix_3d_transform_point(stack_3d_global.current, &triangle.x1, &triangle.y1, &triangle.z1);
+	old_matrix_3d_transform_point(stack_3d_global.current, &triangle.x2, &triangle.y2, &triangle.z2);
 	// Next project 3D -> 2D (x, y divided by z)
 	float verticalFieldOfView = 1.0f / tan(M_PI * 0.125f); // 12.5 degrees of vertical field of view
 	float aspectRatio = depthBuffer->width / depthBuffer->height;

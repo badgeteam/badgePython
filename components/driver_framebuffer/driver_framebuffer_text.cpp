@@ -270,7 +270,7 @@ uint16_t driver_framebuffer_print(Window* window, const char* str, int16_t x0, i
 	int16_t x;
 	int16_t y;
 	#ifdef CONFIG_G_NEW_TEXT
-	if (matrix_2d_is_identity(stack->current)) {
+	if (old_matrix_2d_is_identity(stack->current)) {
 	#endif
 		x = x0;
 		y = y0;
@@ -313,10 +313,10 @@ uint16_t driver_framebuffer_print(Window* window, const char* str, int16_t x0, i
 		float ty2 = y0 + textHeight;
 		float tx3 = x0;
 		float ty3 = y0 + textHeight;
-		matrix_2d_transform_point(stack->current, &tx0, &ty0);
-		matrix_2d_transform_point(stack->current, &tx1, &ty1);
-		matrix_2d_transform_point(stack->current, &tx2, &ty2);
-		matrix_2d_transform_point(stack->current, &tx3, &ty3);
+		old_matrix_2d_transform_point(stack->current, &tx0, &ty0);
+		old_matrix_2d_transform_point(stack->current, &tx1, &ty1);
+		old_matrix_2d_transform_point(stack->current, &tx2, &ty2);
+		old_matrix_2d_transform_point(stack->current, &tx3, &ty3);
 		triangle_uv uv0 = {
 			.u0 = 0,
 			.v0 = 0,

@@ -349,7 +349,7 @@ static mp_obj_t framebuffer_get_pixel(mp_uint_t n_args, const mp_obj_t *args) {
 	float y = mp_obj_get_float(args[paramOffset + 1]);
 	#ifdef CONFIG_G_MATRIX_ENABLE
 	if (!raw) {
-		matrix_2d_transform_point(stack->current, &x, &y);
+		old_matrix_2d_transform_point(stack->current, &x, &y);
 	}
 	#endif
 	
@@ -388,7 +388,7 @@ static mp_obj_t framebuffer_draw_pixel(mp_uint_t n_args, const mp_obj_t *args) {
 	
 	#ifdef CONFIG_G_MATRIX_ENABLE
 	if (!raw) {
-		matrix_2d_transform_point(stack->current, &x, &y);
+		old_matrix_2d_transform_point(stack->current, &x, &y);
 	}
 	#endif
 
@@ -461,8 +461,8 @@ static mp_obj_t framebuffer_draw_line(mp_uint_t n_args, const mp_obj_t *args)
 
 	#ifdef CONFIG_G_MATRIX_ENABLE
 	//transform point according to the transformation
-	matrix_2d_transform_point(stack->current, &x0, &y0);
-	matrix_2d_transform_point(stack->current, &x1, &y1);
+	old_matrix_2d_transform_point(stack->current, &x0, &y0);
+	old_matrix_2d_transform_point(stack->current, &x1, &y1);
 	#endif
 	//convert back to int so the line drawer will accept it
 	int16_t x0i = (int16_t) (x0 + 0.5);
@@ -560,9 +560,9 @@ static mp_obj_t framebuffer_draw_triangle(mp_uint_t n_args, const mp_obj_t *args
 		float x2 = mp_obj_get_float(args[paramOffset + 4]);
 		float y2 = mp_obj_get_float(args[paramOffset + 5]);
 		uint32_t color = mp_obj_get_int(args[paramOffset + 6]);
-		matrix_2d_transform_point(stack_2d->current, &x0, &y0);
-		matrix_2d_transform_point(stack_2d->current, &x1, &y1);
-		matrix_2d_transform_point(stack_2d->current, &x2, &y2);
+		old_matrix_2d_transform_point(stack_2d->current, &x0, &y0);
+		old_matrix_2d_transform_point(stack_2d->current, &x1, &y1);
+		old_matrix_2d_transform_point(stack_2d->current, &x2, &y2);
 		driver_framebuffer_triangle(window, x0, y0, x1, y1, x2, y2, color);
 	}
 	return mp_const_none;
@@ -633,10 +633,10 @@ static mp_obj_t framebuffer_draw_quad(mp_uint_t n_args, const mp_obj_t *args)
 		float y3 = mp_obj_get_float(args[paramOffset + 10]);
 		float z3 = mp_obj_get_float(args[paramOffset + 11]);
 		uint32_t color = mp_obj_get_int(args[paramOffset + 12]);
-		//matrix_3d_transform_point(stack_3d->current, &x0, &y0, &z0);
-		//matrix_3d_transform_point(stack_3d->current, &x1, &y1, &z1);
-		//matrix_3d_transform_point(stack_3d->current, &x2, &y2, &z2);
-		//matrix_3d_transform_point(stack_3d->current, &x3, &y3, &z3);
+		//old_matrix_3d_transform_point(stack_3d->current, &x0, &y0, &z0);
+		//old_matrix_3d_transform_point(stack_3d->current, &x1, &y1, &z1);
+		//old_matrix_3d_transform_point(stack_3d->current, &x2, &y2, &z2);
+		//old_matrix_3d_transform_point(stack_3d->current, &x3, &y3, &z3);
 		int res = driver_framebuffer_tri3d((triangle_3d) {
 			.x0 = x0, .y0 = y0, .z0 = z0,
 			.x1 = x1, .y1 = y1, .z1 = z1,
@@ -664,10 +664,10 @@ static mp_obj_t framebuffer_draw_quad(mp_uint_t n_args, const mp_obj_t *args)
 		float x3 = mp_obj_get_float(args[paramOffset + 6]);
 		float y3 = mp_obj_get_float(args[paramOffset + 7]);
 		uint32_t color = mp_obj_get_int(args[paramOffset + 8]);
-		matrix_2d_transform_point(stack_2d->current, &x0, &y0);
-		matrix_2d_transform_point(stack_2d->current, &x1, &y1);
-		matrix_2d_transform_point(stack_2d->current, &x2, &y2);
-		matrix_2d_transform_point(stack_2d->current, &x3, &y3);
+		old_matrix_2d_transform_point(stack_2d->current, &x0, &y0);
+		old_matrix_2d_transform_point(stack_2d->current, &x1, &y1);
+		old_matrix_2d_transform_point(stack_2d->current, &x2, &y2);
+		old_matrix_2d_transform_point(stack_2d->current, &x3, &y3);
 		driver_framebuffer_quad(window, x0, y0, x1, y1, x2, y2, x3, y3, color);
 	}
 	return mp_const_none;
@@ -706,10 +706,10 @@ static mp_obj_t framebuffer_draw_rect(mp_uint_t n_args, const mp_obj_t *args)
 	float y2 = y0 + h;
 	float x3 = x0;
 	float y3 = y2;
-	matrix_2d_transform_point(stack->current, &x0, &y0);
-	matrix_2d_transform_point(stack->current, &x1, &y1);
-	matrix_2d_transform_point(stack->current, &x2, &y2);
-	matrix_2d_transform_point(stack->current, &x3, &y3);
+	old_matrix_2d_transform_point(stack->current, &x0, &y0);
+	old_matrix_2d_transform_point(stack->current, &x1, &y1);
+	old_matrix_2d_transform_point(stack->current, &x2, &y2);
+	old_matrix_2d_transform_point(stack->current, &x3, &y3);
 	int fill = mp_obj_get_int(args[n_args-2]);
 	uint32_t color = mp_obj_get_int(args[n_args-1]);
 	//driver_framebuffer_rect(window, x, y, w, h, fill, color);
@@ -1213,7 +1213,7 @@ static mp_obj_t framebuffer_clearMatrix(mp_uint_t n_args, const mp_obj_t *args)
 		}
 		else
 		{
-			stack_3d->current = matrix_3d_identity();
+			stack_3d->current = old_matrix_3d_identity();
 		}
 	}
 	else
@@ -1223,7 +1223,7 @@ static mp_obj_t framebuffer_clearMatrix(mp_uint_t n_args, const mp_obj_t *args)
 	}
 	else
 	{
-		stack_2d->current = matrix_2d_identity();
+		stack_2d->current = old_matrix_2d_identity();
 	}
 	return mp_const_none;
 }
@@ -1444,7 +1444,7 @@ static mp_obj_t framebuffer_transformPoint(mp_uint_t n_args, const mp_obj_t *arg
 		float y = mp_obj_get_float(args[paramOffset + 1]);
 		float z = mp_obj_get_float(args[paramOffset + 2]);
 		
-		matrix_3d_transform_point(stack_3d->current, &x, &y, &z);
+		old_matrix_3d_transform_point(stack_3d->current, &x, &y, &z);
 		
 		mp_obj_t out[2] = {
 			mp_obj_new_float(x),
@@ -1459,7 +1459,7 @@ static mp_obj_t framebuffer_transformPoint(mp_uint_t n_args, const mp_obj_t *arg
 		float x = mp_obj_get_float(args[paramOffset]);
 		float y = mp_obj_get_float(args[paramOffset + 1]);
 		
-		matrix_2d_transform_point(stack_2d->current, &x, &y);
+		old_matrix_2d_transform_point(stack_2d->current, &x, &y);
 		
 		mp_obj_t out[2] = {
 			mp_obj_new_float(x),
@@ -1537,12 +1537,12 @@ static mp_obj_t framebuffer_translate(mp_uint_t n_args, const mp_obj_t *args)
 	
 	#ifdef CONFIG_LIB3D_ENABLE
 	if (is_3d) {
-		stack_3d->current = matrix_3d_multiply(stack_3d->current, matrix_3d_translate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
+		stack_3d->current = old_matrix_3d_multiply(stack_3d->current, old_matrix_3d_translate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
 	}
 	else
 	#endif
 	{
-		stack_2d->current = matrix_2d_multiply(stack_2d->current, matrix_2d_translate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1])));
+		stack_2d->current = old_matrix_2d_multiply(stack_2d->current, old_matrix_2d_translate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1])));
 	}
 	return mp_const_none;
 }
@@ -1615,12 +1615,12 @@ static mp_obj_t framebuffer_rotate(mp_uint_t n_args, const mp_obj_t *args)
 	
 	#ifdef CONFIG_LIB3D_ENABLE
 	if (is_3d) {
-		stack_3d->current = matrix_3d_multiply(stack_3d->current, matrix_3d_rotate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
+		stack_3d->current = old_matrix_3d_multiply(stack_3d->current, old_matrix_3d_rotate(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
 	}
 	else
 	#endif
 	{
-		stack_2d->current = matrix_2d_multiply(stack_2d->current, matrix_2d_rotate(mp_obj_get_float(args[paramOffset])));
+		stack_2d->current = old_matrix_2d_multiply(stack_2d->current, old_matrix_2d_rotate(mp_obj_get_float(args[paramOffset])));
 	}
 
 	return mp_const_none;
@@ -1685,12 +1685,12 @@ static mp_obj_t framebuffer_scale(mp_uint_t n_args, const mp_obj_t *args)
 	
 	#ifdef CONFIG_LIB3D_ENABLE
 	if (is_3d) {
-		stack_3d->current = matrix_3d_multiply(stack_3d->current, matrix_3d_scale(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
+		stack_3d->current = old_matrix_3d_multiply(stack_3d->current, old_matrix_3d_scale(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1]), mp_obj_get_float(args[paramOffset + 2])));
 	}
 	else
 	#endif
 	{
-		stack_2d->current = matrix_2d_multiply(stack_2d->current, matrix_2d_scale(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1])));
+		stack_2d->current = old_matrix_2d_multiply(stack_2d->current, old_matrix_2d_scale(mp_obj_get_float(args[paramOffset]), mp_obj_get_float(args[paramOffset + 1])));
 	}
 	return mp_const_none;
 }
