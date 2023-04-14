@@ -1,6 +1,98 @@
 menu "Driver: pax-graphics support"
+	
 	config DRIVER_PAX_ENABLE
 		depends on DRIVER_FRAMEBUFFER_ENABLE
 		bool "Enable the pax-graphics driver"
 		default n
+	
+	choice
+		prompt "Framebuffer type"
+		depends on DRIVER_PAX_ENABLE
+		default DRIVER_PAX_BUF_16_565RGB
+		help
+			Framebuffer pixel format
+		
+		config DRIVER_PAX_BUF_1_PAL
+			bool "1BPP palette"
+		config DRIVER_PAX_BUF_2_PAL
+			bool "2BPP palette"
+		config DRIVER_PAX_BUF_4_PAL
+			bool "4BPP palette"
+		config DRIVER_PAX_BUF_8_PAL
+			bool "8BPP palette"
+		config DRIVER_PAX_BUF_16_PAL
+			bool "16BPP palette"
+		
+		config DRIVER_PAX_BUF_1_GREY
+			bool "1BPP black/white"
+		config DRIVER_PAX_BUF_2_GREY
+			bool "2BPP greyscale"
+		config DRIVER_PAX_BUF_4_GREY
+			bool "4BPP greyscale"
+		config DRIVER_PAX_BUF_8_GREY
+			bool "8BPP greyscale"
+		
+		config DRIVER_PAX_BUF_8_332RGB
+			bool "8BPP 3,3,2-RGB"
+		config DRIVER_PAX_BUF_16_565RGB
+			bool "16BPP 5,6,5-RGB"
+		
+		config DRIVER_PAX_BUF_4_1111ARGB
+			bool "4BPP 1-bit ARGB"
+		config DRIVER_PAX_BUF_8_2222ARGB
+			bool "8BPP 2-bit ARGB"
+		config DRIVER_PAX_BUF_16_4444ARGB
+			bool "16BPP 4-bit ARGB"
+		config DRIVER_PAX_BUF_32_8888ARGB
+			bool "32BPP 8-bit ARGB"
+		
+	endchoice
+	
+	config DRIVER_PAX_REVERSE_ENDIANNESS
+		depends on DRIVER_PAX_ENABLE
+		depends on DRIVER_PAX_BUF_16_PAL || DRIVER_PAX_BUF_16_565RGB || DRIVER_PAX_BUF_16_4444ARGB || DRIVER_PAX_BUF_32_8888ARGB
+		bool "Reverse endianness"
+		default y
+	
+	config DRIVER_PAX_FBWIDTH
+		depends on DRIVER_PAX_ENABLE
+		int "Framebuffer width"
+		default 320
+	config DRIVER_PAX_FBHEIGHT
+		depends on DRIVER_PAX_ENABLE
+		int "Framebuffer height"
+		default 240
+	
+	config DRIVER_PAX_COMPAT
+		depends on DRIVER_FRAMEBUFFER_ENABLE
+		bool "Enable legacy framebuffer driver compatibility"
+		default y
+	
+	choice
+		prompt "Orientation"
+		depends on DRIVER_PAX_ENABLE
+		default DRIVER_PAX_ROT_0
+		help
+			Simulated screen orientation; PAX rotates draw calls to this orientation
+		
+		config DRIVER_PAX_ROT_0
+			bool "Upright"
+		config DRIVER_PAX_ROT_1
+			bool "Rotated counter-clockwise"
+		config DRIVER_PAX_ROT_2
+			bool "Upside-down"
+		config DRIVER_PAX_ROT_3
+			bool "Rotated clockwise"
+	endchoice
+	
+	config DRIVER_PAX_MCR
+		depends on DRIVER_PAX_ENABLE
+		bool "Compile multi-core rendering"
+		default y
+	config DRIVER_PAX_MCR_OPT
+		depends on DRIVER_PAX_ENABLE
+		depends on DRIVER_PAX_MCR
+		bool "Enable multi-core rendering by default"
+		default y
+	
 endmenu

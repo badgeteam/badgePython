@@ -13,30 +13,35 @@
 extern "C" {
 #endif
 
-// TODO.
-#ifndef FB_TYPE_16BPP
-	#define FB_TYPE_16BPP
-#endif
-
-#ifdef CONFIG_DRIVER_FRAMEBUFFER_DOUBLE_BUFFERED
-	#error "PAX does not support double buffering."
-#endif
-
-// Detect correct framebuffer type.
-#if   defined(FB_TYPE_1BPP)
+#if   defined(CONFIG_DRIVER_PAX_BUF_1_GREY)
 	#define PAX2PY_BUF_NATIVE PAX_BUF_1_GREY
-#elif defined(FB_TYPE_8BPP)
+#elif defined(CONFIG_DRIVER_PAX_BUF_2_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_2_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_4_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_4_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_8_GREY)
 	#define PAX2PY_BUF_NATIVE PAX_BUF_8_GREY
-#elif defined(FB_TYPE_12BPP)
-	#error "PAX does not support 12bpp pixel buffers."
-#elif defined(FB_TYPE_16BPP)
+#elif defined(CONFIG_DRIVER_PAX_BUF_16_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_16_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_1_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_1_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_2_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_2_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_4_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_4_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_8_GREY)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_8_GREY
+#elif defined(CONFIG_DRIVER_PAX_BUF_8_332RGB)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_8_332RGB
+#elif defined(CONFIG_DRIVER_PAX_BUF_16_565RGB)
 	#define PAX2PY_BUF_NATIVE PAX_BUF_16_565RGB
-#elif defined(FB_TYPE_8CBPP)
-	#error "I have literally no idea which color format this is."
-#elif defined(FB_TYPE_24BPP)
-	// #define PAX2PY_BUF_NATIVE PAX_BUF_32_8888ARGB
-	#error "PAX does not support 24bpp pixel buffers."
-#elif defined(FB_TYPE_32BPP)
+#elif defined(CONFIG_DRIVER_PAX_BUF_4_1111ARGB)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_4_1111ARGB
+#elif defined(CONFIG_DRIVER_PAX_BUF_8_2222ARGB)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_8_2222ARGB
+#elif defined(CONFIG_DRIVER_PAX_BUF_16_4444ARGB)
+	#define PAX2PY_BUF_NATIVE PAX_BUF_16_4444ARGB
+#elif defined(CONFIG_DRIVER_PAX_BUF_32_8888ARGB)
 	#define PAX2PY_BUF_NATIVE PAX_BUF_32_8888ARGB
 #else
 	#error "No framebuffer type configured."

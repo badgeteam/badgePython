@@ -11,4 +11,3 @@ idf_component_register(
 		micropython
 		driver_framebuffer
 )
-set_target_properties(${COMPONENT_LIB} PROPERTIES COMPILE_FLAGS "-fpermissive")
