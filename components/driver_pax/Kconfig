@@ -1,0 +1,6 @@
+menu "Driver: pax-graphics support"
+	config DRIVER_PAX_ENABLE
+		depends on DRIVER_FRAMEBUFFER_ENABLE
+		bool "Enable the pax-graphics driver"
+		default n
+endmenu

@@ -66,6 +66,7 @@ set(IDF_COMPONENTS
     driver_display_ili9341
     driver_io_disobey_samd
     spi_flash
+    driver_pax
     )
 
 set(includes

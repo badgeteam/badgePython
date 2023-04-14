@@ -10,6 +10,12 @@
 #include "esp_system.h"
 
 
+#ifdef CONFIG_DRIVER_PAX_ENABLE
+extern "C" void driver_framebuffer_pre_flush_callback();
+#endif
+
+
+
 #include "include/driver_framebuffer_internal.h"
 #define TAG "fb"
 
@@ -543,6 +549,10 @@ bool driver_framebuffer_flush(uint32_t flags)
 
 	_render_windows();
 
+	#ifdef CONFIG_DRIVER_PAX_ENABLE
+	driver_framebuffer_pre_flush_callback();
+	#endif
+
 	uint32_t eink_flags = 0;
 
 	if ((flags & FB_FLAG_FULL) || (flags & FB_FLAG_FORCE)) {
@@ -581,6 +591,7 @@ bool driver_framebuffer_flush(uint32_t flags)
 	#endif
 		int16_t dirty_x0, dirty_y0, dirty_x1, dirty_y1;
 		driver_framebuffer_get_dirty_area(&dirty_x0, &dirty_y0, &dirty_x1, &dirty_y1);
+		printf("Dirty: (%d, %d), (%d, %d)\n", dirty_x0, dirty_y0, dirty_x1, dirty_y1);
 		FB_FLUSH(framebuffer,eink_flags,dirty_x0,dirty_y0,dirty_x1,dirty_y1);
 	#ifdef FB_FLUSH_GS
 	}
