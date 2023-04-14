@@ -93,9 +93,22 @@ static mp_obj_t drawRect(mp_uint_t n_args, const mp_obj_t *args) {
 	float      y     = mp_obj_get_float(args[1]);
 	float      w     = mp_obj_get_float(args[2]);
 	float      h     = mp_obj_get_float(args[3]);
-	printf("pax_draw_rect(0x%08x, %f, %f, %f, %f)\n", color, x, y, w, h);
-	// Forward "things".
+	// Forward function call.
 	pax_draw_rect(&buf->buf, color, x, y, w, h);
+	return mp_const_none;
+}
+
+// Rectangle drawing variants.
+static mp_obj_t outlineRect(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(4);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      w     = mp_obj_get_float(args[2]);
+	float      h     = mp_obj_get_float(args[3]);
+	// Forward function call.
+	pax_outline_rect(&buf->buf, color, x, y, w, h);
 	return mp_const_none;
 }
 
@@ -107,6 +120,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR(pax2py_debug_obj, 0, pax2py_debug);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj, 0, 1, fillColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj, 0, 1, lineColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj, 4, 5, drawRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj, 4, 5, outlineRect);
 
 
 
@@ -116,6 +130,7 @@ static const mp_rom_map_elem_t pax_module_globals_table[] = {
 	{MP_ROM_QSTR(MP_QSTR_fillColor), MP_ROM_PTR(&fillColor_obj)},
 	{MP_ROM_QSTR(MP_QSTR_lineColor), MP_ROM_PTR(&lineColor_obj)},
 	{MP_ROM_QSTR(MP_QSTR_drawRect), MP_ROM_PTR(&drawRect_obj)},
+	{MP_ROM_QSTR(MP_QSTR_outlineRect), MP_ROM_PTR(&outlineRect_obj)},
 };
 
 static MP_DEFINE_CONST_DICT(pax_module_globals, pax_module_globals_table);
@@ -130,16 +145,16 @@ const mp_obj_module_t pax_module = {
 /* ==== MODULE INITIALISER ==== */
 extern void driver_framebuffer_set_dirty_area(int16_t x0, int16_t y0, int16_t x1, int16_t y1, bool force);
 void driver_framebuffer_pre_flush_callback() {
-	pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
-	if (pax_is_dirty(&global_pax_buf.buf)) {
-		driver_framebuffer_set_dirty_area(
-			dirty.x,
-			dirty.y,
-			dirty.x + dirty.w - 1,
-			dirty.y + dirty.h - 1,
-			false
-		);
-	}
+	// pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
+	// if (pax_is_dirty(&global_pax_buf.buf)) {
+	// 	driver_framebuffer_set_dirty_area(
+	// 		dirty.x,
+	// 		dirty.y,
+	// 		dirty.x + dirty.w - 1,
+	// 		dirty.y + dirty.h - 1,
+	// 		false
+	// 	);
+	// }
 }
 
 extern esp_err_t driver_framebuffer_init();
