@@ -17,6 +17,7 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/objarray.h"
+#include <string.h>
 
 extern uint8_t *framebuffer;
 
@@ -115,6 +116,9 @@ static font_n_size_t get_font(mp_uint_t *n_args, const mp_obj_t **args) {
 			pax_get_font(mp_obj_str_get_str((*args)[0])),
 			mp_obj_get_float((*args)[1]),
 		};
+		if (!out.font) {
+			mp_raise_ValueError("Unkonwn font");
+		}
 		*n_args -= 2;
 		*args   += 2;
 		return out;
@@ -190,6 +194,68 @@ static void Buffer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
 
 /* ==== GLOBAL FUNCTION DEFINITIONS ==== */
+// Get a list of all available fonts.
+static mp_obj_t fontList(mp_uint_t n_args, const mp_obj_t *args) {
+	mp_obj_t objs[pax_n_fonts];
+	for (size_t i = 0; i < pax_n_fonts; i++) {
+		objs[i] = mp_obj_new_str(pax_fonts_index[i]->name, strlen(pax_fonts_index[i]->name));
+	}
+	return mp_obj_new_list(pax_n_fonts, objs);
+}
+
+// Get info about some font.
+static mp_obj_t fontInfo(mp_uint_t n_args, const mp_obj_t *args) {
+	// Look up the font.
+	const char *name = mp_obj_str_get_str(*args);
+	const pax_font_t *font = pax_get_font(name);
+	int detail = n_args == 2 ? mp_obj_get_int(args[1]) : 0;
+	if (!font) {
+		mp_raise_ValueError("Unkonwn font");
+	}
+	
+	// Collect generic infos.
+	mp_obj_t info = mp_obj_new_dict(4);
+	mp_obj_dict_store(info, MP_OBJ_NEW_QSTR(MP_QSTR_name), mp_obj_new_str(font->name, strlen(font->name)));
+	mp_obj_dict_store(info, MP_OBJ_NEW_QSTR(MP_QSTR_defaultSize), mp_obj_new_int(font->default_size));
+	mp_obj_dict_store(info, MP_OBJ_NEW_QSTR(MP_QSTR_antialiased), mp_obj_new_bool(font->recommend_aa));
+	
+	// Collect range infos.
+	if (detail >= 1) {
+		mp_obj_t ranges = mp_obj_new_list(0, NULL);
+		for (size_t i = 0; i < font->n_ranges; i++) {
+			const pax_font_range_t *range = &font->ranges[i];
+			mp_obj_t rinfo = mp_obj_new_dict(7);
+			
+			// Set generic range infos.
+			bool mono = range->type == PAX_FONT_TYPE_BITMAP_MONO;
+			mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_monospace), mp_obj_new_bool(mono));
+			mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_start), mp_obj_new_int(range->start));
+			mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_end), mp_obj_new_int(range->end));
+			
+			// Set detailed range infos.
+			if (mono && detail >= 2) {
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_width), mp_obj_new_int(range->bitmap_mono.width));
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_height), mp_obj_new_int(range->bitmap_mono.height));
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_bpp), mp_obj_new_int(range->bitmap_mono.bpp));
+				
+			} else if (detail >= 2) {
+				// Grab individual widths.
+				mp_obj_t widths = mp_obj_new_list(0, NULL);
+				for (size_t i = 0; i < range->end - range->start + 1; i++) {
+					mp_obj_list_append(widths, mp_obj_new_int(range->bitmap_var.dims[i].measured_width));
+				}
+				
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_widths), widths);
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_height), mp_obj_new_int(range->bitmap_var.height));
+				mp_obj_dict_store(rinfo, MP_OBJ_NEW_QSTR(MP_QSTR_bpp), mp_obj_new_int(range->bitmap_var.bpp));
+			}
+			mp_obj_list_append(ranges, rinfo);
+		}
+		mp_obj_dict_store(info, MP_OBJ_NEW_QSTR(MP_QSTR_ranges), ranges);
+	}
+	
+	return info;
+}
 
 
 
@@ -679,6 +745,8 @@ static mp_obj_t getClipRect(mp_uint_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,			1, 1, Buffer_del);
 
 /* ==== GLOBAL DEFINITIONS ==== */
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontList_obj,			0, 0, fontList);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,			1, 2, fontInfo);
 
 /* ==== COMMOM DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 2, fillColor);
@@ -728,10 +796,18 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 #define MODPAX_CLASS_ROM \
 	{MP_ROM_QSTR(MP_QSTR___del__),				MP_ROM_PTR(&Buffer_del_obj)},
 
+
 // Functions exclusive to the global(tm).
 #define MODPAX_GLOBAL_ROM \
 	{MP_ROM_QSTR(MP_QSTR___name__),				MP_ROM_QSTR(MP_QSTR_pax)}, \
 	{MP_ROM_QSTR(MP_QSTR_Buffer),				MP_ROM_PTR(&Buffer_type)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_FONT_INFO_BASIC),		MP_ROM_INT(0)}, \
+	{MP_ROM_QSTR(MP_QSTR_FONT_INFO_RANGES),		MP_ROM_INT(1)}, \
+	{MP_ROM_QSTR(MP_QSTR_FONT_INFO_ALL),		MP_ROM_INT(2)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_fontList),				MP_ROM_PTR(&fontList_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_fontInfo),				MP_ROM_PTR(&fontInfo_obj)}, \
 	\
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_1_PAL),		MP_ROM_INT(0)}, \
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_2_PAL),		MP_ROM_INT(1)}, \
@@ -751,6 +827,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_8_2222ARGB),	MP_ROM_INT(12)}, \
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_16_4444ARGB),	MP_ROM_INT(13)}, \
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_32_8888ARGB),	MP_ROM_INT(14)},
+
 
 // Function common to Buffer objects and the global(tm).
 #define MODPAX_COMMON_ROM \
@@ -800,6 +877,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 	{MP_ROM_QSTR(MP_QSTR_clip),					MP_ROM_PTR(&clip_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_noClip),				MP_ROM_PTR(&noClip_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_getClipRect),			MP_ROM_PTR(&getClipRect_obj)},
+
 
 static const mp_rom_map_elem_t Buffer_locals_table[] = {
 	MODPAX_CLASS_ROM
