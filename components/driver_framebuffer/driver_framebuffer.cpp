@@ -493,7 +493,11 @@ uint32_t driver_framebuffer_getPixel(Window* window, int16_t x, int16_t y)
 		uint8_t r = ((((color >> 11) & 0x1F) * 527) + 23) >> 6;
 		uint8_t g = ((((color >> 5 ) & 0x3F) * 259) + 33) >> 6;
 		uint8_t b = ((((color      ) & 0x1F) * 527) + 23) >> 6;
-		return r << 16 | g << 8 | b;
+		#ifdef CONFIG_DRIVER_FRAMEBUFFER_SWAP_R_AND_B
+			return r << 16 | g << 8 | b;
+		#else
+			return b << 16 | g << 8 | r;
+		#endif
 	#elif defined(FB_TYPE_8CBPP)
 		return convert8Cto24(buffer[(y * width) + x]);
 	#elif defined(FB_TYPE_24BPP)
