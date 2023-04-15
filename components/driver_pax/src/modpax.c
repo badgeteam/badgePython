@@ -66,10 +66,18 @@ typedef struct {
 // Type for Buffer class.
 extern const mp_obj_type_t Buffer_type;
 
+static const mp_rom_map_elem_t Buffer_locals_table[];
+static const mp_rom_map_elem_t pax_module_globals_table[];
+
 // Global buffer instance.
 buf_n_col_t global_pax_buf;
 
 /* ==== HELPER FUNCTIONS ==== */
+// Is this the pax module?
+static bool is_pax_module(mp_const_obj_t obj) {
+	return mp_obj_equal(obj, MP_OBJ_FROM_PTR(&pax_module));
+}
+
 // Get buffer to use on some operation (assuming buffer is first arg).
 static buf_n_col_t *get_buf(mp_uint_t *n_args, const mp_obj_t **args) {
 	// Check for buffer class.
@@ -79,6 +87,11 @@ static buf_n_col_t *get_buf(mp_uint_t *n_args, const mp_obj_t **args) {
 		++*args;
 		return &self->ctx;
 	} else {
+		if (is_pax_module(**args)) {
+			// Passed in the pax, CONSUME!
+			--*n_args;
+			++*args;
+		}
 		return &global_pax_buf;
 	}
 }
@@ -450,18 +463,26 @@ static mp_obj_t drawImage(mp_uint_t n_args, const mp_obj_t *args) {
 	pax_buf_t *dst, *src;
 	
 	// Grab buffer #1.
-	if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
-		mp_raise_TypeError("Expected pax.Buffer type");
+	if (is_pax_module(*args)) {
+		dst = &global_pax_buf.buf;
+	} else {
+		if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
+			mp_raise_TypeError("Expected pax.Buffer type");
+		}
+		dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
 	}
-	dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
 	--n_args;
 	++args;
 	
 	// Grab optional buffer #2.
-	if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
+	if (is_pax_module(*args)) {
+		src = &global_pax_buf.buf;
 		--n_args;
 		++args;
+	} else if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
 		src = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+		--n_args;
+		++args;
 	} else {
 		src = dst;
 		dst = &global_pax_buf.buf;
@@ -490,18 +511,27 @@ static mp_obj_t drawImageOpaque(mp_uint_t n_args, const mp_obj_t *args) {
 	pax_buf_t *dst, *src;
 	
 	// Grab buffer #1.
-	if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
-		mp_raise_TypeError("Expected pax.Buffer type");
+	if (is_pax_module(*args)) {
+		dst = &global_pax_buf.buf;
+	} else {
+		if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
+			mp_raise_TypeError("Expected pax.Buffer type");
+		}
+		dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
 	}
 	dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
 	--n_args;
 	++args;
 	
 	// Grab optional buffer #2.
-	if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
+	if (is_pax_module(*args)) {
+		src = &global_pax_buf.buf;
 		--n_args;
 		++args;
+	} else if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
 		src = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+		--n_args;
+		++args;
 	} else {
 		src = dst;
 		dst = &global_pax_buf.buf;
@@ -512,7 +542,7 @@ static mp_obj_t drawImageOpaque(mp_uint_t n_args, const mp_obj_t *args) {
 	float y = mp_obj_get_float(args[2]);
 	// Optional args.
 	float w, h;
-	if (n_args == 5) {
+	if (n_args == 4) {
 		w = mp_obj_get_float(args[3]);
 		h = mp_obj_get_float(args[4]);
 	} else {
