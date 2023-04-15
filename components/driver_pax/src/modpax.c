@@ -257,6 +257,13 @@ static mp_obj_t fontInfo(mp_uint_t n_args, const mp_obj_t *args) {
 	return info;
 }
 
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+extern bool driver_framebuffer_flush(uint32_t flags);
+static mp_obj_t flush(mp_uint_t n_args, const mp_obj_t *args) {
+	driver_framebuffer_flush(0);
+	return mp_const_none;
+}
+#endif
 
 
 /* ==== COMMON FUNCTION DEFINITIONS ==== */
@@ -776,6 +783,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,			1, 1, Buffer_del);
 /* ==== GLOBAL DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontList_obj,			0, 0, fontList);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,			1, 2, fontInfo);
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(flush_obj,				0, 0, flush);
+#endif
 
 /* ==== COMMOM DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 2, fillColor);
@@ -828,12 +838,27 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 
 /* ==== MODULE DEFINITION ==== */
 // Functions exclusive to Buffer objects.
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+#define MODPAX_CLASS_COMPAT_ROM
+#else
+#define MODPAX_CLASS_COMPAT_ROM
+#endif
+
 #define MODPAX_CLASS_ROM \
+	MODPAX_CLASS_COMPAT_ROM \
 	{MP_ROM_QSTR(MP_QSTR___del__),				MP_ROM_PTR(&Buffer_del_obj)},
 
 
 // Functions exclusive to the global(tm).
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+#define MODPAX_GLOBAL_COMPAT_ROM \
+	{MP_ROM_QSTR(MP_QSTR_flush),				MP_ROM_PTR(&flush_obj)},
+#else
+#define MODPAX_GLOBAL_COMPAT_ROM
+#endif
+
 #define MODPAX_GLOBAL_ROM \
+	MODPAX_GLOBAL_COMPAT_ROM \
 	{MP_ROM_QSTR(MP_QSTR___name__),				MP_ROM_QSTR(MP_QSTR_pax)}, \
 	{MP_ROM_QSTR(MP_QSTR_Buffer),				MP_ROM_PTR(&Buffer_type)}, \
 	\
@@ -865,7 +890,14 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 
 
 // Function common to Buffer objects and the global(tm).
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+#define MODPAX_COMMON_COMPAT_ROM
+#else
+#define MODPAX_COMMON_COMPAT_ROM
+#endif
+
 #define MODPAX_COMMON_ROM \
+	MODPAX_COMMON_COMPAT_ROM \
 	{MP_ROM_QSTR(MP_QSTR_fillColor),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)}, \
