@@ -275,6 +275,35 @@ static mp_obj_t lineColor(mp_uint_t n_args, const mp_obj_t *args) {
 }
 
 
+// Get buf width.
+static mp_obj_t getWidth(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	return mp_obj_new_int(pax_buf_get_width(&buf->buf));
+}
+
+// Get buf height.
+static mp_obj_t getHeight(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	return mp_obj_new_int(pax_buf_get_height(&buf->buf));
+}
+
+// Get buf type.
+static mp_obj_t getType(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	return mp_obj_new_int(pax_buf_get_type(&buf->buf));
+}
+
+
+// Background fill.
+static mp_obj_t background(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = mp_obj_get_int_truncated(*args);
+	// Forward function call.
+	pax_background(&buf->buf, color);
+	return mp_const_none;
+}
+
 // Rectangle drawing variants.
 static mp_obj_t drawRect(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
@@ -751,6 +780,12 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,			1, 2, fontInfo);
 /* ==== COMMOM DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 2, fillColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,			0, 2, lineColor);
+
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(width_obj,				0, 1, getWidth);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(height_obj,				0, 1, getHeight);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(type_obj,				0, 1, getType);
+
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(background_obj,			1, 2, background);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj,			4, 6, drawRect);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj,			4, 6, outlineRect);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,				6, 8, drawTri);
@@ -836,6 +871,11 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_lineColour),			MP_ROM_PTR(&lineColor_obj)}, \
 	\
+	{MP_ROM_QSTR(MP_QSTR_width),				MP_ROM_PTR(&width_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_height),				MP_ROM_PTR(&height_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_type),					MP_ROM_PTR(&type_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_background),			MP_ROM_PTR(&background_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawRect),				MP_ROM_PTR(&drawRect_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawRectangle),		MP_ROM_PTR(&drawRect_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_outlineRect),			MP_ROM_PTR(&outlineRect_obj)}, \
@@ -918,16 +958,17 @@ void driver_framebuffer_pre_flush_callback() {
 	#if defined(CONFIG_DRIVER_PAX_MCR)
 	pax_join();
 	#endif
-	// pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
-	// if (pax_is_dirty(&global_pax_buf.buf)) {
-	// 	driver_framebuffer_set_dirty_area(
-	// 		dirty.x,
-	// 		dirty.y,
-	// 		dirty.x + dirty.w - 1,
-	// 		dirty.y + dirty.h - 1,
-	// 		false
-	// 	);
-	// }
+	pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
+	if (pax_is_dirty(&global_pax_buf.buf)) {
+		printf("PAX dirty: (%d, %d) %d x %d\n", dirty.x, dirty.y, dirty.w, dirty.h);
+		driver_framebuffer_set_dirty_area(
+			dirty.x,
+			dirty.y,
+			dirty.x + dirty.w - 1,
+			dirty.y + dirty.h - 1,
+			false
+		);
+	}
 	pax_mark_clean(&global_pax_buf.buf);
 #endif
 }
