@@ -20,23 +20,66 @@
 
 extern uint8_t *framebuffer;
 
+/* ==== TYPEDEFS ==== */
+// Holder for pax_buf_t and pax_col_t.
 typedef struct {
 	pax_col_t fill_color, line_color;
 	pax_buf_t buf;
 } buf_n_col_t;
 
+// Holder for pax_font_t and float.
 typedef struct {
 	const pax_font_t *font;
 	float font_size;
 } font_n_size_t;
 
+// Lookup table from buffer definitions to pax_buf_type_t.
+static const pax_buf_type_t buf_type_lut[] = {
+	PAX_BUF_1_PAL,
+	PAX_BUF_2_PAL,
+	PAX_BUF_4_PAL,
+	PAX_BUF_8_PAL,
+	PAX_BUF_16_PAL,
+	
+	PAX_BUF_1_GREY,
+	PAX_BUF_2_GREY,
+	PAX_BUF_4_GREY,
+	PAX_BUF_8_GREY,
+	
+	PAX_BUF_8_332RGB,
+	PAX_BUF_16_565RGB,
+	
+	PAX_BUF_4_1111ARGB,
+	PAX_BUF_8_2222ARGB,
+	PAX_BUF_16_4444ARGB,
+	PAX_BUF_32_8888ARGB,
+};
+static const size_t buf_type_lut_len = sizeof(buf_type_lut) / sizeof(pax_buf_type_t);
+
+// Data holder(tm) for Buffer class.
+typedef struct {
+	mp_obj_base_t base;
+	buf_n_col_t   ctx;
+} Buffer_obj_t;
+
+// Type for Buffer class.
+extern const mp_obj_type_t Buffer_type;
+
+// Global buffer instance.
 buf_n_col_t global_pax_buf;
 
 /* ==== HELPER FUNCTIONS ==== */
 // Get buffer to use on some operation (assuming buffer is first arg).
 static buf_n_col_t *get_buf(mp_uint_t *n_args, const mp_obj_t **args) {
-	// No-op for now.
-	return &global_pax_buf;
+	// Check for buffer class.
+	if (mp_obj_is_obj(**args) && mp_obj_get_type(**args) == &Buffer_type) {
+		Buffer_obj_t *self = MP_OBJ_TO_PTR(**args);
+		--*n_args;
+		++*args;
+		return &self->ctx;
+	} else {
+		return &global_pax_buf;
+	}
 }
 
 // Get color to use on some operation (assuming color is first arg).
@@ -88,17 +131,69 @@ static font_n_size_t get_font(mp_uint_t *n_args, const mp_obj_t **args) {
 
 
 
-/* ==== FUNCTION DEFINITIONS ==== */
-// For debugging purposes.
-static mp_obj_t pax2py_debug(mp_uint_t n_args, const mp_obj_t *args) {
-	printf("You gave me %d arguments.\n", n_args);
-	for (size_t i = 0; i < n_args; i++) {
-		printf("  %s\n", mp_obj_get_type_str(args[i]));
+/* ==== CLASS FUNCTION DEFINITIONS ==== */
+// Constructor for Buffer class.
+static mp_obj_t Buffer_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+	// Create a BOX to hold the buffer.
+	mp_arg_check_num(n_args, n_kw, 2, 3, true);
+	Buffer_obj_t *self = m_new_obj(Buffer_obj_t);
+	self->base.type = &Buffer_type;
+	
+	// Grab arguments.
+	int w = mp_obj_get_int(args[0]);
+	int h = mp_obj_get_int(args[1]);
+	pax_buf_type_t buf_type;
+	if (n_args == 3) {
+		int raw_type = mp_obj_get_int(args[2]);
+		if (raw_type < 0 || raw_type >= buf_type_lut_len) {
+			mp_raise_ValueError("Not a valid buffer type");
+		}
+		buf_type = buf_type_lut[raw_type];
+	} else {
+		buf_type = PAX2PY_BUF_NATIVE;
 	}
+	
+	// Initialise the buffer.
+	pax_buf_init(&self->ctx.buf, NULL, w, h, buf_type);
+	pax_background(&self->ctx.buf, 0x00000000);
+	self->ctx.fill_color = 0xffffffff;
+	self->ctx.line_color = 0xffffffff;
+	
+	// Forward the BOX.
+	return MP_OBJ_FROM_PTR(self);
+}
+
+// Destructor for Buffer class.
+static mp_obj_t Buffer_del(mp_uint_t n_args, const mp_obj_t *args) {
+	Buffer_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+	
+	// Destroy PAX ctx.
+	pax_join();
+	pax_buf_destroy(&self->ctx.buf);
+	
 	return mp_const_none;
 }
 
+// Printener for Buffer class.
+static void Buffer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+	Buffer_obj_t *self = MP_OBJ_TO_PTR(self_in);
+	int w = pax_buf_get_width (&self->ctx.buf);
+	int h = pax_buf_get_height(&self->ctx.buf);
+	
+	mp_print_str(print, "Buffer(");
+	mp_obj_print_helper(print, mp_obj_new_int(w), PRINT_REPR);
+	mp_print_str(print, ", ");
+	mp_obj_print_helper(print, mp_obj_new_int(h), PRINT_REPR);
+	mp_print_str(print, ")");
+}
 
+
+
+/* ==== GLOBAL FUNCTION DEFINITIONS ==== */
+
+
+
+/* ==== COMMON FUNCTION DEFINITIONS ==== */
 // Fill color accessor.
 static mp_obj_t fillColor(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t *buf = GET_BUF();
@@ -245,7 +340,89 @@ static mp_obj_t drawLine(mp_uint_t n_args, const mp_obj_t *args) {
 }
 
 
-// TODO: draw, outline, draw_image
+// TODO: draw, outline
+
+
+// Draw image variants.
+static mp_obj_t drawImage(mp_uint_t n_args, const mp_obj_t *args) {
+	pax_buf_t *dst, *src;
+	
+	// Grab buffer #1.
+	if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
+		mp_raise_TypeError("Expected pax.Buffer type");
+	}
+	dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+	--n_args;
+	++args;
+	
+	// Grab optional buffer #2.
+	if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
+		--n_args;
+		++args;
+		src = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+	} else {
+		src = dst;
+		dst = &global_pax_buf.buf;
+	}
+	
+	// Required args.
+	float x = mp_obj_get_float(args[0]);
+	float y = mp_obj_get_float(args[1]);
+	// Optional args.
+	float w, h;
+	if (n_args == 4) {
+		w = mp_obj_get_float(args[2]);
+		h = mp_obj_get_float(args[3]);
+	} else {
+		w = pax_buf_get_widthf (src);
+		h = pax_buf_get_heightf(src);
+	}
+	
+	// Forward function call.
+	pax_draw_image_sized(dst, src, x, y, w, h);
+	return mp_const_none;
+}
+
+// Draw image variants.
+static mp_obj_t drawImageOpaque(mp_uint_t n_args, const mp_obj_t *args) {
+	pax_buf_t *dst, *src;
+	
+	// Grab buffer #1.
+	if (!mp_obj_is_obj(args[0]) || mp_obj_get_type(args[0]) != &Buffer_type) {
+		mp_raise_TypeError("Expected pax.Buffer type");
+	}
+	dst = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+	--n_args;
+	++args;
+	
+	// Grab optional buffer #2.
+	if (mp_obj_is_obj(args[0]) && mp_obj_get_type(args[0]) == &Buffer_type) {
+		--n_args;
+		++args;
+		src = &((Buffer_obj_t *) MP_OBJ_TO_PTR(args[0]))->ctx.buf;
+	} else {
+		src = dst;
+		dst = &global_pax_buf.buf;
+	}
+	
+	// Required args.
+	float x = mp_obj_get_float(args[1]);
+	float y = mp_obj_get_float(args[2]);
+	// Optional args.
+	float w, h;
+	if (n_args == 5) {
+		w = mp_obj_get_float(args[3]);
+		h = mp_obj_get_float(args[4]);
+	} else {
+		w = pax_buf_get_widthf (src);
+		h = pax_buf_get_heightf(src);
+	}
+	
+	// Forward function call.
+	pax_draw_image_sized_op(dst, src, x, y, w, h);
+	return mp_const_none;
+}
+
 
 
 // Text size getter.
@@ -498,97 +675,157 @@ static mp_obj_t getClipRect(mp_uint_t n_args, const mp_obj_t *args) {
 
 
 
-/* ==== OBJECT DEFINITIONS ==== */
-static MP_DEFINE_CONST_FUN_OBJ_VAR(pax2py_debug_obj, 0, pax2py_debug);
+/* ==== CLASS DEFINITIONS ==== */
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,			1, 1, Buffer_del);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 1, fillColor);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,			0, 1, lineColor);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj,			4, 5, drawRect);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj,			4, 5, outlineRect);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,				6, 7, drawTri);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineTri_obj,			6, 7, outlineTri);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawCircle_obj,			3, 4, drawCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineCircle_obj,		3, 4, outlineCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawArc_obj,				5, 6, drawArc);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineArc_obj,			5, 6, outlineArc);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawLine_obj,			4, 5, drawLine);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(stringSize_obj,			1, 3, stringSize);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawString_obj,			3, 6, drawString);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawStringCentered_obj,	3, 6, drawStringCentered);
+/* ==== GLOBAL DEFINITIONS ==== */
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pushMatrix_obj,			0, 0, pushMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(popMatrix_obj,			0, 0, popMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clearMatrix_obj,			0, 1, clearMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(scale_obj,				1, 2, scale);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(translate_obj,			2, 2, translate);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(shear_obj,				2, 2, shear);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rotate_obj,				1, 1, rotate);
+/* ==== COMMOM DEFINITIONS ==== */
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 2, fillColor);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,			0, 2, lineColor);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj,			4, 6, drawRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj,			4, 6, outlineRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,				6, 8, drawTri);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineTri_obj,			6, 8, outlineTri);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawCircle_obj,			3, 5, drawCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineCircle_obj,		3, 5, outlineCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawArc_obj,				5, 7, drawArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineArc_obj,			5, 7, outlineArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawLine_obj,			4, 6, drawLine);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixel_obj,			2, 2, getPixel);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixel_obj,			3, 3, setPixel);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelRaw_obj,			2, 2, getPixelRaw);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixelRaw_obj,			3, 3, setPixelRaw);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mergePixel_obj,			3, 3, mergePixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImage_obj,			3, 6, drawImage);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImageOpaque_obj,		3, 6, drawImageOpaque);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(isDirty_obj,				0, 0, isDirty);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getDirtyRect_obj,		0, 0, getDirtyRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(stringSize_obj,			1, 4, stringSize);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawString_obj,			3, 7, drawString);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawStringCentered_obj,	3, 7, drawStringCentered);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clip_obj,				4, 4, clip);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(noClip_obj,				0, 0, noClip);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 0, getClipRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pushMatrix_obj,			0, 1, pushMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(popMatrix_obj,			0, 1, popMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clearMatrix_obj,			0, 2, clearMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(scale_obj,				1, 3, scale);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(translate_obj,			2, 3, translate);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(shear_obj,				2, 3, shear);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rotate_obj,				1, 2, rotate);
 
-// static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(_obj,	3, 6, _______);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixel_obj,			2, 3, getPixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixel_obj,			3, 4, setPixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelRaw_obj,			2, 3, getPixelRaw);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixelRaw_obj,			3, 4, setPixelRaw);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mergePixel_obj,			3, 4, mergePixel);
+
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(isDirty_obj,				0, 1, isDirty);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getDirtyRect_obj,		0, 1, getDirtyRect);
+
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clip_obj,				4, 5, clip);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(noClip_obj,				0, 1, noClip);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect);
 
 
 
 /* ==== MODULE DEFINITION ==== */
-static const mp_rom_map_elem_t pax_module_globals_table[] = {
-	{MP_ROM_QSTR(MP_QSTR_debug),				MP_ROM_PTR(&pax2py_debug_obj)},
-	{MP_ROM_QSTR(MP_QSTR_fillColor),			MP_ROM_PTR(&fillColor_obj)},
-	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)},
-	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)},
-	{MP_ROM_QSTR(MP_QSTR_lineColour),			MP_ROM_PTR(&lineColor_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawRect),				MP_ROM_PTR(&drawRect_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawRectangle),		MP_ROM_PTR(&drawRect_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineRect),			MP_ROM_PTR(&outlineRect_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineRectangle),		MP_ROM_PTR(&outlineRect_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawTri),				MP_ROM_PTR(&drawTri_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawTriangle),			MP_ROM_PTR(&drawTri_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineTri),			MP_ROM_PTR(&outlineTri_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineTriangle),		MP_ROM_PTR(&outlineTri_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawCircle),			MP_ROM_PTR(&drawCircle_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineCircle),		MP_ROM_PTR(&outlineCircle_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawArc),				MP_ROM_PTR(&drawArc_obj)},
-	{MP_ROM_QSTR(MP_QSTR_outlineArc),			MP_ROM_PTR(&outlineArc_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawLine),				MP_ROM_PTR(&drawLine_obj)},
-	{MP_ROM_QSTR(MP_QSTR_stringSize),			MP_ROM_PTR(&stringSize_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawString),			MP_ROM_PTR(&drawString_obj)},
-	{MP_ROM_QSTR(MP_QSTR_drawStringCentered),	MP_ROM_PTR(&drawStringCentered_obj)},
-	{MP_ROM_QSTR(MP_QSTR_pushMatrix),			MP_ROM_PTR(&pushMatrix_obj)},
-	{MP_ROM_QSTR(MP_QSTR_popMatrix),			MP_ROM_PTR(&popMatrix_obj)},
-	{MP_ROM_QSTR(MP_QSTR_clearMatrix),			MP_ROM_PTR(&clearMatrix_obj)},
-	{MP_ROM_QSTR(MP_QSTR_scale),				MP_ROM_PTR(&scale_obj)},
-	{MP_ROM_QSTR(MP_QSTR_translate),			MP_ROM_PTR(&translate_obj)},
-	{MP_ROM_QSTR(MP_QSTR_shear),				MP_ROM_PTR(&shear_obj)},
-	{MP_ROM_QSTR(MP_QSTR_rotate),				MP_ROM_PTR(&rotate_obj)},
-	{MP_ROM_QSTR(MP_QSTR_getPixel),				MP_ROM_PTR(&getPixel_obj)},
-	{MP_ROM_QSTR(MP_QSTR_setPixel),				MP_ROM_PTR(&setPixel_obj)},
-	{MP_ROM_QSTR(MP_QSTR_getPixelRaw),			MP_ROM_PTR(&getPixelRaw_obj)},
-	{MP_ROM_QSTR(MP_QSTR_setPixelRaw),			MP_ROM_PTR(&setPixelRaw_obj)},
-	{MP_ROM_QSTR(MP_QSTR_mergePixel),			MP_ROM_PTR(&mergePixel_obj)},
-	{MP_ROM_QSTR(MP_QSTR_isDirty),				MP_ROM_PTR(&isDirty_obj)},
-	{MP_ROM_QSTR(MP_QSTR_getDirtyRect),			MP_ROM_PTR(&getDirtyRect_obj)},
-	{MP_ROM_QSTR(MP_QSTR_clip),					MP_ROM_PTR(&clip_obj)},
-	{MP_ROM_QSTR(MP_QSTR_noClip),				MP_ROM_PTR(&noClip_obj)},
+// Functions exclusive to Buffer objects.
+#define MODPAX_CLASS_ROM \
+	{MP_ROM_QSTR(MP_QSTR___del__),				MP_ROM_PTR(&Buffer_del_obj)},
+
+// Functions exclusive to the global(tm).
+#define MODPAX_GLOBAL_ROM \
+	{MP_ROM_QSTR(MP_QSTR___name__),				MP_ROM_QSTR(MP_QSTR_pax)}, \
+	{MP_ROM_QSTR(MP_QSTR_Buffer),				MP_ROM_PTR(&Buffer_type)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_1_PAL),		MP_ROM_INT(0)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_2_PAL),		MP_ROM_INT(1)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_4_PAL),		MP_ROM_INT(2)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_8_PAL),		MP_ROM_INT(3)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_16_PAL),		MP_ROM_INT(4)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_1_GREY),		MP_ROM_INT(5)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_2_GREY),		MP_ROM_INT(6)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_4_GREY),		MP_ROM_INT(7)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_8_GREY),		MP_ROM_INT(8)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_8_332RGB),		MP_ROM_INT(9)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_16_565RGB),	MP_ROM_INT(10)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_4_1111ARGB),	MP_ROM_INT(11)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_8_2222ARGB),	MP_ROM_INT(12)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_16_4444ARGB),	MP_ROM_INT(13)}, \
+	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_32_8888ARGB),	MP_ROM_INT(14)},
+
+// Function common to Buffer objects and the global(tm).
+#define MODPAX_COMMON_ROM \
+	{MP_ROM_QSTR(MP_QSTR_fillColor),			MP_ROM_PTR(&fillColor_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_lineColour),			MP_ROM_PTR(&lineColor_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_drawRect),				MP_ROM_PTR(&drawRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawRectangle),		MP_ROM_PTR(&drawRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineRect),			MP_ROM_PTR(&outlineRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineRectangle),		MP_ROM_PTR(&outlineRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawTri),				MP_ROM_PTR(&drawTri_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawTriangle),			MP_ROM_PTR(&drawTri_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineTri),			MP_ROM_PTR(&outlineTri_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineTriangle),		MP_ROM_PTR(&outlineTri_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawCircle),			MP_ROM_PTR(&drawCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineCircle),		MP_ROM_PTR(&outlineCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawArc),				MP_ROM_PTR(&drawArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineArc),			MP_ROM_PTR(&outlineArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawLine),				MP_ROM_PTR(&drawLine_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_drawImage),			MP_ROM_PTR(&drawImage_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawImageOpaque),		MP_ROM_PTR(&drawImageOpaque_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_stringSize),			MP_ROM_PTR(&stringSize_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawString),			MP_ROM_PTR(&drawString_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawStringCentered),	MP_ROM_PTR(&drawStringCentered_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_pushMatrix),			MP_ROM_PTR(&pushMatrix_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_popMatrix),			MP_ROM_PTR(&popMatrix_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_clearMatrix),			MP_ROM_PTR(&clearMatrix_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_scale),				MP_ROM_PTR(&scale_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_translate),			MP_ROM_PTR(&translate_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_shear),				MP_ROM_PTR(&shear_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_rotate),				MP_ROM_PTR(&rotate_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_getPixel),				MP_ROM_PTR(&getPixel_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_setPixel),				MP_ROM_PTR(&setPixel_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_getPixelRaw),			MP_ROM_PTR(&getPixelRaw_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_setPixelRaw),			MP_ROM_PTR(&setPixelRaw_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_mergePixel),			MP_ROM_PTR(&mergePixel_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_isDirty),				MP_ROM_PTR(&isDirty_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_getDirtyRect),			MP_ROM_PTR(&getDirtyRect_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_clip),					MP_ROM_PTR(&clip_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_noClip),				MP_ROM_PTR(&noClip_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_getClipRect),			MP_ROM_PTR(&getClipRect_obj)},
-	// {MP_ROM_QSTR(MP_QSTR_),	MP_ROM_PTR(&_obj)},
+
+static const mp_rom_map_elem_t Buffer_locals_table[] = {
+	MODPAX_CLASS_ROM
+	MODPAX_COMMON_ROM
+};
+
+static MP_DEFINE_CONST_DICT(Buffer_locals, Buffer_locals_table);
+
+const mp_obj_type_t Buffer_type = {
+	.base        = { &mp_type_type },
+	.name        = MP_QSTR_Buffer,
+	.print       = Buffer_print,
+	.make_new    = Buffer_new,
+	.locals_dict = (mp_obj_dict_t *) &Buffer_locals,
+};
+
+static const mp_rom_map_elem_t pax_module_globals_table[] = {
+	MODPAX_GLOBAL_ROM
+	MODPAX_COMMON_ROM
 };
 
 static MP_DEFINE_CONST_DICT(pax_module_globals, pax_module_globals_table);
 
 const mp_obj_module_t pax_module = {
-	.base = {&mp_type_module},
-	.globals = (mp_obj_dict_t *)&pax_module_globals,
+	.base    = {&mp_type_module},
+	.globals = (mp_obj_dict_t *) &pax_module_globals,
 };
 
 
