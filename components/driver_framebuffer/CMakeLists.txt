@@ -64,6 +64,7 @@ set(IDF_COMPONENTS
     micropython
     buses
     driver_display_ili9341
+    driver_display_depg0290b1
     driver_io_disobey_samd
     spi_flash
     )

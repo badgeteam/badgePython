@@ -551,8 +551,8 @@ bool driver_framebuffer_flush(uint32_t flags)
 
 	if ((flags & FB_FLAG_FULL) || (flags & FB_FLAG_FORCE)) {
 		driver_framebuffer_set_dirty_area(0, 0, FB_WIDTH-1, FB_HEIGHT-1, true);
-		#ifdef DISPLAY_FLAG_LUT_BIT
-			eink_flags |= DRIVER_EINK_LUT_FULL << DISPLAY_FLAG_LUT_BIT;
+		#ifdef CONFIG_DRIVER_DEPG0290B1_ENABLE
+			eink_flags |= DRIVER_DEPG0290B1_LUT_FULL << DISPLAY_FLAG_LUT_BIT;
 		#endif
 	} else if (!driver_framebuffer_is_dirty()) {
 		return false; //No need to update, stop.
@@ -566,15 +566,15 @@ bool driver_framebuffer_flush(uint32_t flags)
 		eink_flags |= DISPLAY_FLAG_8BITPIXEL;
 	#endif
 
-	#ifdef DISPLAY_FLAG_LUT_BIT
+	#ifdef CONFIG_DRIVER_DEPG0290B1_ENABLE
 		if (flags & FB_FLAG_LUT_NORMAL) {
-			eink_flags |= DRIVER_EINK_LUT_NORMAL << DISPLAY_FLAG_LUT_BIT;
+			eink_flags |= DRIVER_DEPG0290B1_LUT_NORMAL << DISPLAY_FLAG_LUT_BIT;
 		}
 		if (flags & FB_FLAG_LUT_FAST) {
-			eink_flags |= DRIVER_EINK_LUT_FASTER << DISPLAY_FLAG_LUT_BIT;
+			eink_flags |= DRIVER_DEPG0290B1_LUT_FASTER << DISPLAY_FLAG_LUT_BIT;
 		}
 		if (flags & FB_FLAG_LUT_FASTEST) {
-			eink_flags |= DRIVER_EINK_LUT_FASTEST << DISPLAY_FLAG_LUT_BIT;
+			eink_flags |= DRIVER_DEPG0290B1_LUT_FASTEST << DISPLAY_FLAG_LUT_BIT;
 		}
 	#endif
 
@@ -585,7 +585,7 @@ bool driver_framebuffer_flush(uint32_t flags)
 	#endif
 		int16_t dirty_x0, dirty_y0, dirty_x1, dirty_y1;
 		driver_framebuffer_get_dirty_area(&dirty_x0, &dirty_y0, &dirty_x1, &dirty_y1);
-		FB_FLUSH(framebuffer,eink_flags,dirty_x0,dirty_y0,dirty_x1,dirty_y1);
+		FB_FLUSH(framebuffer, eink_flags,dirty_x0,dirty_y0,dirty_x1,dirty_y1);
 	#ifdef FB_FLUSH_GS
 	}
 	#endif

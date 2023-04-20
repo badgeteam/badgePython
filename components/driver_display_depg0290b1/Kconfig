@@ -1,0 +1,26 @@
+menu "Driver: DEPG0290B1 LCD display"
+	config DRIVER_DEPG0290B1_ENABLE
+		depends on BUS_VSPI_ENABLE
+		bool "Enable the DEPG0290B1 display driver"
+		default n
+		
+	config PIN_NUM_DEPG0290B1_RESET
+		depends on DRIVER_DEPG0290B1_ENABLE
+		int "GPIO pin used for RESET"
+		default -1
+	
+	config PIN_NUM_DEPG0290B1_DCX
+		depends on DRIVER_DEPG0290B1_ENABLE
+		int "GPIO pin used for DC"
+		default -1
+		
+	config PIN_NUM_DEPG0290B1_CS
+		depends on DRIVER_DEPG0290B1_ENABLE
+		int "GPIO pin used for CS"
+		default -1
+	
+	config PIN_NUM_DEPG0290B1_BUSY
+		depends on DRIVER_DEPG0290B1_ENABLE
+		int "GPIO pin used for busy"
+		default -1
+endmenu
