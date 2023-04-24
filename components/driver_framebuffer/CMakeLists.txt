@@ -65,6 +65,7 @@ set(IDF_COMPONENTS
     buses
     driver_display_ili9341
     driver_display_depg0290b1
+    driver_display_ssd1306
     driver_io_disobey_samd
     spi_flash
     )
