@@ -608,15 +608,20 @@ static mp_obj_t framebuffer_draw_quad(mp_uint_t n_args, const mp_obj_t *args) {
 
 static mp_obj_t framebuffer_draw_rect(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t *buf = GET_BUF(n_args, args);
-	if (n_args < 5) {
-		mp_raise_ValueError("Expected 5 or 6 arguments: (window), x, y, width, height and color");
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 6 or 7 arguments: (window), x, y, width, height, fill and color");
 	}
 	float x = mp_obj_get_float(args[0]);
 	float y = mp_obj_get_float(args[1]);
 	float w = mp_obj_get_float(args[2]);
 	float h = mp_obj_get_float(args[3]);
-	pax_col_t color = 0xff000000 | mp_obj_get_int(args[4]);
-	pax_draw_rect(&buf->buf, color, x, y, w, h);
+	bool fill = mp_obj_is_true(args[4]);
+	pax_col_t color = 0xff000000 | mp_obj_get_int(args[5]);
+	if (fill) {
+		pax_draw_rect(&buf->buf, color, x, y, w, h);
+	} else {
+		pax_outline_rect(&buf->buf, color, x, y, w, h);
+	}
 	return mp_const_none;
 	
 	// Window* window = NULL;
@@ -719,16 +724,20 @@ static mp_obj_t framebuffer_draw_circle(mp_uint_t n_args, const mp_obj_t *args) 
 
 static mp_obj_t framebuffer_draw_text(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t *buf = GET_BUF(n_args, args);
+	
 	int x = mp_obj_get_int(args[0]);
 	int y = mp_obj_get_int(args[1]);
 	const char *text = mp_obj_str_get_str(args[2]);
+	
 	pax_col_t color = n_args > 3 ? 0xff000000 | mp_obj_get_int(args[3]) : defaultTextColor;
 	const pax_font_t *font = GET_FONT(n_args, args, 4);
 	int xScale = n_args > 5 ? mp_obj_get_int(args[5]) : 1;
 	int yScale = n_args > 6 ? mp_obj_get_int(args[6]) : 1;
+	
 	pax_push_2d(&buf->buf);
+	pax_apply_2d(&buf->buf, matrix_2d_translate(x, y));
 	pax_apply_2d(&buf->buf, matrix_2d_scale(xScale, yScale));
-	pax_draw_text(&buf->buf, defaultTextColor, font, font->default_size, x, y, text);
+	pax_draw_text(&buf->buf, color, font, font->default_size, 0, 0, text);
 	pax_pop_2d(&buf->buf);
 	return mp_const_none;
 	
@@ -835,13 +844,15 @@ static mp_obj_t framebuffer_png_info(mp_uint_t n_args, const mp_obj_t *args) {
 		
 	} else {
 		// File edition.
-		const char *path = mp_obj_str_get_str(args[0]);
-		FILE *fd = fopen(path, "rb");
+		const char *path = mp_obj_str_get_str(args[2]);
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		FILE *fd = fopen(fullname, "rb");
 		if (!fd) {
-			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", path, strerror(errno));
+			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", fullname, strerror(errno));
 		}
 		pax_png_info_t info;
-		bool res = pax_info_png_fd(&info, fd);
+		res = pax_info_png_fd(&info, fd);
 		fclose(fd);
 		if (!res) {
 			mp_raise_ValueError("Error reading PNG data");
@@ -942,11 +953,13 @@ static mp_obj_t framebuffer_draw_png(mp_uint_t n_args, const mp_obj_t *args) {
 	} else {
 		// File edition.
 		const char *path = mp_obj_str_get_str(args[2]);
-		FILE *fd = fopen(path, "rb");
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		FILE *fd = fopen(fullname, "rb");
 		if (!fd) {
-			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", path, strerror(errno));
+			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", fullname, strerror(errno));
 		}
-		bool res = pax_insert_png_fd(&buf->buf, fd, x, y, 0);
+		res = pax_insert_png_fd(&buf->buf, fd, x, y, 0);
 		fclose(fd);
 		if (!res) {
 			mp_raise_ValueError("Error reading PNG data");
