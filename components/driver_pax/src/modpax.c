@@ -10,6 +10,7 @@
 
 #ifndef NO_QSTR
 #include <pax_gfx.h>
+#include <pax_codecs.h>
 #include "modpax.h"
 #endif
 
@@ -17,6 +18,10 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/objarray.h"
+
+#include "vfs.h"
+#include "vfs_native.h"
+
 #include <string.h>
 
 #ifdef CONFIG_DRIVER_PAX_COMPAT
@@ -306,6 +311,119 @@ mp_obj_t pax2py_flush(mp_uint_t n_args, const mp_obj_t *args) {
 	return mp_const_none;
 }
 #endif
+
+// Decodes a PNG file or bytes object into a Buffer.
+static mp_obj_t decodePNG(mp_uint_t n_args, const mp_obj_t *args) {
+	pax_buf_t decd;
+	
+	if (mp_obj_is_str(*args)) {
+		// Convert given path to physical path.
+		const char *path = mp_obj_str_get_str(*args);
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		
+		// Open file for reading.
+		FILE *fd = fopen(fullname, "rb");
+		if (!fd) {
+			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", fullname, strerror(errno));
+		}
+		
+		// Decode PNG.
+		res = pax_decode_png_fd(&decd, fd, PAX_BUF_16_4444ARGB, 0);
+		fclose(fd);
+		
+		// Error handling.
+		if (!res) {
+			if (pax_last_error == PAX_ERR_NOMEM) {
+				mp_raise_msg(&mp_type_MemoryError, "Out of memory");
+			} else {
+				mp_raise_ValueError("Error reading PNG data");
+			}
+		}
+		
+	} else if (mp_obj_get_type(*args) == &mp_type_bytes) {
+		// Get raw data.
+		size_t len = 0;
+		const char *data = mp_obj_str_get_data(*args, &len);
+		
+		// Decode PNG.
+		int res = pax_decode_png_buf(&decd, data, len, PAX_BUF_16_4444ARGB, 0);
+		
+		// Error handling.
+		if (!res) {
+			if (pax_last_error == PAX_ERR_NOMEM) {
+				mp_raise_msg(&mp_type_MemoryError, "Out of memory");
+			} else {
+				mp_raise_ValueError("Error reading PNG data");
+			}
+		}
+	}
+	
+	// Create a BOX to hold the buffer.
+	Buffer_obj_t *self = m_new_obj_maybe(Buffer_obj_t);
+	if (!self) {
+		pax_buf_destroy(&decd);
+		mp_raise_msg(&mp_type_MemoryError, "Out of memory");
+	}
+	self->base.type = &Buffer_type;
+	
+	// Hand over buffer data.
+	self->ctx.buf        = decd;
+	self->ctx.fill_color = 0xffffffff;
+	self->ctx.line_color = 0xffffffff;
+	
+	// Forward the BOX.
+	return MP_OBJ_FROM_PTR(self);
+}
+
+// Gets info about some sort of PNG.
+static mp_obj_t infoPNG(mp_uint_t n_args, const mp_obj_t *args) {
+	pax_png_info_t info;
+	
+	if (mp_obj_is_str(*args)) {
+		// Convert given path to physical path.
+		const char *path = mp_obj_str_get_str(*args);
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		
+		// Open file for reading.
+		FILE *fd = fopen(fullname, "rb");
+		if (!fd) {
+			mp_raise_msg_varg(&mp_type_ValueError, "Error opening %s: %s", fullname, strerror(errno));
+		}
+		
+		// Decode PNG.
+		res = pax_info_png_fd(&info, fd);
+		fclose(fd);
+		
+		// Error handling.
+		if (!res) {
+			mp_raise_ValueError("Error reading PNG data");
+		}
+		
+	} else if (mp_obj_get_type(*args) == &mp_type_bytes) {
+		// Get raw data.
+		size_t len = 0;
+		const char *data = mp_obj_str_get_data(*args, &len);
+		
+		// Decode PNG.
+		int res = pax_info_png_buf(&info, data, len);
+		
+		// Error handling.
+		if (!res) {
+			mp_raise_ValueError("Error reading PNG data");
+		}
+	}
+	
+	// Pack infos.
+	mp_obj_t dict = mp_obj_new_dict(4);
+	mp_obj_dict_store(dict, MP_OBJ_NEW_QSTR(MP_QSTR_width),      info.width);
+	mp_obj_dict_store(dict, MP_OBJ_NEW_QSTR(MP_QSTR_height),     info.height);
+	mp_obj_dict_store(dict, MP_OBJ_NEW_QSTR(MP_QSTR_bit_depth),  info.bit_depth);
+	mp_obj_dict_store(dict, MP_OBJ_NEW_QSTR(MP_QSTR_color_type), info.color_type);
+	return dict;
+}
+
 
 
 /* ==== COMMON FUNCTION DEFINITIONS ==== */
@@ -960,9 +1078,11 @@ static mp_obj_t getClipRect(mp_uint_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,				1, 1, Buffer_del);
 
 /* ==== GLOBAL DEFINITIONS ==== */
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(flush_obj,					0, 1, pax2py_flush);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontList_obj,				0, 0, fontList);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,				1, 2, fontInfo);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(flush_obj,					0, 1, pax2py_flush);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(decodePNG_obj,				1, 1, decodePNG);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(infoPNG_obj,					1, 1, infoPNG);
 
 /* ==== COMMOM DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,				0, 2, fillColor);
@@ -1056,6 +1176,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect
 	\
 	{MP_ROM_QSTR(MP_QSTR_fontList),				MP_ROM_PTR(&fontList_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_fontInfo),				MP_ROM_PTR(&fontInfo_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_decodePNG),			MP_ROM_PTR(&decodePNG_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_infoPNG),				MP_ROM_PTR(&infoPNG_obj)}, \
 	\
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_1_PAL),		MP_ROM_INT(0)}, \
 	{MP_ROM_QSTR(MP_QSTR_PAX_BUF_2_PAL),		MP_ROM_INT(1)}, \

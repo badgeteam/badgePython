@@ -8,6 +8,7 @@ idf_component_register(
 	
 	REQUIRES
 		pax-graphics
+		pax-codecs
 		micropython
 		driver_display_ili9341
 		driver_framebuffer
