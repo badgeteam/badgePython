@@ -7,7 +7,9 @@
 #include "py/runtime.h"
 #include <driver/uart.h>
 
+#ifdef CONFIG_DRIVER_ILI9341_ENABLE
 #include "driver_ili9341.h"
+#endif
 
 #include <esp_system.h>
 #include "soc/rtc.h"
@@ -273,7 +275,9 @@ static mp_obj_t driver_ice40_send_turbo(mp_obj_t transmit_data) {
 static MP_DEFINE_CONST_FUN_OBJ_1(ice40_send_turbo_obj, driver_ice40_send_turbo);
 
 static mp_obj_t driver_mch22_set_lcd_mode(mp_obj_t mode) {
+#ifdef CONFIG_DRIVER_ILI9341_ENABLE
     driver_ili9341_set_mode(mp_obj_get_int(mode));
+#endif
     return mp_const_none;
 }
 
