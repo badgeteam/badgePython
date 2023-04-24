@@ -1,0 +1,6 @@
+menu "Driver: framebuffer compatibility layer"
+	config DRIVER_FRAMEBUFFER_COMPAT_ENABLE
+		depends on DRIVER_PAX_ENABLE && !DRIVER_FRAMEBUFFER_ENABLE
+		bool "Enable the PAX to legacy framebuffer API backwards-compatibility layer"
+		default y
+endmenu
