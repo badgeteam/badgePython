@@ -13,6 +13,9 @@
 extern "C" {
 #endif
 
+#define PAX2PY_FLAG_FORCE 1
+#define PAX2PY_FLAG_FULL  2
+
 #if   defined(CONFIG_DRIVER_PAX_BUF_1_GREY)
 	#define PAX2PY_BUF_NATIVE PAX_BUF_1_GREY
 #elif defined(CONFIG_DRIVER_PAX_BUF_2_GREY)

@@ -19,13 +19,19 @@
 #include "py/objarray.h"
 #include <string.h>
 
+#ifdef CONFIG_DRIVER_PAX_COMPAT
+// Imported framebuffer from legacy framebuffer driver.
 extern uint8_t *framebuffer;
+#else
+// Statically allocated framebuffer.
+static uint8_t *framebuffer;
+#endif
 
 /* ==== TYPEDEFS ==== */
 // Holder for pax_buf_t and pax_col_t.
 typedef struct {
-	pax_col_t fill_color, line_color;
 	pax_buf_t buf;
+	pax_col_t fill_color, line_color;
 } buf_n_col_t;
 
 // Holder for pax_font_t and float.
@@ -80,6 +86,7 @@ static bool is_pax_module(mp_const_obj_t obj) {
 
 // Get buffer to use on some operation (assuming buffer is first arg).
 static buf_n_col_t *get_buf(mp_uint_t *n_args, const mp_obj_t **args) {
+	if (!*n_args) return &global_pax_buf;
 	// Check for buffer class.
 	if (mp_obj_is_obj(**args) && mp_obj_get_type(**args) == &Buffer_type) {
 		Buffer_obj_t *self = MP_OBJ_TO_PTR(**args);
@@ -273,7 +280,29 @@ static mp_obj_t fontInfo(mp_uint_t n_args, const mp_obj_t *args) {
 #ifdef CONFIG_DRIVER_PAX_COMPAT
 extern bool driver_framebuffer_flush(uint32_t flags);
 static mp_obj_t flush(mp_uint_t n_args, const mp_obj_t *args) {
-	driver_framebuffer_flush(0);
+	int flags = n_args ? mp_obj_get_int_truncated(*args) : 0;
+	driver_framebuffer_flush(flags);
+	return mp_const_none;
+}
+#else
+extern esp_err_t driver_ili9341_write_partial(const uint8_t *buffer, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+// #include "driver_ili9341.h"
+mp_obj_t pax2py_flush(mp_uint_t n_args, const mp_obj_t *args) {
+	int flags = n_args ? mp_obj_get_int_truncated(*args) : 0;
+	
+	if (flags & PAX2PY_FLAG_FORCE) {
+		pax_mark_dirty0(&global_pax_buf.buf);
+	}
+	
+	// Check dirty area.
+	if (!pax_is_dirty(&global_pax_buf.buf)) return mp_const_none;
+	if (flags & PAX2PY_FLAG_FULL) {
+		pax_mark_dirty0(&global_pax_buf.buf);
+	}
+	pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
+	
+	// Flush the thingy.
+	driver_ili9341_write_partial(framebuffer, dirty.x, dirty.y, dirty.x+dirty.w-1, dirty.y+dirty.h-1);
 	return mp_const_none;
 }
 #endif
@@ -352,6 +381,36 @@ static mp_obj_t outlineRect(mp_uint_t n_args, const mp_obj_t *args) {
 	return mp_const_none;
 }
 
+// Rectangle drawing variants.
+static mp_obj_t drawRoundRect(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(5);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      w     = mp_obj_get_float(args[2]);
+	float      h     = mp_obj_get_float(args[3]);
+	float      r     = mp_obj_get_float(args[4]);
+	// Forward function call.
+	pax_draw_round_rect(&buf->buf, color, x, y, w, h, r);
+	return mp_const_none;
+}
+
+// Rectangle drawing variants.
+static mp_obj_t outlineRoundRect(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(5);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      w     = mp_obj_get_float(args[2]);
+	float      h     = mp_obj_get_float(args[3]);
+	float      r     = mp_obj_get_float(args[4]);
+	// Forward function call.
+	pax_outline_round_rect(&buf->buf, color, x, y, w, h, r);
+	return mp_const_none;
+}
+
 // Triangle drawing variants.
 static mp_obj_t drawTri(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
@@ -411,6 +470,34 @@ static mp_obj_t outlineCircle(mp_uint_t n_args, const mp_obj_t *args) {
 }
 
 // Circle drawing variants.
+static mp_obj_t drawHollowCircle(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(4);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	// Forward function call.
+	pax_draw_hollow_circle(&buf->buf, color, x, y, r0, r1);
+	return mp_const_none;
+}
+
+// Circle drawing variants.
+static mp_obj_t outlineHollowCircle(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(4);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	// Forward function call.
+	pax_outline_hollow_circle(&buf->buf, color, x, y, r0, r1);
+	return mp_const_none;
+}
+
+// Circle drawing variants.
 static mp_obj_t drawArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
@@ -440,6 +527,70 @@ static mp_obj_t outlineArc(mp_uint_t n_args, const mp_obj_t *args) {
 	return mp_const_none;
 }
 
+// Circle drawing variants.
+static mp_obj_t drawHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(6);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	float      a0    = mp_obj_get_float(args[4]);
+	float      a1    = mp_obj_get_float(args[5]);
+	// Forward function call.
+	pax_draw_hollow_arc(&buf->buf, color, x, y, r0, r1, a0, a1);
+	return mp_const_none;
+}
+
+// Arc drawing variants.
+static mp_obj_t outlineHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(6);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	float      a0    = mp_obj_get_float(args[4]);
+	float      a1    = mp_obj_get_float(args[5]);
+	// Forward function call.
+	pax_outline_hollow_arc(&buf->buf, color, x, y, r0, r1, a0, a1);
+	return mp_const_none;
+}
+
+// Circle drawing variants.
+static mp_obj_t drawRoundHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(6);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	float      a0    = mp_obj_get_float(args[4]);
+	float      a1    = mp_obj_get_float(args[5]);
+	// Forward function call.
+	pax_draw_round_hollow_arc(&buf->buf, color, x, y, r0, r1, a0, a1);
+	return mp_const_none;
+}
+
+// Arc drawing variants.
+static mp_obj_t outlineRoundHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
+	// Grab arguments.
+	buf_n_col_t *buf = GET_BUF();
+	pax_col_t  color = GET_FILL_COLOR(6);
+	float      x     = mp_obj_get_float(args[0]);
+	float      y     = mp_obj_get_float(args[1]);
+	float      r0    = mp_obj_get_float(args[2]);
+	float      r1    = mp_obj_get_float(args[3]);
+	float      a0    = mp_obj_get_float(args[4]);
+	float      a1    = mp_obj_get_float(args[5]);
+	// Forward function call.
+	pax_outline_round_hollow_arc(&buf->buf, color, x, y, r0, r1, a0, a1);
+	return mp_const_none;
+}
+
 // Line drawing variants.
 static mp_obj_t drawLine(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
@@ -454,8 +605,6 @@ static mp_obj_t drawLine(mp_uint_t n_args, const mp_obj_t *args) {
 	return mp_const_none;
 }
 
-
-// TODO: draw, outline
 
 
 // Draw image variants.
@@ -808,61 +957,67 @@ static mp_obj_t getClipRect(mp_uint_t n_args, const mp_obj_t *args) {
 
 
 /* ==== CLASS DEFINITIONS ==== */
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,			1, 1, Buffer_del);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,				1, 1, Buffer_del);
 
 /* ==== GLOBAL DEFINITIONS ==== */
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontList_obj,			0, 0, fontList);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,			1, 2, fontInfo);
-#ifdef CONFIG_DRIVER_PAX_COMPAT
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(flush_obj,				0, 0, flush);
-#endif
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontList_obj,				0, 0, fontList);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fontInfo_obj,				1, 2, fontInfo);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(flush_obj,					0, 1, pax2py_flush);
 
 /* ==== COMMOM DEFINITIONS ==== */
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,			0, 2, fillColor);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,			0, 2, lineColor);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,				0, 2, fillColor);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,				0, 2, lineColor);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(width_obj,				0, 1, getWidth);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(height_obj,				0, 1, getHeight);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(type_obj,				0, 1, getType);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(width_obj,					0, 1, getWidth);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(height_obj,					0, 1, getHeight);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(type_obj,					0, 1, getType);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(background_obj,			1, 2, background);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj,			4, 6, drawRect);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj,			4, 6, outlineRect);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,				6, 8, drawTri);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineTri_obj,			6, 8, outlineTri);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawCircle_obj,			3, 5, drawCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineCircle_obj,		3, 5, outlineCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawArc_obj,				5, 7, drawArc);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineArc_obj,			5, 7, outlineArc);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawLine_obj,			4, 6, drawLine);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(background_obj,				1, 2, background);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRect_obj,				4, 6, drawRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRect_obj,				4, 6, outlineRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRoundRect_obj,			5, 7, drawRoundRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRoundRect_obj,		5, 7, outlineRoundRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,					6, 8, drawTri);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineTri_obj,				6, 8, outlineTri);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawCircle_obj,				3, 5, drawCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineCircle_obj,			3, 5, outlineCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawHollowCircle_obj,		4, 6, drawCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineHollowCircle_obj,		4, 6, outlineCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawArc_obj,					5, 7, drawArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineArc_obj,				5, 7, outlineArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawHollowArc_obj,			6, 8, drawHollowArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineHollowArc_obj,		6, 8, outlineHollowArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawRoundHollowArc_obj,		6, 8, drawRoundHollowArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineRoundHollowArc_obj,	6, 8, outlineRoundHollowArc);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawLine_obj,				4, 6, drawLine);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImage_obj,			3, 6, drawImage);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImageOpaque_obj,		3, 6, drawImageOpaque);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImage_obj,				3, 6, drawImage);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawImageOpaque_obj,			3, 6, drawImageOpaque);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(stringSize_obj,			1, 4, stringSize);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawString_obj,			3, 7, drawString);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawStringCentered_obj,	3, 7, drawStringCentered);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(stringSize_obj,				1, 4, stringSize);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawString_obj,				3, 7, drawString);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawStringCentered_obj,		3, 7, drawStringCentered);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pushMatrix_obj,			0, 1, pushMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(popMatrix_obj,			0, 1, popMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clearMatrix_obj,			0, 2, clearMatrix);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(scale_obj,				1, 3, scale);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(translate_obj,			2, 3, translate);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(shear_obj,				2, 3, shear);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rotate_obj,				1, 2, rotate);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pushMatrix_obj,				0, 1, pushMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(popMatrix_obj,				0, 1, popMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clearMatrix_obj,				0, 2, clearMatrix);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(scale_obj,					1, 3, scale);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(translate_obj,				2, 3, translate);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(shear_obj,					2, 3, shear);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rotate_obj,					1, 2, rotate);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixel_obj,			2, 3, getPixel);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixel_obj,			3, 4, setPixel);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelRaw_obj,			2, 3, getPixelRaw);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixelRaw_obj,			3, 4, setPixelRaw);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mergePixel_obj,			3, 4, mergePixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixel_obj,				2, 3, getPixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixel_obj,				3, 4, setPixel);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelRaw_obj,				2, 3, getPixelRaw);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setPixelRaw_obj,				3, 4, setPixelRaw);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mergePixel_obj,				3, 4, mergePixel);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(isDirty_obj,				0, 1, isDirty);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getDirtyRect_obj,		0, 1, getDirtyRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(isDirty_obj,					0, 1, isDirty);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getDirtyRect_obj,			0, 1, getDirtyRect);
 
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clip_obj,				4, 5, clip);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(noClip_obj,				0, 1, noClip);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clip_obj,					4, 5, clip);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(noClip_obj,					0, 1, noClip);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect);
 
 
 
@@ -881,14 +1036,17 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 
 // Functions exclusive to the global(tm).
 #ifdef CONFIG_DRIVER_PAX_COMPAT
-#define MODPAX_GLOBAL_COMPAT_ROM \
-	{MP_ROM_QSTR(MP_QSTR_flush),				MP_ROM_PTR(&flush_obj)},
+#define MODPAX_GLOBAL_COMPAT_ROM
 #else
 #define MODPAX_GLOBAL_COMPAT_ROM
 #endif
 
 #define MODPAX_GLOBAL_ROM \
 	MODPAX_GLOBAL_COMPAT_ROM \
+	{MP_ROM_QSTR(MP_QSTR_FLAG_FORCE),			MP_ROM_INT(PAX2PY_FLAG_FORCE)}, \
+	{MP_ROM_QSTR(MP_QSTR_FLAG_FULL),			MP_ROM_INT(PAX2PY_FLAG_FULL)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_flush),				MP_ROM_PTR(&flush_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR___name__),				MP_ROM_QSTR(MP_QSTR_pax)}, \
 	{MP_ROM_QSTR(MP_QSTR_Buffer),				MP_ROM_PTR(&Buffer_type)}, \
 	\
@@ -939,17 +1097,23 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,			0, 1, getClipRect)
 	\
 	{MP_ROM_QSTR(MP_QSTR_background),			MP_ROM_PTR(&background_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawRect),				MP_ROM_PTR(&drawRect_obj)}, \
-	{MP_ROM_QSTR(MP_QSTR_drawRectangle),		MP_ROM_PTR(&drawRect_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_outlineRect),			MP_ROM_PTR(&outlineRect_obj)}, \
-	{MP_ROM_QSTR(MP_QSTR_outlineRectangle),		MP_ROM_PTR(&outlineRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawRoundRect),		MP_ROM_PTR(&drawRoundRect_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineRoundRect),		MP_ROM_PTR(&outlineRoundRect_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawTri),				MP_ROM_PTR(&drawTri_obj)}, \
-	{MP_ROM_QSTR(MP_QSTR_drawTriangle),			MP_ROM_PTR(&drawTri_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_outlineTri),			MP_ROM_PTR(&outlineTri_obj)}, \
-	{MP_ROM_QSTR(MP_QSTR_outlineTriangle),		MP_ROM_PTR(&outlineTri_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawCircle),			MP_ROM_PTR(&drawCircle_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_outlineCircle),		MP_ROM_PTR(&outlineCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawDonut),			MP_ROM_PTR(&drawHollowCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineDonut),			MP_ROM_PTR(&outlineHollowCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawHollowCircle),		MP_ROM_PTR(&drawHollowCircle_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineHollowCircle),	MP_ROM_PTR(&outlineHollowCircle_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawArc),				MP_ROM_PTR(&drawArc_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_outlineArc),			MP_ROM_PTR(&outlineArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawHollowArc),		MP_ROM_PTR(&drawHollowArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineHollowArc),		MP_ROM_PTR(&outlineHollowArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_drawRoundHollowArc),	MP_ROM_PTR(&drawRoundHollowArc_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_outlineRoundHollowArc),MP_ROM_PTR(&outlineRoundHollowArc_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_drawLine),				MP_ROM_PTR(&drawLine_obj)}, \
 	\
 	{MP_ROM_QSTR(MP_QSTR_drawImage),			MP_ROM_PTR(&drawImage_obj)}, \
@@ -1022,7 +1186,6 @@ void driver_framebuffer_pre_flush_callback() {
 	#endif
 	pax_recti dirty = pax_get_dirty(&global_pax_buf.buf);
 	if (pax_is_dirty(&global_pax_buf.buf)) {
-		printf("PAX dirty: (%d, %d) %d x %d\n", dirty.x, dirty.y, dirty.w, dirty.h);
 		driver_framebuffer_set_dirty_area(
 			dirty.x,
 			dirty.y,
@@ -1044,7 +1207,6 @@ esp_err_t driver_pax2py_init() {
 	#endif
 	
 	// Create global PAX context.
-	pax_buf_type_t type = PAX2PY_BUF_NATIVE;
 	pax_buf_init(
 		&global_pax_buf.buf,
 	#ifdef CONFIG_DRIVER_PAX_COMPAT
@@ -1053,8 +1215,11 @@ esp_err_t driver_pax2py_init() {
 		NULL,
 	#endif
 		CONFIG_DRIVER_PAX_FBWIDTH, CONFIG_DRIVER_PAX_FBHEIGHT,
-		type
+		PAX2PY_BUF_NATIVE
 	);
+	#ifndef CONFIG_DRIVER_PAX_COMPAT
+	framebuffer = pax_buf_get_pixels_rw(&global_pax_buf.buf);
+	#endif
 	global_pax_buf.fill_color = 0xffffffff;
 	global_pax_buf.line_color = 0xffffffff;
 	

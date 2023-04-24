@@ -591,7 +591,6 @@ bool driver_framebuffer_flush(uint32_t flags)
 	#endif
 		int16_t dirty_x0, dirty_y0, dirty_x1, dirty_y1;
 		driver_framebuffer_get_dirty_area(&dirty_x0, &dirty_y0, &dirty_x1, &dirty_y1);
-		printf("Dirty: (%d, %d), (%d, %d)\n", dirty_x0, dirty_y0, dirty_x1, dirty_y1);
 		FB_FLUSH(framebuffer,eink_flags,dirty_x0,dirty_y0,dirty_x1,dirty_y1);
 	#ifdef FB_FLUSH_GS
 	}

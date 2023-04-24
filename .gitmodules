@@ -19,6 +19,9 @@
 [submodule "components/driver_mch22/esp32-component-mch2022-rp2040"]
 	path = components/driver_mch22/esp32-component-mch2022-rp2040
 	url = https://github.com/badgeteam/esp32-component-mch2022-rp2040.git
+[submodule "components/pax-gfx"]
+	path = components/pax-graphics
+	url = https://github.com/robotman2412/pax-graphics
 [submodule "components/pax-codecs"]
 	path = components/pax-codecs
 	url = https://github.com/robotman2412/pax-codecs

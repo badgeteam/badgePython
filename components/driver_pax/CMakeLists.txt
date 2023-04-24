@@ -4,10 +4,11 @@ idf_component_register(
 		"src/modpax.c"
 	
 	INCLUDE_DIRS
-		src
+		"src"
 	
 	REQUIRES
 		pax-graphics
 		micropython
+		driver_display_ili9341
 		driver_framebuffer
 )
