@@ -321,6 +321,9 @@ static mp_obj_t decodePNG(mp_uint_t n_args, const mp_obj_t *args) {
 		const char *path = mp_obj_str_get_str(*args);
 		char fullname[128] = {'\0'};
 		int res = physicalPathN(path, fullname, sizeof(fullname));
+		if (res) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", path, strerror(errno));
+		}
 		
 		// Open file for reading.
 		FILE *fd = fopen(fullname, "rb");
@@ -376,6 +379,82 @@ static mp_obj_t decodePNG(mp_uint_t n_args, const mp_obj_t *args) {
 	return MP_OBJ_FROM_PTR(self);
 }
 
+// Encodes a PNG file or bytes object from a Buffer.
+static mp_obj_t encodePNG(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	
+	if (n_args == 0 || n_args == 4) {
+		// Get the WINDOW.
+		int x, y, w, h;
+		if (n_args == 4) {
+			x = mp_obj_get_int(args[0]);
+			y = mp_obj_get_int(args[1]);
+			w = mp_obj_get_int(args[2]);
+			h = mp_obj_get_int(args[3]);
+		} else {
+			x = 0;
+			y = 0;
+			w = pax_buf_get_width(&buf->buf);
+			h = pax_buf_get_height(&buf->buf);
+		}
+		
+		// Encode a PNG bytes.
+		size_t pnglen;
+		void  *pngbuf;
+		bool res = pax_encode_png_buf(&buf->buf, &pngbuf, &pnglen, x, y, w, h);
+		if (!res) {
+			mp_raise_ValueError("Error while encoding PNG data");
+		}
+		
+		// Unfortunately, micropyhon insists on copying the data.
+		mp_obj_t bytes = mp_obj_new_bytes(pngbuf, pnglen);
+		free(pngbuf);
+		return bytes;
+		
+	} else if (n_args == 1 || n_args == 5) {
+		// Convert given path to physical path.
+		const char *path = mp_obj_str_get_str(*args);
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		if (res) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", path, strerror(errno));
+		}
+		
+		// Open file for writing.
+		FILE *fd = fopen(fullname, "wb");
+		if (!fd) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", fullname, strerror(errno));
+		}
+		
+		// Get the WINDOW.
+		int x, y, w, h;
+		if (n_args == 5) {
+			x = mp_obj_get_int(args[1]);
+			y = mp_obj_get_int(args[2]);
+			w = mp_obj_get_int(args[3]);
+			h = mp_obj_get_int(args[4]);
+		} else {
+			x = 0;
+			y = 0;
+			w = pax_buf_get_width(&buf->buf);
+			h = pax_buf_get_height(&buf->buf);
+		}
+		
+		// Encode a PNG file.
+		res = pax_encode_png_fd(&buf->buf, fd, x, y, w, h);
+		fclose(fd);
+		
+		if (res) {
+			mp_raise_ValueError(pax_desc_err(pax_last_error));
+		} else {
+			return mp_const_none;
+		}
+		
+	} else {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (buffer), (path), (x, y, width, height)");
+	}
+}
+
 // Gets info about some sort of PNG.
 static mp_obj_t infoPNG(mp_uint_t n_args, const mp_obj_t *args) {
 	pax_png_info_t info;
@@ -385,6 +464,9 @@ static mp_obj_t infoPNG(mp_uint_t n_args, const mp_obj_t *args) {
 		const char *path = mp_obj_str_get_str(*args);
 		char fullname[128] = {'\0'};
 		int res = physicalPathN(path, fullname, sizeof(fullname));
+		if (res) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", path, strerror(errno));
+		}
 		
 		// Open file for reading.
 		FILE *fd = fopen(fullname, "rb");
@@ -1085,6 +1167,8 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(decodePNG_obj,				1, 1, decodePNG);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(infoPNG_obj,					1, 1, infoPNG);
 
 /* ==== COMMOM DEFINITIONS ==== */
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(encodePNG_obj,				0, 6, encodePNG);
+
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,				0, 2, fillColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,				0, 2, lineColor);
 
@@ -1209,6 +1293,8 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect
 
 #define MODPAX_COMMON_ROM \
 	MODPAX_COMMON_COMPAT_ROM \
+	{MP_ROM_QSTR(MP_QSTR_encodePNG),			MP_ROM_PTR(&encodePNG_obj)}, \
+	\
 	{MP_ROM_QSTR(MP_QSTR_fillColor),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)}, \
