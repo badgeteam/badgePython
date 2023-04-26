@@ -216,6 +216,84 @@ static void Buffer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 	mp_print_str(print, ")");
 }
 
+#ifdef CONFIG_DRIVER_PAX_EXPERIMENTAL
+// Encodes a PNG file or bytes object from a Buffer.
+static mp_obj_t encodePNG(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	
+	if (n_args == 0 || n_args == 4) {
+		// Get the WINDOW.
+		int x, y, w, h;
+		if (n_args == 4) {
+			x = mp_obj_get_int(args[0]);
+			y = mp_obj_get_int(args[1]);
+			w = mp_obj_get_int(args[2]);
+			h = mp_obj_get_int(args[3]);
+		} else {
+			x = 0;
+			y = 0;
+			w = pax_buf_get_width(&buf->buf);
+			h = pax_buf_get_height(&buf->buf);
+		}
+		
+		// Encode a PNG bytes.
+		size_t pnglen;
+		void  *pngbuf;
+		bool res = pax_encode_png_buf(&buf->buf, &pngbuf, &pnglen, x, y, w, h);
+		if (!res) {
+			mp_raise_ValueError("Error while encoding PNG data");
+		}
+		
+		// Unfortunately, micropyhon insists on copying the data.
+		mp_obj_t bytes = mp_obj_new_bytes(pngbuf, pnglen);
+		free(pngbuf);
+		return bytes;
+		
+	} else if (n_args == 1 || n_args == 5) {
+		// Convert given path to physical path.
+		const char *path = mp_obj_str_get_str(*args);
+		char fullname[128] = {'\0'};
+		int res = physicalPathN(path, fullname, sizeof(fullname));
+		if (res) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", path, strerror(errno));
+		}
+		
+		// Open file for writing.
+		FILE *fd = fopen(fullname, "wb");
+		if (!fd) {
+			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", fullname, strerror(errno));
+		}
+		
+		// Get the WINDOW.
+		int x, y, w, h;
+		if (n_args == 5) {
+			x = mp_obj_get_int(args[1]);
+			y = mp_obj_get_int(args[2]);
+			w = mp_obj_get_int(args[3]);
+			h = mp_obj_get_int(args[4]);
+		} else {
+			x = 0;
+			y = 0;
+			w = pax_buf_get_width(&buf->buf);
+			h = pax_buf_get_height(&buf->buf);
+		}
+		
+		// Encode a PNG file.
+		res = pax_encode_png_fd(&buf->buf, fd, x, y, w, h);
+		fclose(fd);
+		
+		if (res) {
+			mp_raise_ValueError(pax_desc_err(pax_last_error));
+		} else {
+			return mp_const_none;
+		}
+		
+	} else {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (buffer), (path), (x, y, width, height)");
+	}
+}
+#endif // CONFIG_DRIVER_PAX_EXPERIMENTAL
+
 
 
 /* ==== GLOBAL FUNCTION DEFINITIONS ==== */
@@ -377,82 +455,6 @@ static mp_obj_t decodePNG(mp_uint_t n_args, const mp_obj_t *args) {
 	
 	// Forward the BOX.
 	return MP_OBJ_FROM_PTR(self);
-}
-
-// Encodes a PNG file or bytes object from a Buffer.
-static mp_obj_t encodePNG(mp_uint_t n_args, const mp_obj_t *args) {
-	buf_n_col_t *buf = GET_BUF();
-	
-	if (n_args == 0 || n_args == 4) {
-		// Get the WINDOW.
-		int x, y, w, h;
-		if (n_args == 4) {
-			x = mp_obj_get_int(args[0]);
-			y = mp_obj_get_int(args[1]);
-			w = mp_obj_get_int(args[2]);
-			h = mp_obj_get_int(args[3]);
-		} else {
-			x = 0;
-			y = 0;
-			w = pax_buf_get_width(&buf->buf);
-			h = pax_buf_get_height(&buf->buf);
-		}
-		
-		// Encode a PNG bytes.
-		size_t pnglen;
-		void  *pngbuf;
-		bool res = pax_encode_png_buf(&buf->buf, &pngbuf, &pnglen, x, y, w, h);
-		if (!res) {
-			mp_raise_ValueError("Error while encoding PNG data");
-		}
-		
-		// Unfortunately, micropyhon insists on copying the data.
-		mp_obj_t bytes = mp_obj_new_bytes(pngbuf, pnglen);
-		free(pngbuf);
-		return bytes;
-		
-	} else if (n_args == 1 || n_args == 5) {
-		// Convert given path to physical path.
-		const char *path = mp_obj_str_get_str(*args);
-		char fullname[128] = {'\0'};
-		int res = physicalPathN(path, fullname, sizeof(fullname));
-		if (res) {
-			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", path, strerror(errno));
-		}
-		
-		// Open file for writing.
-		FILE *fd = fopen(fullname, "wb");
-		if (!fd) {
-			mp_raise_msg_varg(&mp_type_OSError, "Error opening %s: %s", fullname, strerror(errno));
-		}
-		
-		// Get the WINDOW.
-		int x, y, w, h;
-		if (n_args == 5) {
-			x = mp_obj_get_int(args[1]);
-			y = mp_obj_get_int(args[2]);
-			w = mp_obj_get_int(args[3]);
-			h = mp_obj_get_int(args[4]);
-		} else {
-			x = 0;
-			y = 0;
-			w = pax_buf_get_width(&buf->buf);
-			h = pax_buf_get_height(&buf->buf);
-		}
-		
-		// Encode a PNG file.
-		res = pax_encode_png_fd(&buf->buf, fd, x, y, w, h);
-		fclose(fd);
-		
-		if (res) {
-			mp_raise_ValueError(pax_desc_err(pax_last_error));
-		} else {
-			return mp_const_none;
-		}
-		
-	} else {
-		mp_raise_ValueError("Expected 0 to 5 arguments: (buffer), (path), (x, y, width, height)");
-	}
 }
 
 // Gets info about some sort of PNG.
@@ -1155,6 +1157,41 @@ static mp_obj_t getClipRect(mp_uint_t n_args, const mp_obj_t *args) {
 }
 
 
+// Get a copy of the pixel data from a Buffer.
+static mp_obj_t getPixelData(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	
+	// Get range params.
+	int buf_size = PAX_BUF_CALC_SIZE(pax_buf_get_width(&buf->buf), pax_buf_get_height(&buf->buf), pax_buf_get_type(&buf->buf));
+	int off      = 0;
+	int len      = buf_size;
+	if (n_args > 0) {
+		off = mp_obj_get_int(args[0]);
+	}
+	if (n_args > 1) {
+		len = mp_obj_get_int(args[1]);
+	}
+	
+	// Bounds check.
+	if (off < 0 || off + len > buf_size || len < 0) {
+		mp_raise_msg_varg(&mp_type_ValueError, "Buffer index out of range: %d bytes at position %d in buffer of size %d", len, off, buf_size);
+	}
+	
+	// Get some bytes.
+	const uint8_t *buf_dat = pax_buf_get_pixels(&buf->buf);
+	return mp_obj_new_bytearray(len, buf_dat + off);
+}
+
+// Get the size of the pixel data returned by `getPixelData`.
+static mp_obj_t getPixelDataLen(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	
+	// Simple calculator.
+	size_t len = PAX_BUF_CALC_SIZE(pax_buf_get_width(&buf->buf), pax_buf_get_height(&buf->buf), pax_buf_get_type(&buf->buf));
+	return mp_obj_new_int(len);
+}
+
+
 
 /* ==== CLASS DEFINITIONS ==== */
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Buffer_del_obj,				1, 1, Buffer_del);
@@ -1167,7 +1204,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(decodePNG_obj,				1, 1, decodePNG);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(infoPNG_obj,					1, 1, infoPNG);
 
 /* ==== COMMOM DEFINITIONS ==== */
+#ifdef CONFIG_DRIVER_PAX_EXPERIMENTAL
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(encodePNG_obj,				0, 6, encodePNG);
+#endif // CONFIG_DRIVER_PAX_EXPERIMENTAL
 
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,				0, 2, fillColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,				0, 2, lineColor);
@@ -1185,8 +1224,8 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawTri_obj,					6, 8, drawTri);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineTri_obj,				6, 8, outlineTri);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawCircle_obj,				3, 5, drawCircle);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineCircle_obj,			3, 5, outlineCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawHollowCircle_obj,		4, 6, drawCircle);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineHollowCircle_obj,		4, 6, outlineCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawHollowCircle_obj,		4, 6, drawHollowCircle);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineHollowCircle_obj,		4, 6, outlineHollowCircle);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawArc_obj,					5, 7, drawArc);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(outlineArc_obj,				5, 7, outlineArc);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawHollowArc_obj,			6, 8, drawHollowArc);
@@ -1223,30 +1262,33 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(clip_obj,					4, 5, clip);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(noClip_obj,					0, 1, noClip);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect);
 
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelData_obj,			0, 3, getPixelData);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelDataLen_obj,			0, 1, getPixelDataLen);
+
 
 
 /* ==== MODULE DEFINITION ==== */
 // Functions exclusive to Buffer objects.
-#ifdef CONFIG_DRIVER_PAX_COMPAT
-#define MODPAX_CLASS_COMPAT_ROM
+#ifdef CONFIG_DRIVER_PAX_EXPERIMENTAL
+#define MODPAX_CLASS_EXP_ROM
 #else
-#define MODPAX_CLASS_COMPAT_ROM
+#define MODPAX_CLASS_EXP_ROM
 #endif
 
 #define MODPAX_CLASS_ROM \
-	MODPAX_CLASS_COMPAT_ROM \
+	MODPAX_CLASS_EXP_ROM \
 	{MP_ROM_QSTR(MP_QSTR___del__),				MP_ROM_PTR(&Buffer_del_obj)},
 
 
 // Functions exclusive to the global(tm).
-#ifdef CONFIG_DRIVER_PAX_COMPAT
-#define MODPAX_GLOBAL_COMPAT_ROM
+#ifdef CONFIG_DRIVER_PAX_EXPERIMENTAL
+#define MODPAX_GLOBAL_EXP_ROM
 #else
-#define MODPAX_GLOBAL_COMPAT_ROM
+#define MODPAX_GLOBAL_EXP_ROM
 #endif
 
 #define MODPAX_GLOBAL_ROM \
-	MODPAX_GLOBAL_COMPAT_ROM \
+	MODPAX_GLOBAL_EXP_ROM \
 	{MP_ROM_QSTR(MP_QSTR_FLAG_FORCE),			MP_ROM_INT(PAX2PY_FLAG_FORCE)}, \
 	{MP_ROM_QSTR(MP_QSTR_FLAG_FULL),			MP_ROM_INT(PAX2PY_FLAG_FULL)}, \
 	\
@@ -1285,15 +1327,15 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect
 
 
 // Function common to Buffer objects and the global(tm).
-#ifdef CONFIG_DRIVER_PAX_COMPAT
-#define MODPAX_COMMON_COMPAT_ROM
+#ifdef CONFIG_DRIVER_PAX_EXPERIMENTAL
+#define MODPAX_COMMON_EXP_ROM \
+	{MP_ROM_QSTR(MP_QSTR_encodePNG),			MP_ROM_PTR(&encodePNG_obj)},
 #else
-#define MODPAX_COMMON_COMPAT_ROM
+#define MODPAX_COMMON_EXP_ROM
 #endif
 
 #define MODPAX_COMMON_ROM \
-	MODPAX_COMMON_COMPAT_ROM \
-	{MP_ROM_QSTR(MP_QSTR_encodePNG),			MP_ROM_PTR(&encodePNG_obj)}, \
+	MODPAX_COMMON_EXP_ROM \
 	\
 	{MP_ROM_QSTR(MP_QSTR_fillColor),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)}, \
@@ -1351,7 +1393,10 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getClipRect_obj,				0, 1, getClipRect
 	\
 	{MP_ROM_QSTR(MP_QSTR_clip),					MP_ROM_PTR(&clip_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_noClip),				MP_ROM_PTR(&noClip_obj)}, \
-	{MP_ROM_QSTR(MP_QSTR_getClipRect),			MP_ROM_PTR(&getClipRect_obj)},
+	{MP_ROM_QSTR(MP_QSTR_getClipRect),			MP_ROM_PTR(&getClipRect_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_getPixelData),			MP_ROM_PTR(&getPixelData_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_getPixelDataLen),		MP_ROM_PTR(&getPixelDataLen_obj)},
 
 
 static const mp_rom_map_elem_t Buffer_locals_table[] = {

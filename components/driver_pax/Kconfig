@@ -87,11 +87,15 @@ menu "Driver: pax-graphics support"
 	config DRIVER_PAX_MCR
 		depends on DRIVER_PAX_ENABLE
 		bool "Compile multi-core rendering"
-		default y
+		default n
 	config DRIVER_PAX_MCR_OPT
 		depends on DRIVER_PAX_ENABLE
 		depends on DRIVER_PAX_MCR
 		bool "Enable multi-core rendering by default"
 		default y
 	
+	config DRIVER_PAX_EXPERIMENTAL
+		depends on DRIVER_PAX_ENABLE
+		bool "Enable experimental features"
+		default n
 endmenu
