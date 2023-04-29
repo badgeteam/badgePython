@@ -14,6 +14,6 @@
 		{"in": "Exo2-Regular.ttf",			"name": "Exo2",					"out": "exo2_regular*.pax_font",		"sizes": [12, 18, 22]},
 		{"in": "Exo2-Thin.ttf",				"name": "Exo2 Thin",			"out": "exo2_thin*.pax_font",			"sizes": [12, 18, 22]},
 		{"in": "Exo2-Bold.ttf",				"name": "Exo2 Bold",			"out": "exo2_bold*.pax_font",			"sizes": [12, 18, 22]},
-		{"in": "PressStart2P.ttf",			"name": "Press Start 2P",		"out": "press_start_2p*.pax_font",		"sizes": [6, 12, 22, 18]}
+		{"in": "PressStart2P.ttf",			"name": "Press Start",			"out": "press_start_2p*.pax_font",		"sizes": [8]}
 	]
 }

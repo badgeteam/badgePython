@@ -45,12 +45,14 @@
 | :---					| :--	| :----------	| :---------------
 | Permanent Marker		| 2		| 36			| FS
 | Fairlight				| 1		| 8, 12			| FS
-| Dejavu Sans			| 1		| 20			| FS
-| Roboto Black			| 1		| 22			| FS
-| Roboto Black Italic	| 1		| 24			| FS
-| Roboto				| 1		| 12, 18, 22	| FS
-| Exo2					| 1		| 12, 18, 22	| FS
-| Exo2 Thin				| 1		| 12, 18, 22	| FS
-| Exo2 Bold				| 1		| 12, 18, 22	| FS
-| Press Start 2P		| 2		| 6, 12, 22		| Built-in
-| Press Start 2P		| 2		| 18			| Built-in
+| Dejavu Sans			| 2		| 20			| FS
+| Roboto Black			| 2		| 22			| FS
+| Roboto Black Italic	| 2		| 24			| FS
+| Roboto				| 2		| 12, 18, 22	| FS
+| Exo2					| 2		| 12, 18, 22	| FS
+| Exo2 Thin				| 2		| 12, 18, 22	| FS
+| Exo2 Bold				| 2		| 12, 18, 22	| FS
+| Press Start 2P		| 1		| 6, 12, 22		| Built-in
+| Press Start 2P		| 1		| 18			| Built-in
+
+<!-- [[32, 126], [128, 255], [8364, 8364], [8482, 8482]] -->
