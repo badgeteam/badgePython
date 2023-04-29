@@ -52,7 +52,6 @@
 | Exo2					| 2		| 12, 18, 22	| FS
 | Exo2 Thin				| 2		| 12, 18, 22	| FS
 | Exo2 Bold				| 2		| 12, 18, 22	| FS
-| Press Start 2P		| 1		| 6, 12, 22		| Built-in
-| Press Start 2P		| 1		| 18			| Built-in
+| Press Start 2P		| 1		| 8				| Built-in
 
 <!-- [[32, 126], [128, 255], [8364, 8364], [8482, 8482]] -->

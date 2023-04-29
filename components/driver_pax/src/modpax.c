@@ -1,6 +1,6 @@
 /*
- * BADGE.TEAM framebuffer driver
- * Implements the PAX C API for BadgePython.
+ * BADGE.TEAM PAX driver
+ * Implements the PAX API for BadgePython.
  * Julian Scheffers 2023
  */
 
@@ -12,6 +12,7 @@
 #include <pax_gfx.h>
 #include <pax_codecs.h>
 #include "modpax.h"
+#include "fonts.h"
 #endif
 
 #include "py/mperrno.h"
