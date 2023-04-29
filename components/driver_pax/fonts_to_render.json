@@ -1,0 +1,19 @@
+{
+	"glyphs": [
+		[32, 126],
+		[8364, 8364],
+		[8482, 8482]
+	],
+	"fonts": [
+		{"in": "permanentmarker.ttf",		"name": "Permanent Marker",		"out": "permanentmarker*.pax_font",		"sizes": [36]},
+		{"in": "fairlight.ttf",				"name": "Fairlight",			"out": "fairlight*.pax_font",			"sizes": [8, 12]},
+		{"in": "dejavusans.ttf",			"name": "Dejavu Sans",			"out": "dejavusans*.pax_font",			"sizes": [20]},
+		{"in": "roboto-Black.ttf",			"name": "Roboto black",			"out": "roboto_black*.pax_font",		"sizes": [22]},
+		{"in": "roboto-BlackItalic.ttf",	"name": "Roboto black italic",	"out": "roboto_blackitalic*.pax_font",	"sizes": [24]},
+		{"in": "roboto.ttf",				"name": "Roboto",				"out": "roboto_regular*.pax_font",		"sizes": [12, 18, 22]},
+		{"in": "Exo2-Regular.ttf",			"name": "Exo2",					"out": "exo2_regular*.pax_font",		"sizes": [12, 18, 22]},
+		{"in": "Exo2-Thin.ttf",				"name": "Exo2 Thin",			"out": "exo2_thin*.pax_font",			"sizes": [12, 18, 22]},
+		{"in": "Exo2-Bold.ttf",				"name": "Exo2 Bold",			"out": "exo2_bold*.pax_font",			"sizes": [12, 18, 22]},
+		{"in": "PressStart2P.ttf",			"name": "Press Start 2P",		"out": "press_start_2p*.pax_font",		"sizes": [6, 12, 22, 18]}
+	]
+}
