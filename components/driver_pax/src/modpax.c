@@ -527,6 +527,21 @@ static mp_obj_t lineColor(mp_uint_t n_args, const mp_obj_t *args) {
 }
 
 
+// Get buf rotation
+static mp_obj_t getRotation(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	return mp_obj_new_int(pax_buf_get_rotation(&buf->buf));
+}
+
+// Set buf rotation.
+static mp_obj_t setRotation(mp_uint_t n_args, const mp_obj_t *args) {
+	buf_n_col_t *buf = GET_BUF();
+	if (n_args != 1) mp_raise_ValueError("Expected 1 argument: rotation");
+	pax_buf_set_rotation(&buf->buf, mp_obj_get_int(*args));
+	return mp_const_none;
+}
+
+
 // Get buf width.
 static mp_obj_t getWidth(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t *buf = GET_BUF();
@@ -1212,6 +1227,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(encodePNG_obj,				0, 6, encodePNG);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(fillColor_obj,				0, 2, fillColor);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lineColor_obj,				0, 2, lineColor);
 
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getRotation_obj,				0, 1, getRotation);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setRotation_obj,				1, 2, setRotation);
+
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(width_obj,					0, 1, getWidth);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(height_obj,					0, 1, getHeight);
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(type_obj,					0, 1, getType);
@@ -1342,6 +1360,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(getPixelDataLen_obj,			0, 1, getPixel
 	{MP_ROM_QSTR(MP_QSTR_fillColour),			MP_ROM_PTR(&fillColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_lineColor),			MP_ROM_PTR(&lineColor_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_lineColour),			MP_ROM_PTR(&lineColor_obj)}, \
+	\
+	{MP_ROM_QSTR(MP_QSTR_getRotation),			MP_ROM_PTR(&getRotation_obj)}, \
+	{MP_ROM_QSTR(MP_QSTR_setRotation),			MP_ROM_PTR(&setRotation_obj)}, \
 	\
 	{MP_ROM_QSTR(MP_QSTR_width),				MP_ROM_PTR(&width_obj)}, \
 	{MP_ROM_QSTR(MP_QSTR_height),				MP_ROM_PTR(&height_obj)}, \
