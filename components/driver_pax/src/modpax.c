@@ -136,7 +136,7 @@ static pax_col_t get_line_color(buf_n_col_t *buf, mp_uint_t *n_args, const mp_ob
 // Get buffer to use on some operation (assuming buffer is first arg).
 static font_n_size_t get_font(mp_uint_t *n_args, const mp_obj_t **args) {
 	// Is ther an font?
-	if (mp_obj_is_str(**args)) {
+	if (*n_args >= 2 && mp_obj_is_str(**args)) {
 		// Yes font; get.
 		font_n_size_t out = {
 			pax_get_font(mp_obj_str_get_str((*args)[0])),
@@ -170,8 +170,6 @@ static mp_obj_t Buffer_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw
 	self->base.type = &Buffer_type;
 	
 	// Grab arguments.
-	int w = mp_obj_get_int(args[0]);
-	int h = mp_obj_get_int(args[1]);
 	pax_buf_type_t buf_type;
 	if (n_args == 3) {
 		int raw_type = mp_obj_get_int(args[2]);
@@ -179,9 +177,13 @@ static mp_obj_t Buffer_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw
 			mp_raise_ValueError("Not a valid buffer type");
 		}
 		buf_type = buf_type_lut[raw_type];
-	} else {
+	} else if (n_args == 2) {
 		buf_type = PAX2PY_BUF_NATIVE;
+	} else {
+		mp_raise_ValueError("Expected 2 or 3 arguments: width, height, (type)");
 	}
+	int w = mp_obj_get_int(args[0]);
+	int h = mp_obj_get_int(args[1]);
 	
 	// Initialise the buffer.
 	pax_buf_init(&self->ctx.buf, NULL, w, h, buf_type);
@@ -290,7 +292,7 @@ static mp_obj_t encodePNG(mp_uint_t n_args, const mp_obj_t *args) {
 		}
 		
 	} else {
-		mp_raise_ValueError("Expected 0 to 5 arguments: (buffer), (path), (x, y, width, height)");
+		mp_raise_ValueError("Expected 0 to 5 arguments: (path), (x, y, width, height)");
 	}
 }
 #endif // CONFIG_DRIVER_PAX_EXPERIMENTAL
@@ -565,6 +567,7 @@ static mp_obj_t getType(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t background(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (!n_args) mp_raise_ValueError("Expected 1 argument: color");
 	pax_col_t  color = mp_obj_get_int_truncated(*args);
 	// Forward function call.
 	pax_background(&buf->buf, color);
@@ -576,6 +579,9 @@ static mp_obj_t drawRect(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(4);
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (color), x, y, width, height");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      w     = mp_obj_get_float(args[2]);
@@ -594,6 +600,9 @@ static mp_obj_t outlineRect(mp_uint_t n_args, const mp_obj_t *args) {
 	float      y     = mp_obj_get_float(args[1]);
 	float      w     = mp_obj_get_float(args[2]);
 	float      h     = mp_obj_get_float(args[3]);
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (color), x, y, width, height");
+	}
 	// Forward function call.
 	pax_outline_rect(&buf->buf, color, x, y, w, h);
 	return mp_const_none;
@@ -604,6 +613,9 @@ static mp_obj_t drawRoundRect(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(5);
+	if (n_args < 5) {
+		mp_raise_ValueError("Expected 0 to 6 arguments: (color), x, y, width, height, radius");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      w     = mp_obj_get_float(args[2]);
@@ -619,6 +631,9 @@ static mp_obj_t outlineRoundRect(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(5);
+	if (n_args < 5) {
+		mp_raise_ValueError("Expected 0 to 6 arguments: (color), x, y, width, height, radius");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      w     = mp_obj_get_float(args[2]);
@@ -634,6 +649,9 @@ static mp_obj_t drawTri(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x0, y0, x1, y1, x2, y2");
+	}
 	float      x0    = mp_obj_get_float(args[0]);
 	float      y0    = mp_obj_get_float(args[1]);
 	float      x1    = mp_obj_get_float(args[2]);
@@ -650,6 +668,9 @@ static mp_obj_t outlineTri(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x0, y0, x1, y1, x2, y2");
+	}
 	float      x0    = mp_obj_get_float(args[0]);
 	float      y0    = mp_obj_get_float(args[1]);
 	float      x1    = mp_obj_get_float(args[2]);
@@ -666,6 +687,9 @@ static mp_obj_t drawCircle(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(3);
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 0 to 4 arguments: (color), x, y, radius");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r     = mp_obj_get_float(args[2]);
@@ -679,6 +703,9 @@ static mp_obj_t outlineCircle(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(3);
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 0 to 4 arguments: (color), x, y, radius");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r     = mp_obj_get_float(args[2]);
@@ -692,6 +719,9 @@ static mp_obj_t drawHollowCircle(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(4);
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (color), x, y, radius0, radius1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -706,6 +736,9 @@ static mp_obj_t outlineHollowCircle(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(4);
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (color), x, y, radius0, radius1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -720,6 +753,9 @@ static mp_obj_t drawArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(5);
+	if (n_args < 5) {
+		mp_raise_ValueError("Expected 0 to 6 arguments: (color), x, y, radius, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r     = mp_obj_get_float(args[2]);
@@ -735,6 +771,9 @@ static mp_obj_t outlineArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(5);
+	if (n_args < 5) {
+		mp_raise_ValueError("Expected 0 to 6 arguments: (color), x, y, radius, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r     = mp_obj_get_float(args[2]);
@@ -750,6 +789,9 @@ static mp_obj_t drawHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x, y, radius0, radius1, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -766,6 +808,9 @@ static mp_obj_t outlineHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x, y, radius0, radius1, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -782,6 +827,9 @@ static mp_obj_t drawRoundHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x, y, radius0, radius1, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -798,6 +846,9 @@ static mp_obj_t outlineRoundHollowArc(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(6);
+	if (n_args < 6) {
+		mp_raise_ValueError("Expected 0 to 7 arguments: (color), x, y, radius0, radius1, angle0, angle1");
+	}
 	float      x     = mp_obj_get_float(args[0]);
 	float      y     = mp_obj_get_float(args[1]);
 	float      r0    = mp_obj_get_float(args[2]);
@@ -814,6 +865,9 @@ static mp_obj_t drawLine(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
 	pax_col_t  color = GET_FILL_COLOR(4);
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 0 to 5 arguments: (color), x0, y0, x1, y1");
+	}
 	float      x0    = mp_obj_get_float(args[0]);
 	float      y0    = mp_obj_get_float(args[1]);
 	float      x1    = mp_obj_get_float(args[2]);
@@ -855,6 +909,9 @@ static mp_obj_t drawImage(mp_uint_t n_args, const mp_obj_t *args) {
 		dst = &global_pax_buf.buf;
 	}
 	
+	if (n_args != 2 && n_args != 4) {
+		mp_raise_ValueError("Expected 1 to 5 arguments: imagebuffer, x, y, (width, height)");
+	}
 	// Required args.
 	float x = mp_obj_get_float(args[0]);
 	float y = mp_obj_get_float(args[1]);
@@ -904,6 +961,9 @@ static mp_obj_t drawImageOpaque(mp_uint_t n_args, const mp_obj_t *args) {
 		dst = &global_pax_buf.buf;
 	}
 	
+	if (n_args != 2 && n_args != 4) {
+		mp_raise_ValueError("Expected 1 to 5 arguments: imagebuffer, x, y, (width, height)");
+	}
 	// Required args.
 	float x = mp_obj_get_float(args[1]);
 	float y = mp_obj_get_float(args[2]);
@@ -930,6 +990,9 @@ static mp_obj_t stringSize(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t  *buf  = GET_BUF();
 	// Grab arguments.
 	font_n_size_t font = GET_FONT();
+	if (!n_args) {
+		mp_raise_ValueError("Expected 1 to 3 arguments: (font, fontsize), text");
+	}
 	const char   *text = mp_obj_str_get_str(*args);
 	// Forward function call.
 	pax_vec2f     dims = pax_text_size(font.font, font.font_size, text);
@@ -947,6 +1010,9 @@ static mp_obj_t drawString(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t  *buf  = GET_BUF();
 	pax_col_t     col  = GET_FILL_COLOR(mp_obj_is_str(*args) ? 5 : 3);
 	font_n_size_t font = GET_FONT();
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 3 to 6 arguments: (color), (font, fontsize), x, y, text");
+	}
 	float         x    = mp_obj_get_float(args[0]);
 	float         y    = mp_obj_get_float(args[1]);
 	const char   *text = mp_obj_str_get_str(args[2]);
@@ -966,6 +1032,9 @@ static mp_obj_t drawStringCentered(mp_uint_t n_args, const mp_obj_t *args) {
 	buf_n_col_t  *buf  = GET_BUF();
 	pax_col_t     col  = GET_FILL_COLOR(mp_obj_is_str(*args) ? 5 : 3);
 	font_n_size_t font = GET_FONT();
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 3 to 6 arguments: (color), (font, fontsize), x, y, text");
+	}
 	float         x    = mp_obj_get_float(args[0]);
 	float         y    = mp_obj_get_float(args[1]);
 	const char   *text = mp_obj_str_get_str(args[2]);
@@ -1030,6 +1099,9 @@ static mp_obj_t scale(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t translate(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 2) {
+		mp_raise_ValueError("Expected 2 arguments: x, y");
+	}
 	float x = mp_obj_get_float(args[0]);
 	float y = mp_obj_get_float(args[1]);
 	pax_apply_2d(&buf->buf, matrix_2d_translate(x, y));
@@ -1042,6 +1114,9 @@ static mp_obj_t translate(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t shear(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 2) {
+		mp_raise_ValueError("Expected 2 arguments: x, y");
+	}
 	float x = mp_obj_get_float(args[0]);
 	float y = mp_obj_get_float(args[1]);
 	pax_apply_2d(&buf->buf, matrix_2d_shear(x, y));
@@ -1052,6 +1127,9 @@ static mp_obj_t shear(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t rotate(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 2) {
+		mp_raise_ValueError("Expected 1 argument: angle");
+	}
 	float x = mp_obj_get_float(args[0]);
 	pax_apply_2d(&buf->buf, matrix_2d_rotate(x));
 	return mp_const_none;
@@ -1062,6 +1140,9 @@ static mp_obj_t rotate(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t getPixel(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 2) {
+		mp_raise_ValueError("Expected 2 arguments: x, y");
+	}
 	int x = mp_obj_get_int(args[0]);
 	int y = mp_obj_get_int(args[1]);
 	pax_col_t col = pax_get_pixel(&buf->buf, x, y);
@@ -1072,6 +1153,9 @@ static mp_obj_t getPixel(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t setPixel(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 3 arguments: color, x, y");
+	}
 	pax_col_t col = mp_obj_get_int_truncated(args[0]);
 	int x = mp_obj_get_int(args[1]);
 	int y = mp_obj_get_int(args[2]);
@@ -1084,6 +1168,9 @@ static mp_obj_t setPixel(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t getPixelRaw(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 2) {
+		mp_raise_ValueError("Expected 2 arguments: x, y");
+	}
 	int x = mp_obj_get_int(args[0]);
 	int y = mp_obj_get_int(args[1]);
 	pax_col_t col = pax_get_pixel_raw(&buf->buf, x, y);
@@ -1094,6 +1181,9 @@ static mp_obj_t getPixelRaw(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t setPixelRaw(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 3 arguments: value, x, y");
+	}
 	pax_col_t col = mp_obj_get_int_truncated(args[0]);
 	int x = mp_obj_get_int(args[1]);
 	int y = mp_obj_get_int(args[2]);
@@ -1106,6 +1196,9 @@ static mp_obj_t setPixelRaw(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t mergePixel(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 3) {
+		mp_raise_ValueError("Expected 3 arguments: color, x, y");
+	}
 	pax_col_t col = mp_obj_get_int_truncated(args[0]);
 	int x = mp_obj_get_int(args[1]);
 	int y = mp_obj_get_int(args[2]);
@@ -1143,6 +1236,9 @@ static mp_obj_t getDirtyRect(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t clip(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
+	if (n_args < 4) {
+		mp_raise_ValueError("Expected 4 arguments: x, y, width, height");
+	}
 	float x = mp_obj_get_float(args[0]);
 	float y = mp_obj_get_float(args[1]);
 	float w = mp_obj_get_float(args[2]);
