@@ -1013,13 +1013,15 @@ static mp_obj_t clearMatrix(mp_uint_t n_args, const mp_obj_t *args) {
 static mp_obj_t scale(mp_uint_t n_args, const mp_obj_t *args) {
 	// Grab arguments.
 	buf_n_col_t *buf = GET_BUF();
-	if (n_args > 1) {
+	if (n_args == 1) {
 		float x = mp_obj_get_float(args[0]);
 		pax_apply_2d(&buf->buf, matrix_2d_scale(x, x));
-	} else {
+	} else if (n_args == 2) {
 		float x = mp_obj_get_float(args[0]);
 		float y = mp_obj_get_float(args[1]);
 		pax_apply_2d(&buf->buf, matrix_2d_scale(x, y));
+	} else {
+		mp_raise_ValueError("Expected 1 or 2 arguments: factor OR x, y");
 	}
 	return mp_const_none;
 }
