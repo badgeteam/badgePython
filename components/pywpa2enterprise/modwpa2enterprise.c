@@ -22,7 +22,7 @@ STATIC mp_obj_t mod_wpa2enterprise_connect (mp_uint_t n_args, const mp_obj_t *ar
     const char* aPassword = mp_obj_str_get_str(args[3]);
     int phase2 = mp_obj_get_int(args[4]);
     wifi_config_t wifi_config = {0};
-    strncpy((char*) wifi_config.sta.ssid, aSsid, 32);
+    strlcpy((char*) wifi_config.sta.ssid, aSsid, sizeof(wifi_config.sta.ssid));
     WIFI_SORT_ERRCHECK(esp_wifi_stop());
     WIFI_SORT_ERRCHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     WIFI_SORT_ERRCHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
