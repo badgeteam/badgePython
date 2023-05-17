@@ -27,7 +27,7 @@ static xSemaphoreHandle i2c1_mux = NULL;
 
 esp_err_t start_buses() {
     // This function initializes the VSPI, HSPI and I2C buses of the ESP32
-    esp_err_t res;
+    esp_err_t res = ESP_OK;
 
     #ifdef CONFIG_BUS_VSPI_ENABLE
         spi_bus_config_t vspiBusConfiguration = {0};
@@ -109,7 +109,7 @@ esp_err_t start_buses() {
         if (i2c1_mux == NULL) return ESP_ERR_NO_MEM;
     #endif
 
-    return ESP_OK;
+    return res;
 }
 
 /* I2C helper functions */
