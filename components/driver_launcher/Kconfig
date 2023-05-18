@@ -1,0 +1,5 @@
+menu "Driver: Badge.team launcher"
+	config DRIVER_BADGEAPI_ENABLE
+		bool "Enable the Badge.team launcher driver"
+		default n
+endmenu
