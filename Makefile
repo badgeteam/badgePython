@@ -8,7 +8,7 @@ MPYCROSS_SUBDIR := $(CURDIR)/components/micropython/micropython/mpy-cross
 MPYCROSS_FILES := $(MPYCROSS_SUBDIR)/build/main.o $(MPYCROSS_SUBDIR)/mpy-cross
 
 
-.PHONY: mpy_cross prepare clean build flash erase monitor menuconfig image qemu install clean-frozen
+.PHONY: mpy_cross prepare clean build flash erase monitor menuconfig image qemu install clean-frozen git-submodule-reset
 
 all: prepare build
 
@@ -52,3 +52,8 @@ install: flash
 
 clean-frozen:
 	rm -rf build/frozen_content.c
+
+git-submodule-reset:
+	git submodule foreach --recursive git clean -ffdx
+	git submodule update --init --recursive
+	git submodule foreach --recursive git reset --hard --recurse-submodules
