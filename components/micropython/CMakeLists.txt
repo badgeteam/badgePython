@@ -1,5 +1,5 @@
-get_filename_component(MICROPY_DIR ${PROJECT_DIR}/components/micropython/micropython ABSOLUTE)
-get_filename_component(MICROPY_PORT_DIR ${PROJECT_DIR}/components/micropython/micropython/ports/esp32 ABSOLUTE)
+get_filename_component(MICROPY_DIR ${PROJECT_DIR}/external/micropython ABSOLUTE)
+get_filename_component(MICROPY_PORT_DIR ${PROJECT_DIR}/external/micropython/ports/esp32 ABSOLUTE)
 set(MICROPY_FROZEN_MANIFEST ${PROJECT_DIR}/manifests/${CONFIG_MICROPY_FROZEN_MANIFEST})
 
 # Include core source components.
@@ -73,7 +73,6 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/mphalport.c
     #${MICROPY_PORT_DIR}/fatfs_port.c
     ${MICROPY_PORT_DIR}/help.c
-    ${MICROPY_PORT_DIR}/modutime.c
     #${MICROPY_PORT_DIR}/moduos.c
     ${COMPONENT_DIR}/vfs_fat/moduos.c
     ${MICROPY_PORT_DIR}/machine_bitstream.c
@@ -86,7 +85,7 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/machine_i2s.c
     ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/modmachine.c
-    ${MICROPY_PORT_DIR}/modnetwork.c
+    ${MICROPY_PORT_DIR}/network_common.c
     ${MICROPY_PORT_DIR}/network_lan.c
     ${MICROPY_PORT_DIR}/network_ppp.c
     ${MICROPY_PORT_DIR}/network_wlan.c
@@ -102,7 +101,8 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/machine_wdt.c
     ${MICROPY_PORT_DIR}/mpthreadport.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
-    #${MICROPY_PORT_DIR}/machine_sdcard.c
+    ${MICROPY_PORT_DIR}/machine_sdcard.c
+    ${MICROPY_PORT_DIR}/modespnow.c
 )
 
 set(MICROPY_SOURCE_QSTR
@@ -123,6 +123,7 @@ set(IDF_COMPONENTS
     bootloader_support
     bt
     driver
+    esp_adc_cal
     esp_common
     esp_eth
     esp_event
@@ -207,8 +208,8 @@ add_custom_command(
         ${COMPONENT_DIR}/mpconfigoverrides.h
     COMMAND echo extmods: ${EXTMODS} &&
             python3 mpconfigover_generator.py -b ./ \"${EXTMODS_NAMES}\" &&
-            cp mpconfigport.h micropython/ports/esp32/ &&
-            cp help.c micropython/ports/esp32/
+            cp mpconfigport.h ../../external/micropython/ports/esp32/ &&
+            cp help.c ../../external/micropython/ports/esp32/
     WORKING_DIRECTORY ${COMPONENT_DIR}
     DEPENDS ${EXTMODS}
 )
