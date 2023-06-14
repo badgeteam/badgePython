@@ -1,5 +1,5 @@
 [submodule "firmware/components/micropython/micropython"]
-	path = components/micropython/micropython
+	path = external/micropython
 	url = https://github.com/micropython/micropython.git
 [submodule "esp-idf"]
 	path = esp-idf
