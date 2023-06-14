@@ -1,27 +1,24 @@
 PORT ?= /dev/ttyACM0
 BUILDDIR ?= build
+BOARD ?= DEFAULT
 IDF_PATH ?= $(shell pwd)/esp-idf
 IDF_EXPORT_QUIET ?= 0
 SHELL := /usr/bin/env bash
+MPYCROSS_SUBDIR := $(CURDIR)/external/micropython/mpy-cross
+MPYCROSS_FILES := $(MPYCROSS_SUBDIR)/build/main.o $(MPYCROSS_SUBDIR)/mpy-cross
 
 .PHONY: prepare clean build flash erase monitor menuconfig image qemu install prepare-mch2022 prepare-cz19 mch2022 clean-frozen
 
 all: prepare build
 
-prepare:
+prepare: $(MPYCROSS_FILES)
 	git submodule update --init --recursive
 	cd esp-idf; bash install.sh; cd ..
-	cd components/micropython/micropython/mpy-cross; make
-	cp configs/default_defconfig sdkconfig
-	cp partition_tables/default.csv partitions.csv
 
-prepare-mch2022: prepare
-	cp configs/mch2022_defconfig sdkconfig
-	cp partition_tables/mch2022.csv partitions.csv
-	
-prepare-campzone2019: prepare
-	cp configs/campzone2019_defconfig sdkconfig
-	cp partition_tables/campzone2019.csv partitions.csv
+$(MPYCROSS_FILES): mpy_cross;
+
+mpy_cross:
+	$(MAKE) -C $(MPYCROSS_SUBDIR)
 
 clean:
 	rm -rf "$(BUILDDIR)"
@@ -44,7 +41,10 @@ menuconfig:
 
 install: flash
 
-mch2022: prepare-mch2022 build
-
 clean-frozen:
 	rm -rf build/frozen_content.c
+
+git-submodule-reset:
+	git submodule foreach --recursive git clean -ffdx
+	git submodule update --init --recursive
+	git submodule foreach --recursive git reset --hard --recurse-submodules
