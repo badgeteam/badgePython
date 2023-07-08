@@ -19,3 +19,6 @@
 [submodule "components/driver_mch22/esp32-component-mch2022-rp2040"]
 	path = components/driver_mch22/esp32-component-mch2022-rp2040
 	url = https://github.com/badgeteam/esp32-component-mch2022-rp2040.git
+[submodule "external/opus"]
+	path = external/opus
+	url = https://gitlab.xiph.org/xiph/opus/
