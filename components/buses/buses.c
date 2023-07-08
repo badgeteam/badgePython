@@ -131,7 +131,7 @@ esp_err_t driver_i2c_read_bytes(int bus, uint8_t addr, uint8_t *value, size_t va
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -160,7 +160,7 @@ esp_err_t driver_i2c_read_reg(int bus, uint8_t addr, uint8_t reg, uint8_t *value
     
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -181,7 +181,7 @@ esp_err_t driver_i2c_read_event(int bus, uint8_t addr, uint8_t *buf) {
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -200,7 +200,7 @@ esp_err_t driver_i2c_write_byte(int bus, uint8_t addr, uint8_t value) {
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -221,7 +221,7 @@ esp_err_t driver_i2c_write_reg(int bus, uint8_t addr, uint8_t reg, uint8_t value
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -244,7 +244,7 @@ esp_err_t driver_i2c_write_reg_n(int bus, uint8_t addr, uint8_t reg, uint8_t *va
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -265,7 +265,7 @@ esp_err_t driver_i2c_write_buffer(int bus, uint8_t addr, const uint8_t* buffer, 
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -288,7 +288,7 @@ esp_err_t driver_i2c_write_buffer_reg(int bus, uint8_t addr, uint8_t reg, const 
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
@@ -315,7 +315,7 @@ esp_err_t driver_i2c_write_reg32(int bus, uint8_t addr, uint8_t reg, uint32_t va
 
     xSemaphoreHandle mux = (bus == I2C_NUM_1) ? i2c1_mux : i2c0_mux;
     if (xSemaphoreTake(mux, portMAX_DELAY) != pdTRUE) return ESP_ERR_TIMEOUT; // Wait for I2C bus to become available
-    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    res = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     xSemaphoreGive(mux);
     return res;
