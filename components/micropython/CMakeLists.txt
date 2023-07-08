@@ -7,4 +7,4 @@ if(NOT DEFINED MICROPY_DIR)
 endif()
 
 # Include core source components.
-include(${MICROPY_DIR}/ports/esp32/main/CMakeLists.txt)
+include(${MICROPY_DIR}/ports/esp32/main_${IDF_TARGET}/CMakeLists.txt)
