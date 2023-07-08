@@ -27,6 +27,7 @@ endif()
 cmake_path(SET MICROPY_DIR NORMALIZE "${CMAKE_CURRENT_SOURCE_DIR}/external/micropython")
 
 cmake_path(SET MICROPY_PORT_DIR NORMALIZE "${MICROPY_DIR}/ports/esp32")
+cmake_path(SET USER_C_MODULES NORMALIZE "${CMAKE_CURRENT_SOURCE_DIR}/components/external_micropy_modules.cmake")
 
 # Set the board directory and check that it exists.
 if(NOT EXISTS ${MICROPY_BOARD_DIR}/mpconfigboard.cmake)
