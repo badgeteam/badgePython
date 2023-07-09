@@ -4,6 +4,7 @@
 #include "include/ota_update.h"
 #include "include/factory_reset.h"
 #include "driver_framebuffer.h"
+#include "include/micropython_main.h"
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -11,7 +12,6 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "nvs.h"
-#include "micropython_main.h"
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
 
