@@ -10,4 +10,4 @@ target_include_directories(driver_nvs INTERFACE
 
 target_link_libraries(usermod INTERFACE driver_nvs)
 
-message(STATUS "rtcmem enabled")
+message(STATUS "nvs enabled")
