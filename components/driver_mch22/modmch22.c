@@ -181,30 +181,42 @@ static mp_obj_t driver_ice40_disable() {
 static MP_DEFINE_CONST_FUN_OBJ_0 (ice40_disable_obj, driver_ice40_disable);
 
 static mp_obj_t driver_ice40_transaction(mp_obj_t transmit_data) {
-    if (!MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+    mp_uint_t length;
+    uint8_t* data_out = NULL;
+    if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+		data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
+	} else if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytearray)) {
+		mp_buffer_info_t bufinfo;
+
+		if (mp_get_buffer(transmit_data, &bufinfo, MP_BUFFER_READ)) {
+			data_out = (uint8_t*) bufinfo.buf;
+			length = (mp_uint_t) bufinfo.len;
+		}
+	} else {
         mp_raise_ValueError("Expected a bytestring like object");
         return mp_const_none;
-    }
+	}
 
-    mp_uint_t length;
-    uint8_t* data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
-    uint8_t* data_in = heap_caps_malloc(length + 4, MALLOC_CAP_DMA);
-    if (data_in == NULL) {
-        mp_raise_ValueError("Out of memory");
-        return mp_const_none;
-    }
+	if (data_out != NULL) {	
+		uint8_t* data_in = heap_caps_malloc(length + 4, MALLOC_CAP_DMA);
+		if (data_in == NULL) {
+			mp_raise_ValueError("Out of memory");
+			return mp_const_none;
+		}
 
-    esp_err_t res = ice40_transaction(&ice40, data_out, length, data_in, length);
+		esp_err_t res = ice40_transaction(&ice40, data_out, length, data_in, length);
 
-    if (res != ESP_OK) {
-        heap_caps_free(data_in);
-        mp_raise_ValueError("Failed to execute transaction");
-        return mp_const_none;
-    }
+		if (res != ESP_OK) {
+			heap_caps_free(data_in);
+			mp_raise_ValueError("Failed to execute transaction");
+			return mp_const_none;
+		}
 
-    mp_obj_t data_in_obj = mp_obj_new_bytes(data_in, length);
-    heap_caps_free(data_in);
-    return data_in_obj;
+		mp_obj_t data_in_obj = mp_obj_new_bytes(data_in, length);
+		heap_caps_free(data_in);
+		return data_in_obj;
+	}
+	return mp_const_none;
 }
 
 static MP_DEFINE_CONST_FUN_OBJ_1(ice40_transaction_obj, driver_ice40_transaction);
@@ -233,20 +245,30 @@ static mp_obj_t driver_ice40_receive(mp_obj_t length_obj) {
 static MP_DEFINE_CONST_FUN_OBJ_1(ice40_receive_obj, driver_ice40_receive);
 
 static mp_obj_t driver_ice40_send(mp_obj_t transmit_data) {
-    if (!MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+    mp_uint_t length;
+    uint8_t* data_out = NULL;
+    if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+		data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
+	} else if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytearray)) {
+		mp_buffer_info_t bufinfo;
+
+		if (mp_get_buffer(transmit_data, &bufinfo, MP_BUFFER_READ)) {
+			data_out = (uint8_t*) bufinfo.buf;
+			length = (mp_uint_t) bufinfo.len;
+		}
+	} else {
         mp_raise_ValueError("Expected a bytestring like object");
         return mp_const_none;
-    }
+	}
 
-    mp_uint_t length;
-    uint8_t* data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
+	if (data_out != NULL) {
+		esp_err_t res = ice40_send(&ice40, data_out, length);
 
-    esp_err_t res = ice40_send(&ice40, data_out, length);
-
-    if (res != ESP_OK) {
-        mp_raise_ValueError("Failed to execute transaction");
-        return mp_const_none;
-    }
+		if (res != ESP_OK) {
+			mp_raise_ValueError("Failed to execute transaction");
+			return mp_const_none;
+		}
+	}
 
     return mp_const_none;
 }
@@ -254,20 +276,30 @@ static mp_obj_t driver_ice40_send(mp_obj_t transmit_data) {
 static MP_DEFINE_CONST_FUN_OBJ_1(ice40_send_obj, driver_ice40_send);
 
 static mp_obj_t driver_ice40_send_turbo(mp_obj_t transmit_data) {
-    if (!MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+    mp_uint_t length;
+    uint8_t* data_out = NULL;
+    if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytes)) {
+		data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
+	} else if (MP_OBJ_IS_TYPE(transmit_data, &mp_type_bytearray)) {
+		mp_buffer_info_t bufinfo;
+
+		if (mp_get_buffer(transmit_data, &bufinfo, MP_BUFFER_READ)) {
+			data_out = (uint8_t*) bufinfo.buf;
+			length = (mp_uint_t) bufinfo.len;
+		}
+	} else {
         mp_raise_ValueError("Expected a bytestring like object");
         return mp_const_none;
-    }
+	}
 
-    mp_uint_t length;
-    uint8_t* data_out = (uint8_t*) mp_obj_str_get_data(transmit_data, &length);
+	if (data_out != NULL) {
+		esp_err_t res = ice40_send_turbo(&ice40, data_out, length);
 
-    esp_err_t res = ice40_send_turbo(&ice40, data_out, length);
-
-    if (res != ESP_OK) {
-        mp_raise_ValueError("Failed to execute transaction");
-        return mp_const_none;
-    }
+		if (res != ESP_OK) {
+			mp_raise_ValueError("Failed to execute transaction");
+			return mp_const_none;
+		}
+	}
 
     return mp_const_none;
 }
