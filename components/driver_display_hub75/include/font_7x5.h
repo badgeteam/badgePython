@@ -109,7 +109,7 @@ volatile static uint8_t font_7x5[] = {
         0x08, 0x1C, 0x2A, 0x08, 0x08 // <-
 };
 
-void renderChar_7x5(uint8_t charId, Color color, int *x, int y, int endX, int *skip);
+void renderChar_7x5(uint8_t charId, Color color, int *x, int y, int endX, int *offset, float micro_frame);
 int getCharWidth_7x5(uint8_t charId);
 
 #endif //NEW_ESP32_FIRMWARE_FONT_7X5_H

@@ -9,12 +9,12 @@
 
 #ifdef CONFIG_DRIVER_HUB75_ENABLE
 
-void renderChar_6x3(uint8_t charId, Color color, int *x, int y, int endX, int *skip) {
+void renderChar_6x3(uint8_t charId, Color color, int *x, int y, int endX, int *offset, float micro_frame) {
     character toDraw = font_6x3[charId];
 
     for (int col = 0; col < toDraw.width; col++) {
-        if (*skip != 0) {
-            (*skip)--;
+        if (*offset != 0) {
+            (*offset)--;
             continue;
         }
 

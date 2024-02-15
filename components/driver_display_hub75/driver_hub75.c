@@ -175,54 +175,51 @@ void displayTask(void *pvParameter)
         uint32_t deduced_current = 0;
 
 	while(driver_hub75_active) {
-		if(compositor_status()) composite();
-		render16();
+		if(compositor_status() && composite()) {
+            render16();
 
 #ifdef CONFIG_HUB75_REGULATE_VLED
-                if (xTaskGetTickCount() - lastUsbCheck > 1000/portTICK_PERIOD_MS) {
-                    lastUsbCheck = xTaskGetTickCount();
-                    int vusb = adc1_get_raw(ADC1_CHANNEL_6) * 2; // in raw dimensionless units
-//                    printf("vusb: %d\n", vusb);
-                    usb_connected = vusb > 1000; // arbitrary cutoff (normal values 1500-5000 when connected)
+            if (xTaskGetTickCount() - lastUsbCheck > 1000/portTICK_PERIOD_MS) {
+                lastUsbCheck = xTaskGetTickCount();
+                int vusb = adc1_get_raw(ADC1_CHANNEL_6) * 2; // in raw dimensionless units
+                usb_connected = vusb > 1000; // arbitrary cutoff (normal values 1500-5000 when connected)
+            }
+
+            if (usb_connected) {
+                uint32_t intensity        = total_intensity;
+                uint8_t milliamps_per_led = 35;
+                deduced_current =
+                    (uint32_t)((intensity / 255.0) * milliamps_per_led *
+                               ((brightness - 2) / 32.0) / 8);  // in milliamps
+
+                // Correct for blank frames. Example: 1 data frame + 3 blank frames, of
+                // which 1 blanks the row, actual current is <deduced> * 3/4.
+                if (NULLFRAMES) {
+    //                      deduced_current *= NULLFRAMES;
+    //                      deduced_current /= NULLFRAMES+1;
+                  deduced_current /= 3; // this silly heuristic works
                 }
 
-                if (usb_connected) {
-                    uint32_t intensity        = total_intensity;
-                    uint8_t milliamps_per_led = 35;
-                    deduced_current =
-                        (uint32_t)((intensity / 255.0) * milliamps_per_led *
-                                   ((brightness - 2) / 32.0) / 8);  // in milliamps
-
-                    // Correct for blank frames. Example: 1 data frame + 3 blank frames, of
-                    // which 1 blanks the row, actual current is <deduced> * 3/4.
-                    if (NULLFRAMES) {
-//                      deduced_current *= NULLFRAMES;
-//                      deduced_current /= NULLFRAMES+1;
-                      deduced_current /= 3; // this silly heuristic works
-                    }
-
-                    if (deduced_current <= LOWER) {
-                      duty = PCT_MIN;
-                    } else if (deduced_current <= MID) {
-                      duty = (int)((deduced_current - LOWER) / ((float)MID - LOWER) *
-                                   (PCT_MID - PCT_MIN)) +
-                             PCT_MIN;
-                    } else if (deduced_current <= UPPER) {
-                      duty = (int)((deduced_current - MID) / ((float)UPPER - MID) * (255 - PCT_MID)) +
-                             PCT_MID;
-                    }
-                } else {
-                  duty = 255;
+                if (deduced_current <= LOWER) {
+                  duty = PCT_MIN;
+                } else if (deduced_current <= MID) {
+                  duty = (int)((float)(deduced_current - LOWER) / ((float)MID - LOWER) *
+                               (PCT_MID - PCT_MIN)) +
+                         PCT_MIN;
+                } else if (deduced_current <= UPPER) {
+                  duty = (int)((float)(deduced_current - MID) / ((float)UPPER - MID) * (255 - PCT_MID)) +
+                         PCT_MID;
                 }
+            } else {
+              duty = 255;
+            }
 
-                if (duty != 255) {
-//                    printf("%d %d\n", deduced_current, duty);
-                }
-                ledc_set_duty(led_power_dimmer.speed_mode, led_power_dimmer.channel, duty);
-                ledc_update_duty(led_power_dimmer.speed_mode, led_power_dimmer.channel);
+            ledc_set_duty(led_power_dimmer.speed_mode, led_power_dimmer.channel, duty);
+            ledc_update_duty(led_power_dimmer.speed_mode, led_power_dimmer.channel);
 #endif // CONFIG_HUB75_REGULATE_VLED
+        }
 
-		vTaskDelayUntil( &xLastWakeTime, 1.0 / framerate * 1000 / portTICK_PERIOD_MS );
+		vTaskDelayUntil( &xLastWakeTime, 1.0 / framerate * /*MICRO_STEP * */1000 / portTICK_PERIOD_MS );
 	}
 	vTaskDelete( NULL );
 }

@@ -2,6 +2,7 @@
 // Created by Tom on 12/07/2019.
 //
 
+#include "esp_log.h"
 #include "include/font_7x5.h"
 #include "include/compositor.h"
 
@@ -15,15 +16,33 @@ void renderCharCol(uint8_t ch, Color color, int x, int y) {
     }
 }
 
-void renderChar_7x5(uint8_t charId, Color color, int *x, int y, int endX, int *skip) {
+void renderChar_7x5(uint8_t charId, Color color, int *x, int y, int endX, int *offset, float micro_frame) {
+    uint8_t orig_alpha = color.RGB[0];
+
     for(int i = 0; i<5; i++) {
-        if(*skip == 0) {
+        if(*offset == 0) {
             uint8_t cs = font_7x5[charId*5+i];
             if(endX > 0 && *x >= endX) return;
+
+            if(*x >= 1 && micro_frame < 0.5f) {
+                // Left neighbour
+                color.RGB[0] = (uint8_t)((0.5f - micro_frame) * 255); // max 255/2
+                renderCharCol(cs, color, (*x)-1, y);
+            }
+
+            // Current column
+            color.RGB[0] = orig_alpha;
             renderCharCol(cs, color, *x, y);
+
+            if(*x < (endX-1) && micro_frame > 0.5f) {
+                // Right neighbour
+                color.RGB[0] = (uint8_t)((micro_frame - 0.5f) * 255); // max 255/2
+                renderCharCol(cs, color, (*x)+1, y);
+            }
+
             (*x)++;
         } else {
-            (*skip)--;
+            (*offset)--;
         }
     }
 }

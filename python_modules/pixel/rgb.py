@@ -7,7 +7,7 @@ MAX_BRIGHTNESS = PANEL_WIDTH
 
 FONT_7x5 = 0
 FONT_6x3 = 1
-current_framerate = 20
+current_framerate = 1
 current_font = FONT_7x5
 font_heights = [7, 6]
 nvs = esp32.NVS("system")

@@ -24,6 +24,7 @@ STATIC mp_obj_t hub75_background(mp_obj_t r_obj, mp_obj_t g_obj, mp_obj_t b_obj)
     k.RGB[3] = r;
     k.RGB[2] = g;
     k.RGB[1] = b;
+    k.RGB[0] = 255; // alpha
     compositor_setBackground(k);
     return mp_const_none;
 }
@@ -76,6 +77,7 @@ STATIC mp_obj_t hub75_text(size_t n_args, const mp_obj_t *args) {
     k.RGB[3] = r;
     k.RGB[2] = g;
     k.RGB[1] = b;
+    k.RGB[0] = 255; // alpha
 
     int x = mp_obj_get_int(args[4]);
     int y = mp_obj_get_int(args[5]);
@@ -96,6 +98,7 @@ STATIC mp_obj_t hub75_scrolltext(size_t n_args, const mp_obj_t *args) {
     k.RGB[3] = r;
     k.RGB[2] = g;
     k.RGB[1] = b;
+    k.RGB[0] = 255; // alpha
 
     int x = mp_obj_get_int(args[4]);
     int y = mp_obj_get_int(args[5]);
@@ -147,6 +150,7 @@ STATIC mp_obj_t hub75_pixel(size_t n_args, const mp_obj_t *args) {
      k.RGB[3] = r;
      k.RGB[2] = g;
      k.RGB[1] = b;
+     k.RGB[0] = 255; // alpha
 
      image[0] = k.value;
      compositor_addImage((uint8_t *) image, x, y, 1, 1);

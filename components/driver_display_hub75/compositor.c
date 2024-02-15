@@ -23,20 +23,21 @@ static uint32_t smiley[] = {
 };
 
 bool enabled = true;
+float cur_micro_frame = 0.5f;
 
-Color background;
+Color background[CONFIG_HUB75_WIDTH * CONFIG_HUB75_HEIGHT];
 Color *buffer;
 renderTask_t *head = NULL;
 
 #define N_FONTS 2
 int font_index = 0;
-void (*font_render_char[])(uint8_t charId, Color color, int *x, int y, int endX, int *skip) = {&renderChar_7x5, &renderChar_6x3};
+void (*font_render_char[])(uint8_t charId, Color color, int *x, int y, int endX, int *offset, float micro_frame) = {&renderChar_7x5, &renderChar_6x3};
 int (*font_char_width[])(uint8_t charId) = {&getCharWidth_7x5, &getCharWidth_6x3};
 
 void addTask(renderTask_t *node);
 void renderImage(uint8_t *image, int x, int y, int sizeX, int sizeY);
 void renderCharCol(uint8_t ch, Color color, int x, int y);
-void renderText(char *text, Color color, int x, int y, int sizeX, int skip, bool firstshow);
+void renderText(char *text, Color color, int x, int y, int sizeX, int offset, bool firstshow, float micro_frame);
 
 
 Color genColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
@@ -49,7 +50,7 @@ Color genColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 }
 
 void compositor_init() {
-        background.value = 0;
+    memset(background, 0, sizeof(background));
 }
 
 /*
@@ -83,7 +84,11 @@ void compositor_clear() {
 * Sets the background color of the display.
 */
 void compositor_setBackground(Color color) {
-        background = color;
+    for(int x=0; x<CONFIG_HUB75_WIDTH; x++) {
+        for(int y=0; y<CONFIG_HUB75_HEIGHT; y++) {
+            background[y*CONFIG_HUB75_WIDTH+x] = color;
+        }
+    }
 }
 
 void addTask(renderTask_t *node) {
@@ -123,7 +128,7 @@ void compositor_addScrollText(char *text, Color color, int x, int y, int sizeX) 
 	scrollText_t *scroll = (scrollText_t *) malloc(sizeof(scrollText_t));
 	scroll->text = text_store;
 	scroll->speed = 1;
-	scroll->skip = -10;
+	scroll->offset = -10;
 	scroll->firstshow = true;
 	renderTask_t *node = (renderTask_t *) malloc(sizeof(renderTask_t));
 	node->payload = scroll;
@@ -179,12 +184,13 @@ void compositor_addAnimation(uint8_t *image, int x, int y, int width, int length
 	addTask(node);
 }
 
-void compositor_setPixel(int x, int y, Color color) {
+void compositor_setPixel(int x, int y, Color new_color) {
 	if (!buffer) return;
-	Color *target = &buffer[y*CONFIG_HUB75_WIDTH+x];
-	target->RGB[1] = color.RGB[1] + (255-color.RGB[0])*target->RGB[1]/255;
-	target->RGB[2] = color.RGB[2] + (255-color.RGB[0])*target->RGB[2]/255;
-	target->RGB[3] = color.RGB[3] + (255-color.RGB[0])*target->RGB[3]/255;
+	Color *current = &buffer[y * CONFIG_HUB75_WIDTH + x];
+    current->RGB[1] = (uint8_t)MIN(((uint16_t)new_color.RGB[0] * new_color.RGB[1] / 255) + (((uint16_t)current->RGB[0]) * current->RGB[1] / 255), 255);
+//    ESP_LOGE("compositor", "RGB[1]: %d", current->RGB[1]);
+    current->RGB[2] = (uint8_t)MIN(((uint16_t)new_color.RGB[0] * new_color.RGB[2] / 255) + (((uint16_t)current->RGB[0]) * current->RGB[2] / 255), 255);
+    current->RGB[3] = (uint8_t)MIN(((uint16_t)new_color.RGB[0] * new_color.RGB[3] / 255) + (((uint16_t)current->RGB[0]) * current->RGB[3] / 255), 255);
 }
 
 void renderImage(uint8_t *image, int x, int y, int sizeX, int sizeY) {
@@ -200,24 +206,24 @@ void renderImage(uint8_t *image, int x, int y, int sizeX, int sizeY) {
 	}
 }
 
-void renderText(char *text, Color color, int x, int y, int sizeX, int skip, bool firstshow) {
+void renderText(char *text, Color color, int x, int y, int sizeX, int offset, bool firstshow, float micro_frame) {
 	int endX = sizeX > 0 ? x+sizeX : CONFIG_HUB75_WIDTH - 1;
-	if(skip < 0) {
+	if(offset < 0) {
 		if (!firstshow)
 		{
-			x += -skip;
+			x += -offset;
 		}
 		else
 		{
 		    x += 1;
 		}
-		skip = 0;
+		offset = 0;
 	}
 	for(int i = 0; i<strlen(text); i++) {
 		uint8_t charId = (uint8_t)text[i] - 32;
-		(*font_render_char[font_index])(charId, color, &x, y, endX, &skip);
-		if(skip == 0) x++; //If started printing insert blank line
-		else skip--; //If not decrease the number to skip by one to make it fluid
+		(*font_render_char[font_index])(charId, color, &x, y, endX, &offset, micro_frame);
+		if(offset == 0) x++; //If started printing insert blank line
+		else offset--; //If not decrease the number to offset by one to make it fluid
 	}
 }
 
@@ -243,7 +249,7 @@ void display_crash() {
 	enabled = false;
 	if (!buffer) return;
 	Color blue;
-	blue.value = 0x1070AA00;
+	blue.value = 0xFF1070AA;
 	Color white;
 	white.value = 0xFFFFFFFF;
 	for(int x=0; x<CONFIG_HUB75_WIDTH; x++) {
@@ -252,32 +258,33 @@ void display_crash() {
 		}
 	}
 	renderImage((uint8_t *) smiley, 24, 0, 8, 8);   
-	renderText("FML", white, 0, 0, -1, 0, false);     
+	renderText("FML", white, 0, 0, -1, 0, false, 0.5f);
 }
 
-void composite() {
-	if (!buffer) return;
-	//Setting the background color
-	for(int x=0; x<CONFIG_HUB75_WIDTH; x++) {
-			for(int y=0; y<CONFIG_HUB75_HEIGHT; y++) {
-					buffer[y*CONFIG_HUB75_WIDTH+x] = background;
-			}
-	}
+bool composite() {
+	if(!buffer) { return false; }
+
+    if(cur_micro_frame < 0.0f) { cur_micro_frame = 1.0f; }
+
+    memcpy(buffer, background, sizeof(background));
 	renderTask_t *node = head;
 	while(node != NULL) {
 		if(node->id == 0) { //Render text
-			renderText((char *)node->payload, node->color, node->x, node->y, -1, 0, false);
+			renderText((char *)node->payload, node->color, node->x, node->y, -1, 0, false, 0.5f);
 		} else if(node->id == 1) {  //Render image
 			renderImage((uint8_t *)node->payload, node->x, node->y, node->sizeX, node->sizeY);
 		} else if(node->id == 2) {  //Render scrolling text
 			scrollText_t *scroll = (scrollText_t *) node->payload;
-			renderText(scroll->text, node->color, node->x, node->y, node->sizeX, scroll->skip, scroll->firstshow);
-			scroll->skip++;
-			if(scroll->skip == strlen(scroll->text)*6+6) 
-			{
-				scroll->skip = -node->sizeX;
-				scroll->firstshow = false;
-			}
+			renderText(scroll->text, node->color, node->x, node->y, node->sizeX, scroll->offset, scroll->firstshow, cur_micro_frame);
+            if(IS_AROUND(cur_micro_frame, 0.0, 0.01)) {
+                // Only update the offset after all micro steps have been done
+                scroll->offset++;
+                if(scroll->offset == strlen(scroll->text)*6+6)
+                {
+                    scroll->offset = -node->sizeX;
+                    scroll->firstshow = false;
+                }
+            }
 		} else if(node->id == 3) {//Render animation
 			animation_t *gif = (animation_t *) node->payload;
 			int index = node->sizeX*node->sizeY*4*gif->showFrame;
@@ -287,6 +294,13 @@ void composite() {
 		}
 		node = node->next;
 	}
+
+//    ESP_LOGE("compositor", "microframe %f", cur_micro_frame);
+    // Update micro steps
+    cur_micro_frame -= MICRO_STEP;
+
+    // TODO: add dirty check and return false if no render is needed
+    return true;
 }
 
 void compositor_setBuffer(Color* framebuffer) {
