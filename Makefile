@@ -23,6 +23,10 @@ prepare-campzone2019: prepare
 	cp configs/campzone2019_defconfig sdkconfig
 	cp partition_tables/campzone2019.csv partitions.csv
 
+prepare-sha2017: prepare
+	cp configs/sha2017_defconfig sdkconfig
+	cp partition_tables/sha2017.csv partitions.csv
+
 clean:
 	rm -rf "$(BUILDDIR)"
 	source "$(IDF_PATH)/export.sh" && idf.py clean
@@ -45,6 +49,8 @@ menuconfig:
 install: flash
 
 mch2022: prepare-mch2022 build
+
+sha2017: prepare-sha2017 build
 
 clean-frozen:
 	rm -rf build/frozen_content.c
