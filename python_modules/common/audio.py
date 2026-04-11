@@ -3,7 +3,6 @@ from esp32 import NVS
 
 _no_channels = 4  # We can't play more than this number of channels concurrently without glitches
 _started = False
-handles = {}
 
 def _start_audio_if_needed():
     global _started
@@ -11,34 +10,24 @@ def _start_audio_if_needed():
         sndmixer.begin(_no_channels)
         _started = True
 
-def _clean_channel(channel_id):
-    global handles
-    if channel_id in handles:
-        file = handles[channel_id]
-        if file is not None:
-            file.close()
-        del handles[channel_id]
 
 def _add_channel(filename, on_finished=None):
-    global handles
-    stream = True
     try:
         file = open(filename, 'rb')
     except:
         return -1
     lower = filename.lower()
     if(lower.endswith('.mp3')):
-        channel_id = sndmixer.mp3_stream(file)
+        channel_id = sndmixer.mp3(file.read())
     elif(lower.endswith('.wav')):
-        channel_id = sndmixer.wav_stream(file)
+        channel_id = sndmixer.wav(file.read())
     elif(lower.endswith('.ogg') or
          lower.endswith('.opus')):
-        channel_id = sndmixer.opus_stream(file)  # No support for looping yet
+        channel_id = sndmixer.opus(file.read())  # No support for looping yet
     elif(lower.endswith('.mod') or
          lower.endswith('.s3m') or
          lower.endswith('.xm')):
         channel_id = sndmixer.mod(file.read())  # No support for streaming mod files or looping yet
-        stream = False
     else:
         print('Audio: unknown filetype')
         channel_id = -1
@@ -47,16 +36,13 @@ def _add_channel(filename, on_finished=None):
         return -1
 
     def finish_callback(_):
-        _clean_channel(channel_id)
         if on_finished is not None:
             try:
                 on_finished()
             except:
                 pass
 
-    handles[channel_id] = file
-    if stream:
-        sndmixer.on_finished(channel_id, finish_callback)
+    file.close()
     return channel_id
 
 def play(filename, volume=None, loop=False, sync_beat=None, start_at_next=None, on_finished=None):

@@ -11,6 +11,8 @@
 
 #include "sndmixer.h"
 
+#include "board_kconfig.h"
+
 #ifdef CONFIG_DRIVER_SNDMIXER_ENABLE
 
 #define CHUNK_SIZE 32
@@ -108,8 +110,8 @@ const uint8_t noise[] = {
     0x72, 0xe5, 0x6f, 0x3e, 0x79, 0xa6, 0xbc, 0x6f, 0x67, 0x8f, 0xe5, 0xc8, 0x7a, 0x6c, 0xde, 0x8e};
 
 int IRAM_ATTR synth_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
-                      int *stereo) {
-  synth_ctx_t *synth = calloc(sizeof(synth_ctx_t), 1);
+                      int *stereo, stream_seek_type seek_func) {
+  synth_ctx_t *synth = calloc(1, sizeof(synth_ctx_t));
   if (!synth)
     return -1;
 

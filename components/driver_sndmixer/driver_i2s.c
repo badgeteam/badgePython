@@ -1,154 +1,161 @@
 #include <sdkconfig.h>
 #include <esp_log.h>
+#include <driver/i2s_std.h>
 #include "driver_i2s.h"
 
 #ifdef CONFIG_DRIVER_SNDMIXER_ENABLE
 
 #ifdef CONFIG_DRIVER_SNDMIXER_DEBUG
-int min_val=0, max_val=0;
+int min_val = 0, max_val = 0;
 #endif
 
 struct Config {
-  uint8_t volume;
+    uint8_t volume;
 } config;
 
-static QueueHandle_t soundQueue;
 static int soundRunning = 0;
 
 #ifdef CONFIG_DRIVER_SNDMIXER_I2S_PORT1
-static const i2s_port_t g_i2s_port = 1;
+static const i2s_port_t g_i2s_port = I2S_NUM_1;
 #else
-static const i2s_port_t g_i2s_port = 0;
+static const i2s_port_t g_i2s_port = I2S_NUM_0;
 #endif
 
-void driver_i2s_sound_start() {
-  config.volume = 255;
+static i2s_chan_handle_t tx_chan = NULL;
 
-  int rate     = CONFIG_DRIVER_SNDMIXER_SAMPLE_RATE;
-  int buffsize = CONFIG_DRIVER_SNDMIXER_BUFFZIE;
+void driver_i2s_sound_start(void) {
+	if (soundRunning) return;
+	
+    config.volume = 255;
 
-  i2s_config_t cfg = {
-#ifdef CONFIG_DRIVER_SNDMIXER_I2S_DAC_INTERNAL
-    .mode = I2S_MODE_TX | I2S_MODE_MASTER | I2S_MODE_DAC_BUILT_IN,
-#else
-    .mode                 = I2S_MODE_TX | I2S_MODE_MASTER,
-#endif
-    .sample_rate     = rate,
-    .bits_per_sample = CONFIG_DRIVER_SNDMIXER_BITS_PER_SAMPLE,
+    int rate     = CONFIG_DRIVER_SNDMIXER_SAMPLE_RATE;
+
+    // 1) Create TX channel
+    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(g_i2s_port, I2S_ROLE_MASTER);
+
+    ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &tx_chan, NULL));
+
+    // 2) Configure standard I2S mode (Philips)
+    i2s_std_config_t std_cfg = {
+        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(rate),
+        .slot_cfg = {
+            .data_bit_width  = CONFIG_DRIVER_SNDMIXER_BITS_PER_SAMPLE,
+            .slot_bit_width  = CONFIG_DRIVER_SNDMIXER_BITS_PER_SAMPLE,
 #if defined(CONFIG_DRIVER_SNDMIXER_I2S_CHANNEL_FORMAT_OR)
-    .channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
+            .slot_mode       = I2S_SLOT_MODE_MONO,
 #elif defined(CONFIG_DRIVER_SNDMIXER_I2S_CHANNEL_FORMAT_OL)
-    .channel_format       = I2S_CHANNEL_FMT_ONLY_LEFT,
+            .slot_mode       = I2S_SLOT_MODE_MONO,
 #elif defined(CONFIG_DRIVER_SNDMIXER_I2S_CHANNEL_FORMAT_AL)
-    .channel_format       = I2S_CHANNEL_FMT_ALL_LEFT,
+            .slot_mode       = I2S_SLOT_MODE_STEREO,
 #elif defined(CONFIG_DRIVER_SNDMIXER_I2S_CHANNEL_FORMAT_AR)
-    .channel_format       = I2S_CHANNEL_FMT_ALL_RIGHT,
+            .slot_mode       = I2S_SLOT_MODE_STEREO,
 #else
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+            .slot_mode       = I2S_SLOT_MODE_STEREO,
 #endif
-#ifdef CONFIG_DRIVER_SNDMIXER_I2S_DAC_INTERNAL
-    .communication_format = I2S_COMM_FORMAT_I2S_MSB,
-#elif defined(CONFIG_DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_MSB)
-    .communication_format = I2S_COMM_FORMAT_I2S_MSB | I2S_COMM_FORMAT_I2S,
-#elif defined(CONFIG_DRIVER_SNDMIXER_I2S_DAC_EXTERNAL_LSB)
-    .communication_format = I2S_COMM_FORMAT_I2S_LSB | I2S_COMM_FORMAT_I2S,
-#else
-    .communication_format = I2S_COMM_FORMAT_I2S,
-#endif
-    .intr_alloc_flags = 0,
-    .dma_buf_count    = 4,
-    .dma_buf_len      = buffsize / 4
-  };
+            .slot_mask       = I2S_STD_SLOT_BOTH,
+            .ws_width        = CONFIG_DRIVER_SNDMIXER_BITS_PER_SAMPLE,
+            .ws_pol          = false,
+            .bit_shift       = true,
+            .msb_right       = true,
+        },
+        .gpio_cfg = {
+            .mclk = CONFIG_DRIVER_SNDMIXER_PIN_MCK,
+            .bclk = CONFIG_DRIVER_SNDMIXER_PIN_BCK,
+            .ws   = CONFIG_DRIVER_SNDMIXER_PIN_WS,
+            .dout = CONFIG_DRIVER_SNDMIXER_PIN_DATA_OUT,
+            .din  = I2S_GPIO_UNUSED,
+            .invert_flags = {
+                .mclk_inv = false,
+                .bclk_inv = false,
+                .ws_inv   = false,
+            },
+        },
+    };
 
-  i2s_driver_install(g_i2s_port, &cfg, 4, &soundQueue);
-  i2s_set_sample_rates(g_i2s_port, cfg.sample_rate);
-#ifdef CONFIG_DRIVER_SNDMIXER_I2S_DAC_INTERNAL
-  i2s_set_pin(g_i2s_port, NULL);
-#ifdef CONFIG_DRIVER_SNDMIXER_I2S_INTERNAL_DAC_BOTH
-  i2s_set_dac_mode(I2S_DAC_CHANNEL_BOTH_EN);
-#elif defined(CONFIG_DRIVER_SNDMIXER_I2S_INTERNAL_DAC_RIGHT)
-  i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
-#elif defined(CONFIG_DRIVER_SNDMIXER_I2S_INTERNAL_DAC_LEFT)
-  i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);
-#else
-  i2s_set_dac_mode(I2S_DAC_CHANNEL_DISABLE);
-#endif
-#else
-  static const i2s_pin_config_t pin_config = {.bck_io_num   = CONFIG_DRIVER_SNDMIXER_PIN_BCK,
-                                              .mck_io_num   = CONFIG_DRIVER_SNDMIXER_PIN_MCK,
-                                              .ws_io_num    = CONFIG_DRIVER_SNDMIXER_PIN_WS,
-                                              .data_out_num = CONFIG_DRIVER_SNDMIXER_PIN_DATA_OUT,
-                                              .data_in_num  = I2S_PIN_NO_CHANGE};
-  i2s_set_pin(g_i2s_port, &pin_config);
-#endif
-  soundRunning = 1;
+    ESP_ERROR_CHECK(i2s_channel_init_std_mode(tx_chan, &std_cfg));
+    ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
+
+    soundRunning = 1;
 }
 
-void driver_i2s_sound_stop() {
-  i2s_driver_uninstall(g_i2s_port);
+void driver_i2s_sound_stop(void) {
+	if (!soundRunning) return;
+    if (tx_chan) {
+        i2s_channel_disable(tx_chan);
+        i2s_del_channel(tx_chan);
+        tx_chan = NULL;
+    }
+    soundRunning = 0;
 }
 
 #define SND_CHUNKSZ 32
 void driver_i2s_sound_push(int16_t *buf, int len, int stereo_input) {
-  int16_t tmpb[SND_CHUNKSZ * 2];
-  int i = 0;
-  while (i < len) {
-    int plen = len - i;
-    if (plen > SND_CHUNKSZ) {
-      plen = SND_CHUNKSZ;
+    if (!tx_chan || !soundRunning) {
+        return;
     }
-    for (int sample = 0; sample < plen; sample++) {
-      int32_t s[2] = {0, 0};
-      if (stereo_input) {
-        s[0] = buf[(i + sample) * 2 + 0];
-        s[1] = buf[(i + sample) * 2 + 1];
-      } else {
-        s[0] = s[1] = buf[i + sample];
-      }
 
-      // Multiply with volume/volume_max, resulting in signed integers with range [INT16_MIN:INT16_MAX]
-      s[0]                       = (s[0] * config.volume / 255);
-      s[1]                       = (s[1] * config.volume / 255);
+    int16_t tmpb[SND_CHUNKSZ * 2];
+    int i = 0;
+    while (i < len) {
+        int plen = len - i;
+        if (plen > SND_CHUNKSZ) {
+            plen = SND_CHUNKSZ;
+        }
+        for (int sample = 0; sample < plen; sample++) {
+            int32_t s[2] = {0, 0};
+            if (stereo_input) {
+                s[0] = buf[(i + sample) * 2 + 0];
+                s[1] = buf[(i + sample) * 2 + 1];
+            } else {
+                s[0] = s[1] = buf[i + sample];
+            }
+
+            s[0] = (s[0] * config.volume) / 255;
+            s[1] = (s[1] * config.volume) / 255;
 
 #ifdef CONFIG_DRIVER_SNDMIXER_I2S_DATA_FORMAT_UNSIGNED
-      // Offset to [0:UINT16_MAX] store as unsigned integers
-      s[0] -= INT16_MIN;
-      s[1] -= INT16_MIN;
+            s[0] -= INT16_MIN;
+            s[1] -= INT16_MIN;
 #endif
-      tmpb[(i + sample) * 2 + 0] = s[0];
-      tmpb[(i + sample) * 2 + 1] = s[1];
+            tmpb[(sample * 2) + 0] = (int16_t)s[0];
+            tmpb[(sample * 2) + 1] = (int16_t)s[1];
 
 #ifdef CONFIG_DRIVER_SNDMIXER_DEBUG
-      min_val = s[0] < min_val ? s[0] : min_val;
-      max_val = s[0] > max_val ? s[0] : max_val;
-
-      if (i == 0 && sample == 0 && rand() < (RAND_MAX/100)) {
-          ESP_LOGW("Sndmixer","[global vol %d]: min %d max %d", config.volume, min_val, max_val);
-      }
+            min_val = s[0] < min_val ? s[0] : min_val;
+            max_val = s[0] > max_val ? s[0] : max_val;
+            if (i == 0 && sample == 0 && rand() < (RAND_MAX / 100)) {
+                ESP_LOGW("Sndmixer", "[global vol %d]: min %d max %d", config.volume, min_val, max_val);
+            }
 #endif
+        }
+
+        size_t bytes_written = 0;
+        ESP_ERROR_CHECK(i2s_channel_write(tx_chan,
+                                          tmpb,
+                                          plen * 2 * sizeof(tmpb[0]),
+                                          &bytes_written,
+                                          portMAX_DELAY));
+        i += plen;
     }
-    size_t bytes_written;
-    i2s_write(g_i2s_port, (char *)tmpb, plen * 2 * sizeof(tmpb[0]), &bytes_written, portMAX_DELAY);
-    i += plen;
-  }
 }
 
 void driver_i2s_set_volume(uint8_t new_volume) {
-  // xSemaphoreTake(configMux, portMAX_DELAY);
-  config.volume = new_volume;
-  // xSemaphoreGive(configMux);
+    config.volume = new_volume;
 }
 
-uint8_t driver_i2s_get_volume() {
-  return config.volume;
+uint8_t driver_i2s_get_volume(void) {
+    return config.volume;
 }
 
 void driver_i2s_sound_mute(int doMute) {
-  if (doMute) {
-    dac_i2s_disable();
-  } else {
-    dac_i2s_enable();
-  }
+    if (!tx_chan) {
+        return;
+    }
+    if (doMute) {
+        i2s_channel_disable(tx_chan);
+    } else {
+        i2s_channel_enable(tx_chan);
+    }
 }
 
 #endif

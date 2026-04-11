@@ -17,7 +17,7 @@
 
 typedef struct {
   const uint8_t *data;  // Pointer to internal buffer (if applicable)
-  uint32_t pos;
+  ssize_t pos;
   uint32_t data_len;
   uint32_t rate;
   uint16_t channels, bits;
@@ -25,7 +25,7 @@ typedef struct {
   stream_read_type stream_read;
   stream_seek_type seek_func;
   void *stream;  // Pointer to stream
-  uint32_t data_start_offset;
+  off_t data_start_offset;
 } wav_ctx_t;
 
 typedef struct __attribute__((packed)) {
@@ -56,11 +56,11 @@ typedef struct __attribute__((packed)) {
   };
 } chunk_hdr_t;
 
-int IRAM_ATTR wav_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
+int wav_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
                     int *stereo) {
   // Check sanity first
   char *p        = (char *)data_start;
-  wav_ctx_t *wav = heap_caps_calloc(sizeof(wav_ctx_t), 1, MALLOC_CAP_DMA);
+  wav_ctx_t *wav = calloc(1, sizeof(wav_ctx_t));
   if (!wav)
     goto err;
   riff_hdr_t *riff = (riff_hdr_t *)p;
@@ -104,10 +104,16 @@ err:
   return -1;
 }
 
-int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req_sample_rate,
-                           void **ctx, int *stereo, void *seek_func) {
+int wav_init_source_stream(
+  stream_read_type stream_read_fn,
+  void *stream,
+  int req_sample_rate,
+  void **ctx,
+  int *stereo,
+  stream_seek_type seek_func
+) {
   ESP_LOGI(TAG, "init wav");
-  wav_ctx_t *wav = heap_caps_calloc(sizeof(wav_ctx_t), 1, MALLOC_CAP_DMA);
+  wav_ctx_t *wav = calloc(1, sizeof(wav_ctx_t));
   if (!wav) {
     ESP_LOGE(TAG, "Failed to allocate wave file context");
     return -1;
@@ -117,7 +123,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
   wav->seek_func    = seek_func;
   wav->stream       = stream;
 
-  ESP_LOGI(TAG, "header @ %d", wav->seek_func(wav->stream, 0, SEEK_CUR));
+  ESP_LOGI(TAG, "header @ %ld", wav->seek_func(wav->stream, 0, SEEK_CUR));
   riff_hdr_t *riffHdr = calloc(1, sizeof(riff_hdr_t));
   int read = wav->stream_read(wav->stream, riffHdr, sizeof(riff_hdr_t));
   if (read < 7) {
@@ -134,7 +140,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
     return -1;
   }
 
-  ESP_LOGI(TAG, "fmt @ %d", wav->seek_func(wav->stream, 0, SEEK_CUR));
+  ESP_LOGI(TAG, "fmt @ %ld", wav->seek_func(wav->stream, 0, SEEK_CUR));
   chunk_hdr_t chunk;
   wav->stream_read(wav->stream, &chunk, 4 + 4);
 
@@ -144,7 +150,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
   }
   ESP_LOGI(TAG, "fmt size %d", chunk.size);
 
-  ESP_LOGI(TAG, "fmt body @ %d", wav->seek_func(wav->stream, 0, SEEK_CUR));
+  ESP_LOGI(TAG, "fmt body @ %ld", wav->seek_func(wav->stream, 0, SEEK_CUR));
   fmt_data_t format;
   wav->stream_read(wav->stream, &format, chunk.size);
   if (format.fmtcode != WAVE_FORMAT_PCM) {
@@ -160,7 +166,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
 
   ESP_LOGI(TAG, "channels: %d, bits: %d, rate: %d", wav->channels, wav->bits, wav->rate);
 
-  ESP_LOGI(TAG, "data @ %d", wav->seek_func(wav->stream, 0, SEEK_CUR));
+  ESP_LOGI(TAG, "data @ %ld", wav->seek_func(wav->stream, 0, SEEK_CUR));
   wav->stream_read(wav->stream, &chunk, 4 + 4);
   if (memcmp(chunk.magic, "data", 4) != 0){
     ESP_LOGW(TAG, "WAV file does not contain data chunk after format chunk");
@@ -170,7 +176,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
   ESP_LOGI(TAG, "seek");
   wav->data_start_offset = wav->seek_func(wav->stream, 0, SEEK_CUR);
   wav->data_len = chunk.size;
-  ESP_LOGI(TAG, "WAV data offset: %d", wav->data_start_offset);
+  ESP_LOGI(TAG, "WAV data offset: %ld", wav->data_start_offset);
 
   wav->pos = 0;
   *ctx     = (void *)wav;
@@ -178,7 +184,7 @@ int IRAM_ATTR wav_init_source_stream(void *stream_read_fn, void *stream, int req
   return CHUNK_SIZE;
 }
 
-int IRAM_ATTR wav_get_sample_rate(void *ctx) {
+int wav_get_sample_rate(void *ctx) {
   wav_ctx_t *wav = (wav_ctx_t *)ctx;
   return wav->rate;
 }
@@ -195,7 +201,7 @@ uint8_t get_sample_byte(wav_ctx_t *wav) {
   return rv;
 }
 
-int16_t IRAM_ATTR get_sample(wav_ctx_t *wav) {
+int16_t get_sample(wav_ctx_t *wav) {
   int16_t rv = 0;
   if (wav->bits == 8) {
     rv = (get_sample_byte(wav) - 128) << 8;
@@ -205,7 +211,7 @@ int16_t IRAM_ATTR get_sample(wav_ctx_t *wav) {
   return rv;
 }
 
-int IRAM_ATTR wav_fill_buffer(void *ctx, int16_t *buffer, int stereo) {
+int wav_fill_buffer(void *ctx, int16_t *buffer, int stereo) {
   wav_ctx_t *wav = (wav_ctx_t *)ctx;
   int channels   = 1;
   if (wav->channels == 2 && stereo) {
@@ -213,9 +219,9 @@ int IRAM_ATTR wav_fill_buffer(void *ctx, int16_t *buffer, int stereo) {
   }
   if(wav->stream && stereo && wav->bits == 16 && wav->channels <= 2) {
     // Optimisation: if we're streaming a 1 or 2-channel 16 bit file, we can directly copy its contents
-    int read = wav->stream_read(wav->stream, buffer, CHUNK_SIZE * sizeof(uint16_t) * wav->channels);
+    ssize_t read = wav->stream_read(wav->stream, buffer, CHUNK_SIZE * sizeof(uint16_t) * wav->channels);
     wav->pos += read;
-    return read / (2 * 2);
+    return read / (sizeof(uint16_t) * wav->channels);
   }
   for (int i = 0; i < CHUNK_SIZE; i++) {
     if (wav->pos >= wav->data_len)
@@ -253,16 +259,20 @@ void wav_deinit_source(void *ctx) {
   free(wav);
 }
 
-const sndmixer_source_t sndmixer_source_wav = {.init_source     = wav_init_source,
-                                               .get_sample_rate = wav_get_sample_rate,
-                                               .fill_buffer     = wav_fill_buffer,
-                                               .reset_buffer    = wav_reset_buffer,
-                                               .deinit_source   = wav_deinit_source};
-
-const sndmixer_source_t sndmixer_source_wav_stream = {.init_source     = wav_init_source_stream,
+const sndmixer_source_t sndmixer_source_wav = {
+  .init_source     = wav_init_source,
   .get_sample_rate = wav_get_sample_rate,
   .fill_buffer     = wav_fill_buffer,
-  .reset_buffer    = wav_stream_reset_buffer,
-  .deinit_source   = wav_deinit_source};
+  .reset_buffer    = wav_reset_buffer,
+  .deinit_source   = wav_deinit_source
+};
+
+const sndmixer_source_t sndmixer_source_wav_stream = {
+  .init_source_stream = wav_init_source_stream,
+  .get_sample_rate    = wav_get_sample_rate,
+  .fill_buffer        = wav_fill_buffer,
+  .reset_buffer       = wav_stream_reset_buffer,
+  .deinit_source      = wav_deinit_source
+};
 
 #endif

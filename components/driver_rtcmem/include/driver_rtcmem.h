@@ -5,18 +5,26 @@
 #include <stdint.h>
 #include <esp_err.h>
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern esp_err_t driver_rtcmem_int_write(int pos, int val);
-extern esp_err_t driver_rtcmem_int_read(int pos, int* val);
+// Initialize RTC memory subsystem (optional for IDF 5.x)
+esp_err_t driver_rtcmem_init(void);
 
-extern esp_err_t driver_rtcmem_string_write(const char* str);
-extern esp_err_t driver_rtcmem_string_read(const char** str);
+// Integer API
+esp_err_t driver_rtcmem_int_write(int pos, int val);
+esp_err_t driver_rtcmem_int_read(int pos, int *val);
 
-extern esp_err_t driver_rtcmem_clear();
+// String API
+esp_err_t driver_rtcmem_string_write(const char *str);
+esp_err_t driver_rtcmem_string_read(const char **str);
 
-extern esp_err_t driver_rtcmem_init(void);
+// Clear all RTC memory regions used by this driver
+esp_err_t driver_rtcmem_clear(void);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DRIVER_RTCMEM_H

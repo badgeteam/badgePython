@@ -62,7 +62,7 @@ typedef struct {
       const void *queue_file_start;
       const void *queue_file_end;
       const void *read_func;
-      const void *stream;
+            void *stream;
       const void *seek_func;
       const void *callback_func;
       const void *callback_handle;
@@ -105,33 +105,37 @@ static uint8_t beat_sync_bpm = 120; // Preconfigured BPM. Can be configured with
 
 // Grabs a new ID by atomically increasing curr_id and returning its value. This is called outside
 // of the audio playing thread, hence the atomicity.
-static uint32_t new_id() {
-  uint32_t old_id, new_id;
-  do {
-    old_id = curr_id;
-    new_id = old_id + 1;
-    // compares curr_id with old_id, sets to new_id if same, returns old val in new_id
-    uxPortCompareSet(&curr_id, old_id, &new_id);
-  } while (new_id != old_id);
-  return old_id + 1;
+static uint32_t new_id(void) {
+    uint32_t old_id = __atomic_load_n(&curr_id, __ATOMIC_SEQ_CST);
+    uint32_t new_id;
+    while (1) {
+        new_id = old_id + 1;
+        if (__atomic_compare_exchange_n(&curr_id, &old_id, new_id,
+                                        false,
+                                        __ATOMIC_SEQ_CST,
+                                        __ATOMIC_SEQ_CST)) {
+            return new_id;
+        }
+        // on failure, old_id is updated; loop and try again
+    }
 }
 
-static void clean_up_channel(int ch) {
-  if(channel[ch].callback_handle) {
+static void clean_up_channel(sndmixer_channel_t *chan) {
+  if(chan->callback_handle) {
     // exec callback
-    callback_type do_callback = channel[ch].callback_func;
-    do_callback(channel[ch].callback_handle,0,0);
+    callback_type do_callback = chan->callback_func;
+    do_callback(chan->callback_handle,0);
   }
 
-  if (channel[ch].source) {
-    channel[ch].source->deinit_source(channel[ch].src_ctx);
-    channel[ch].source = NULL;
+  if (chan->source) {
+    chan->source->deinit_source(chan->src_ctx);
+    chan->source = NULL;
   }
-  free(channel[ch].buffer);
-  channel[ch].buffer = NULL;
-  channel[ch].flags  = 0;
-  ESP_LOGI(TAG, "Sndmixer: %d: cleaning up done", channel[ch].id);
-  channel[ch].id = 0;
+  free(chan->buffer);
+  chan->buffer = NULL;
+  chan->flags  = 0;
+  ESP_LOGI(TAG, "Sndmixer: %d: cleaning up done", chan->id);
+  chan->id = 0;
 }
 
 static int find_free_channel() {
@@ -142,7 +146,7 @@ static int find_free_channel() {
   // No free channels. Maybe one is evictable?
   for (int x = 0; x < no_channels; x++) {
     if (channel[x].flags & CHFL_EVICTABLE) {
-      clean_up_channel(x);
+      clean_up_channel(channel + x);
       return x;
     }
   }
@@ -150,7 +154,7 @@ static int find_free_channel() {
 }
 
 static int init_source(int* chan_id, const sndmixer_source_t *srcfns, const void *data_start,
-                       const void *data_end, const void *seek_func) {
+                       const void *data_end) {
   int ch = find_free_channel();
   *chan_id = ch;
   if (ch < 0) {
@@ -159,14 +163,47 @@ static int init_source(int* chan_id, const sndmixer_source_t *srcfns, const void
   ESP_LOGI(TAG, "Sndmixer: %d: initialising source\n", ch);
   int stereo = 0;
   int chunksz =
-      srcfns->init_source(data_start, data_end, samplerate, &channel[ch].src_ctx, &stereo, seek_func);
+      srcfns->init_source(data_start, data_end, samplerate, &channel[ch].src_ctx, &stereo);
   if (chunksz <= 0)
     return 0;  // failed
   channel[ch].source = srcfns;
   channel[ch].volume = 255;
   channel[ch].buffer = malloc(chunksz * sizeof(channel[ch].buffer[0]) * ((stereo && use_stereo) ? 2 : 1));
   if (!channel[ch].buffer) {
-    clean_up_channel(ch);
+    clean_up_channel(channel + ch);
+    return 0;
+  }
+  channel[ch].chunksz  = chunksz;
+  int64_t real_rate    = srcfns->get_sample_rate(channel[ch].src_ctx);
+  channel[ch].dds_rate = (real_rate << 16) / samplerate;
+  channel[ch].dds_acc  = chunksz << 16;  // to force the main thread to get new data
+  channel[ch].flags    = 0;
+  if (stereo && use_stereo) {
+    ESP_LOGI(TAG, "Starting stereo channel");
+    channel[ch].flags |= CHFL_STEREO;
+  }
+  return 1;
+}
+
+static int init_source_stream(int* chan_id, const sndmixer_source_t *srcfns, const stream_read_type read_fn, void *stream, stream_seek_type seek_func) {
+  int ch = find_free_channel();
+  *chan_id = ch;
+  if (ch < 0) {
+    return 0;  // no free channels
+  }
+  ESP_LOGI(TAG, "Sndmixer: %d: initialising source\n", ch);
+  int stereo = 0;
+  int chunksz =
+      srcfns->init_source_stream(read_fn, stream, samplerate, &channel[ch].src_ctx, &stereo, seek_func);
+  if (chunksz <= 0)
+    return 0;  // failed
+  channel[ch].source = srcfns;
+  channel[ch].volume = 255;
+  int msize = chunksz * sizeof(channel[ch].buffer[0]) * ((stereo && use_stereo) ? 2 : 1);
+  channel[ch].buffer = malloc(msize);
+  ESP_LOGI(TAG, "init_source_stream: chunksz %d, msize %d, stereo: %d, use_stereo: %d, buffer = %p", chunksz, msize, stereo, use_stereo, channel[ch].buffer);
+  if (!channel[ch].buffer) {
+    clean_up_channel(channel + ch);
     return 0;
   }
   channel[ch].chunksz  = chunksz;
@@ -189,28 +226,28 @@ static void handle_cmd(sndmixer_cmd_t *cmd) {
   // Global initialisation commands that are not bound to a single channel
   switch(cmd->cmd) {
     case CMD_QUEUE_WAV:
-      cmd_success = init_source(&chan_id, &sndmixer_source_wav, cmd->queue_file_start, cmd->queue_file_end, 0);
+      cmd_success = init_source(&chan_id, &sndmixer_source_wav, cmd->queue_file_start, cmd->queue_file_end);
       break;
     case CMD_QUEUE_WAV_STREAM:
-      cmd_success = init_source(&chan_id, &sndmixer_source_wav_stream, cmd->read_func, cmd->stream, cmd->seek_func);
+      cmd_success = init_source_stream(&chan_id, &sndmixer_source_wav_stream, cmd->read_func, cmd->stream, cmd->seek_func);
       break;
     case CMD_QUEUE_MOD:
-      cmd_success = init_source(&chan_id, &sndmixer_source_mod, cmd->queue_file_start, cmd->queue_file_end, 0);
+      cmd_success = init_source(&chan_id, &sndmixer_source_mod, cmd->queue_file_start, cmd->queue_file_end);
       break;
     case CMD_QUEUE_MP3:
-      cmd_success = init_source(&chan_id, &sndmixer_source_mp3, cmd->queue_file_start, cmd->queue_file_end, 0);
+      cmd_success = init_source(&chan_id, &sndmixer_source_mp3, cmd->queue_file_start, cmd->queue_file_end);
       break;
     case CMD_QUEUE_MP3_STREAM:
-      cmd_success = init_source(&chan_id, &sndmixer_source_mp3_stream, cmd->read_func, cmd->stream, cmd->seek_func);
+      cmd_success = init_source_stream(&chan_id, &sndmixer_source_mp3_stream, cmd->read_func, cmd->stream, cmd->seek_func);
       break;
     case CMD_QUEUE_OPUS:
-      cmd_success = init_source(&chan_id, &sndmixer_source_opus, cmd->queue_file_start, cmd->queue_file_end, 0);
+      cmd_success = init_source(&chan_id, &sndmixer_source_opus, cmd->queue_file_start, cmd->queue_file_end);
       break;
     case CMD_QUEUE_OPUS_STREAM:
-      cmd_success = init_source(&chan_id, &sndmixer_source_opus_stream, cmd->read_func, cmd->stream, 0);
+      cmd_success = init_source_stream(&chan_id, &sndmixer_source_opus_stream, cmd->read_func, cmd->stream, cmd->seek_func);
       break;
     case CMD_QUEUE_SYNTH:
-      cmd_success = init_source(&chan_id, &sndmixer_source_synth, 0, 0, 0);
+      cmd_success = init_source(&chan_id, &sndmixer_source_synth, 0, 0);
       break;
     default:
       cmd_found = false;
@@ -291,7 +328,7 @@ static void handle_cmd(sndmixer_cmd_t *cmd) {
       break;
     case CMD_STOP:
       ESP_LOGI(TAG, "%d: cleaning up source due to external stop request", cmd->id);
-      clean_up_channel(chan_id);
+      clean_up_channel(channel + chan_id);
       break;
     case CMD_FREQ:
       if (channel[chan_id].source->set_frequency) {
@@ -322,7 +359,7 @@ static void handle_cmd(sndmixer_cmd_t *cmd) {
 #define CHUNK_SIZE 32
 
 // Sound mixer main loop.
-IRAM_ATTR static void sndmixer_task(void *arg) {
+static void sndmixer_task(void *arg) {
   int16_t mixbuf[CHUNK_SIZE * (use_stereo ? 2 : 1)];
   ESP_LOGI(TAG, "Sndmixer task up.\n");
 
@@ -377,7 +414,7 @@ IRAM_ATTR static void sndmixer_task(void *arg) {
                 ESP_LOGI(TAG, "Looping sample");
                 if (chan->source->reset_buffer(chan->src_ctx) < 0) {
                   ESP_LOGE(TAG, "%d: cleaning up source, loop failed", chan->id);
-                  clean_up_channel(ch);
+                  clean_up_channel(chan);
                   break;
                 } else {
                   r = chan->source->fill_buffer(chan->src_ctx, chan->buffer, use_stereo);
@@ -385,16 +422,18 @@ IRAM_ATTR static void sndmixer_task(void *arg) {
               } else {
                 // Source is done and no loops are requested
                 ESP_LOGI(TAG, "%d: cleaning up source because of EOF", chan->id);
-                clean_up_channel(ch);
+                clean_up_channel(chan);
                 break;
               }
               continue;
             }
+			if (chan->source) {
             int64_t real_rate = chan->source->get_sample_rate(chan->src_ctx);
             chan->dds_rate    = (real_rate << 16) / samplerate;
             chan->dds_acc -=
                 (chan->chunksz << 16);  // reset dds acc; we have parsed chunksize samples.
             chan->chunksz = r;          // save new chunksize
+			} else { ESP_LOGE(TAG, "chan->source is NULL"); }
           }
           if (!chan->source) {
             continue;

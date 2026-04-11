@@ -34,6 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "stack_alloc.h"
 #include "tuning_parameters.h"
 
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+
 /* Low Bitrate Redundancy (LBRR) encoding. Reuse all parameters but encode with lower bitrate           */
 static OPUS_INLINE void silk_LBRR_encode_FIX(
     silk_encoder_state_FIX          *psEnc,                                 /* I/O  Pointer to Silk FIX encoder state                                           */

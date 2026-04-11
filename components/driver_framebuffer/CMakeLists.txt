@@ -64,16 +64,33 @@ set(IDF_COMPONENTS
     micropython
     buses
     driver_display_ili9341
-    driver_display_depg0290b1
-    driver_display_ssd1306
-    driver_io_disobey_samd
+#    driver_display_depg0290b1
+#    driver_display_ssd1306
+#    driver_io_disobey_samd
     spi_flash
+	esp_partition
+	esp_timer
+	esp_mm
     )
 
 set(includes
     "include"
-    "png")
+    "png"
+)
 
-idf_component_register(SRCS "${srcs}"
-                       INCLUDE_DIRS ${includes}
-                       REQUIRES ${IDF_COMPONENTS})
+# Compute the MicroPython root relative to this component
+set(MP_ROOT ${PROJECT_DIR}/../..)
+
+idf_component_register(
+	SRCS "${srcs}"
+    PRIV_INCLUDE_DIRS
+        ${MP_ROOT}             # micropython/
+        ${MP_ROOT}/py          # micropython/py
+        ${PROJECT_DIR}         # micropython/ports/esp32
+        ${MICROPY_BOARD_DIR}   # board headers (mpconfigboard.h)
+        ${CMAKE_CURRENT_LIST_DIR}/..
+        ${BUILD_DIR}
+
+	INCLUDE_DIRS ${includes}
+	REQUIRES ${IDF_COMPONENTS}
+)

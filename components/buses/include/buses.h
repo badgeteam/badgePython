@@ -4,6 +4,7 @@
 #include <esp_err.h>
 
 extern esp_err_t start_buses();
+
 extern esp_err_t driver_i2c_read_bytes(int bus, uint8_t addr, uint8_t *value, size_t value_len);
 extern esp_err_t driver_i2c_read_reg(int bus, uint8_t addr, uint8_t reg, uint8_t *value, size_t value_len);
 extern esp_err_t driver_i2c_read_event(int bus, uint8_t addr, uint8_t *buf);
