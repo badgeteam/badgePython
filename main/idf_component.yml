@@ -1,0 +1,3 @@
+dependencies:
+  idf: ">=5.5.1"
+  badgeteam/badge-bsp: "^0.9.1"
