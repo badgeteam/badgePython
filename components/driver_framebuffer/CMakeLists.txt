@@ -71,6 +71,7 @@ set(IDF_COMPONENTS
 	esp_partition
 	esp_timer
 	esp_mm
+	driver_badge_bsp
     )
 
 set(includes
@@ -78,8 +79,7 @@ set(includes
     "png"
 )
 
-# Compute the MicroPython root relative to this component
-set(MP_ROOT ${PROJECT_DIR}/../..)
+set(MP_ROOT ${PROJECT_DIR}/components/micropython/micropython)
 
 idf_component_register(
 	SRCS "${srcs}"

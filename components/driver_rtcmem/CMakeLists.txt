@@ -7,8 +7,7 @@ set(includes
     "include"
     )
 
-# Compute the MicroPython root relative to this component
-set(MP_ROOT ${PROJECT_DIR}/../..)
+set(MP_ROOT ${PROJECT_DIR}/components/micropython/micropython)
 
 set(IDF_COMPONENTS
     nvs_flash
