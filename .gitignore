@@ -9,4 +9,6 @@ partitions.csv
 sdkconfig.defaults
 esp-idf
 esp-idf-tools
+dependencies.lock
+managed_components
 
