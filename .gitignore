@@ -7,3 +7,6 @@ sdkconfig
 sdkconfig.old
 partitions.csv
 sdkconfig.defaults
+esp-idf
+esp-idf-tools
+
