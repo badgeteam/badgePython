@@ -4,14 +4,20 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
-#include "driver/i2s.h"
+//#include "driver/i2s.h"
+#include "driver/i2s_common.h"
+#include "driver/i2s_etm.h"
+#include "driver/i2s_pdm.h"
+#include "driver/i2s_std.h"
+#include "driver/i2s_tdm.h"
+#include "driver/i2s_types.h"
 #include "esp_sleep.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
 #include "driver/gpio.h"
-#include "driver/adc.h"
-#include "driver/dac.h"
+//#include "driver/adc.h"
+//#include "driver/dac.h"
 #include "soc/rtc_cntl_reg.h"
 
 // Start audio output driver

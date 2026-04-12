@@ -9,6 +9,8 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 
+#define STATIC static
+
 esp_err_t driver_nvs_init() { return ESP_OK; }
 
 //------------------------------------------------------------------------
@@ -143,7 +145,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(mod_machine_nvs_set_int_obj, mod_machine_nvs_se
 STATIC mp_obj_t mod_machine_nvs_get_int (mp_obj_t _handle, mp_obj_t _key) {
     const char *handle = mp_obj_str_get_str(_handle);
     const char *key = mp_obj_str_get_str(_key);
-    int value = 0;
+    int32_t value = 0;
 	
 	nvs_handle my_handle;
 	esp_err_t res = nvs_open(handle, NVS_READWRITE, &my_handle);
@@ -277,3 +279,4 @@ const mp_obj_module_t nvs_module = {
     .base = {&mp_type_module},
     .globals = (mp_obj_dict_t *)&nvs_module_globals,
 };
+MP_REGISTER_MODULE(MP_QSTR_nvs, nvs_module);

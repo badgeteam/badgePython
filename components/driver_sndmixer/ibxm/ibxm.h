@@ -6,7 +6,7 @@
 //Set to 1 to output mono samples
 #define IBXM_MONO 1
 
-const char *IBXM_VERSION;
+extern const char *IBXM_VERSION;
 
 struct data {
 	char *buffer;

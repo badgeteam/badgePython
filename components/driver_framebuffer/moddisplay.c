@@ -7,8 +7,8 @@
 #include "py/runtime.h"
 #include "py/objarray.h"
 
-#include "vfs.h"
-#include "vfs_native.h"
+//#include "vfs.h"
+//#include "vfs_native.h"
 
 #ifndef NO_QSTR
 #include "include/driver_framebuffer.h"
@@ -851,6 +851,12 @@ static mp_obj_t framebuffer_get_text_height(mp_uint_t n_args, const mp_obj_t *ar
 	return mp_obj_new_int(value);
 }
 
+static int physicalPathN(char *filename, char *fullname, size_t size)
+{
+	snprintf(fullname, size, "/sd/%s", filename);
+	return 0;
+}
+
 static mp_obj_t framebuffer_png_info(mp_uint_t n_args, const mp_obj_t *args)
 {
 	lib_reader_read_t reader;
@@ -870,6 +876,7 @@ static mp_obj_t framebuffer_png_info(mp_uint_t n_args, const mp_obj_t *args)
 		const char* filename = mp_obj_str_get_str(args[0]);
 		char fullname[128] = {'\0'};
 		int res = physicalPathN(filename, fullname, sizeof(fullname));
+
 		if ((res != 0) || (strlen(fullname) == 0)) {
 			mp_raise_ValueError("Error resolving file name");
 			return mp_const_none;
@@ -1446,7 +1453,7 @@ static mp_obj_t framebuffer_transformPoint(mp_uint_t n_args, const mp_obj_t *arg
 		
 		matrix_3d_transform_point(stack_3d->current, &x, &y, &z);
 		
-		mp_obj_t out[2] = {
+		mp_obj_t out[3] = {
 			mp_obj_new_float(x),
 			mp_obj_new_float(y),
 			mp_obj_new_float(z)
@@ -1808,7 +1815,7 @@ static mp_obj_t framebuffer_get3D(mp_uint_t n_args, const mp_obj_t *args) {
 	}
 }
 
-static mp_obj_t framebuffer_clearDepth(mp_uint_t n_args, const mp_obj_t *args)
+static mp_obj_t framebuffer_clearDepth(void)
 {
 	depth_buffer_3d *buffer = &depth_buffer_global;
 
@@ -2078,5 +2085,6 @@ const mp_obj_module_t udisplay_module = {
 	.base = {&mp_type_module},
 	.globals = (mp_obj_dict_t *)&framebuffer_module_globals,
 };
+MP_REGISTER_MODULE(MP_QSTR_display, udisplay_module);
 
 #endif //CONFIG_DRIVER_FRAMEBUFFER_ENABLE

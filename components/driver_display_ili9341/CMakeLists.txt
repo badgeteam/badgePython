@@ -16,4 +16,4 @@ endif()
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS ${includes}
-                       REQUIRES driver_framebuffer)
+                       REQUIRES micropython driver_framebuffer)

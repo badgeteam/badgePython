@@ -145,7 +145,7 @@ static mp_obj_t modsndmixer_wav_stream(mp_obj_t _stream) {
     mp_raise_ValueError(msg_error_not_started);
     return mp_const_none;
   }
-  int id = sndmixer_queue_wav_stream(mp_stream_posix_read, mp_stream_posix_lseek, (void *)_stream);
+  int id = sndmixer_queue_wav_stream(mp_stream_posix_read, mp_stream_posix_lseek, _stream);
 //  sndmixer_play(id);
   return mp_obj_new_int(id);
 }
@@ -184,7 +184,7 @@ static mp_obj_t modsndmixer_mp3_stream(mp_obj_t _stream) {
     mp_raise_ValueError(msg_error_not_started);
     return mp_const_none;
   }
-  int id = sndmixer_queue_mp3_stream(mp_stream_posix_read, mp_stream_posix_lseek, (void *)_stream);
+  int id = sndmixer_queue_mp3_stream(mp_stream_posix_read, mp_stream_posix_lseek, _stream);
 //  sndmixer_play(id);
   return mp_obj_new_int(id);
 }
@@ -206,7 +206,7 @@ static mp_obj_t modsndmixer_opus_stream(mp_obj_t _stream) {
     mp_raise_ValueError(msg_error_not_started);
     return mp_const_none;
   }
-  int id = sndmixer_queue_opus_stream(mp_stream_posix_read, (void *)_stream);
+  int id = sndmixer_queue_opus_stream(mp_stream_posix_read, _stream);
 //  sndmixer_play(id);
   return mp_obj_new_int(id);
 }
@@ -335,3 +335,4 @@ const mp_obj_module_t sndmixer_module = {
     .base    = {&mp_type_module},
     .globals = (mp_obj_dict_t *)&sndmixer_module_globals,
 };
+MP_REGISTER_MODULE(MP_QSTR_sndmixer, sndmixer_module);

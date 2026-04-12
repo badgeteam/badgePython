@@ -5,6 +5,8 @@
 #include <ibxm/ibxm.h>
 #include "snd_source_mod.h"
 
+#include "board_kconfig.h"
+
 #ifdef CONFIG_DRIVER_SNDMIXER_ENABLE
 
 typedef struct {
@@ -14,8 +16,8 @@ typedef struct {
 } mod_ctx_t;
 
 int mod_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **ctx,
-                    int *stereo) {
-  mod_ctx_t *mod = calloc(sizeof(mod_ctx_t), 1);
+                    int *stereo, stream_seek_type seek_func) {
+  mod_ctx_t *mod = calloc(1, sizeof(mod_ctx_t));
   if (!mod)
     return -1;
   char error[64];

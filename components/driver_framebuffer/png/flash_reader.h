@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define SPI_FLASH_SEC_SIZE 4096
+
 struct lib_flash_reader {
 	const esp_partition_t *part;
 	size_t offset;

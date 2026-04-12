@@ -1,4 +1,5 @@
 #ifndef NO_QSTR
+#include <sdkconfig.h>
 #include "rp2040.h"
 #include "ice40.h"
 
@@ -14,7 +15,7 @@
 #include <esp_system.h>
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
-#endif
+#endif /* NO_QSTR */
 
 #define TAG "RP2040_UPY"
 
@@ -27,6 +28,8 @@
 #define GPIO_INT_FPGA    (39)  // Active low
 
 #define MAXIMUM_CALLBACK_RETRY (10)
+
+#define STATIC static
 
 static ICE40 ice40;
 static RP2040 rp2040;
@@ -50,7 +53,9 @@ static esp_err_t ice40_set_reset_wrapper(bool reset) {
 }
 
 void driver_mch22_init() {
-    rp2040.i2c_bus = 0;
+	ESP_LOGI(TAG, "driver_mch22_init()");
+
+    rp2040.i2c_bus = 1;
     rp2040.i2c_address = RP2040_ADDR;
     rp2040.pin_interrupt = GPIO_INT_RP2040;
     rp2040.queue = xQueueCreate(15, sizeof(rp2040_input_message_t));
@@ -82,7 +87,7 @@ void driver_mch22_init() {
         }
     }
 
-    xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
+    xTaskCreatePinnedToCore(button_handler, "button_handler_task", 2048, NULL, 5,  NULL, MP_TASK_COREID);
     //xTaskCreatePinnedToCore(webusb_handler, "webusb_handler_task", 2048, NULL, 100,  NULL, MP_TASK_COREID);
 }
 
@@ -95,7 +100,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(buttons_obj, buttons);
 
 static mp_obj_t get_gpio_dir(mp_obj_t gpio) {
     uint8_t value_gpio = mp_obj_get_int(gpio);
-    uint8_t value_direction;
+    bool value_direction;
     rp2040_get_gpio_dir(&rp2040, value_gpio, &value_direction);
     return mp_obj_new_int(value_direction);
 }
@@ -111,7 +116,7 @@ static MP_DEFINE_CONST_FUN_OBJ_2(set_gpio_dir_obj, set_gpio_dir);
 
 static mp_obj_t get_gpio_value(mp_obj_t gpio) {
     uint8_t value_gpio = mp_obj_get_int(gpio);
-    uint8_t value_value;
+    bool value_value;
     rp2040_get_gpio_value(&rp2040, value_gpio, &value_value);
     return mp_obj_new_int(value_value);
 }
@@ -161,13 +166,13 @@ static MP_DEFINE_CONST_FUN_OBJ_0(disable_webusb_obj, enable_webusb);*/
 
 static mp_obj_t driver_ice40_load_bitstream(mp_obj_t bitstream) {
     if (!MP_OBJ_IS_TYPE(bitstream, &mp_type_bytes)) {
-        mp_raise_ValueError("Expected a bytestring like object");
+        mp_raise_ValueError(MP_ERROR_TEXT("Expected a bytestring like object"));
         return mp_const_none;
     }
     mp_uint_t length;
     uint8_t* data = (uint8_t*) mp_obj_str_get_data(bitstream, &length);
     esp_err_t res = ice40_load_bitstream(&ice40, data, length);
-    if (res != ESP_OK) mp_raise_ValueError("Failed to load bitstream");
+    if (res != ESP_OK) mp_raise_ValueError(MP_ERROR_TEXT("Failed to load bitstream"));
     return mp_const_none;
 }
 
@@ -193,7 +198,7 @@ static uint8_t* get_buffer_data(mp_obj_t transmit_data, mp_uint_t* length)
             *length = (mp_uint_t) bufinfo.len;
         }
     } else {
-        mp_raise_ValueError("Expected a bytestring like object");
+        mp_raise_ValueError(MP_ERROR_TEXT("Expected a bytestring like object"));
     }
     return data_out;
 }
@@ -205,7 +210,7 @@ static mp_obj_t driver_ice40_transaction(mp_obj_t transmit_data) {
     if (data_out != NULL) { 
         uint8_t* data_in = heap_caps_malloc(length + 4, MALLOC_CAP_DMA);
         if (data_in == NULL) {
-            mp_raise_ValueError("Out of memory");
+            mp_raise_ValueError(MP_ERROR_TEXT("Out of memory"));
             return mp_const_none;
         }
 
@@ -213,7 +218,7 @@ static mp_obj_t driver_ice40_transaction(mp_obj_t transmit_data) {
 
         if (res != ESP_OK) {
             heap_caps_free(data_in);
-            mp_raise_ValueError("Failed to execute transaction");
+            mp_raise_ValueError(MP_ERROR_TEXT("Failed to execute transaction"));
             return mp_const_none;
         }
 
@@ -230,7 +235,7 @@ static mp_obj_t driver_ice40_receive(mp_obj_t length_obj) {
     size_t length = mp_obj_get_int(length_obj);
     uint8_t* data_in = heap_caps_malloc(length, MALLOC_CAP_DMA);
     if (data_in == NULL) {
-        mp_raise_ValueError("Out of memory");
+        mp_raise_ValueError(MP_ERROR_TEXT("Out of memory"));
         return mp_const_none;
     }
 
@@ -238,7 +243,7 @@ static mp_obj_t driver_ice40_receive(mp_obj_t length_obj) {
 
     if (res != ESP_OK) {
         heap_caps_free(data_in);
-        mp_raise_ValueError("Failed to execute transaction");
+        mp_raise_ValueError(MP_ERROR_TEXT("Failed to execute transaction"));
         return mp_const_none;
     }
 
@@ -257,7 +262,7 @@ static mp_obj_t driver_ice40_send(mp_obj_t transmit_data) {
         esp_err_t res = ice40_send(&ice40, data_out, length);
 
         if (res != ESP_OK) {
-            mp_raise_ValueError("Failed to execute transaction");
+            mp_raise_ValueError(MP_ERROR_TEXT("Failed to execute transaction"));
         }
     }
     return mp_const_none;
@@ -273,7 +278,7 @@ static mp_obj_t driver_ice40_send_turbo(mp_obj_t transmit_data) {
         esp_err_t res = ice40_send_turbo(&ice40, data_out, length);
 
         if (res != ESP_OK) {
-            mp_raise_ValueError("Failed to execute transaction");
+            mp_raise_ValueError(MP_ERROR_TEXT("Failed to execute transaction"));
         }
     }
     return mp_const_none;
@@ -301,7 +306,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(mch22_return_to_launcher_obj, driver_mch22_retu
 static mp_obj_t read_vbat() {
     float vbat = 0;
     if (rp2040_read_vbat(&rp2040, &vbat) != ESP_OK) {
-        mp_raise_ValueError("Failed to get battery voltage");
+        mp_raise_ValueError(MP_ERROR_TEXT("Failed to get battery voltage"));
         return mp_const_none;
     }
     return mp_obj_new_float(vbat);
@@ -311,7 +316,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(read_vbat_obj, read_vbat);
 static mp_obj_t read_vusb() {
     float vusb = 0;
     if (rp2040_read_vusb(&rp2040, &vusb) != ESP_OK) {
-        mp_raise_ValueError("Failed to get USB voltage");
+        mp_raise_ValueError(MP_ERROR_TEXT("Failed to get USB voltage"));
         return mp_const_none;
     }
     return mp_obj_new_float(vusb);
@@ -351,10 +356,11 @@ STATIC const mp_rom_map_elem_t mch22_module_globals_table[] = {
 STATIC MP_DEFINE_CONST_DICT(mch22_module_globals, mch22_module_globals_table);
 
 //===================================
-const mp_obj_module_t mch22_module = {
+const mp_obj_module_t mp_module_mch22 = {
     .base = {&mp_type_module},
     .globals = (mp_obj_dict_t *)&mch22_module_globals,
 };
+MP_REGISTER_MODULE(MP_QSTR_mch22, mp_module_mch22);
 
 
 static void button_handler(void *parameter) {

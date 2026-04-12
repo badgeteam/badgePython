@@ -12,6 +12,8 @@
 #include "sndmixer.h"
 #include "opus.h"
 
+#include "board_kconfig.h"
+
 #ifdef CONFIG_DRIVER_SNDMIXER_ENABLE
 
 #define INPUT_BUFFER_SIZE  (2 * 1024)
@@ -102,9 +104,9 @@ static int IRAM_ATTR ctx_decode(void *_ctx) {
 }
 
 int IRAM_ATTR opus_init_source(const void *data_start, const void *data_end, int req_sample_rate, void **_ctx,
-                     int *stereo) {
+                     int *stereo, stream_seek_type seek_func) {
   // Allocate space for the information struct
-  opus_ctx_t *ctx = calloc(sizeof(opus_ctx_t), 1);
+  opus_ctx_t *ctx = calloc(1, sizeof(opus_ctx_t));
   if (!ctx)
     goto err;
 
@@ -144,7 +146,7 @@ err:
 }
 
 int IRAM_ATTR opus_init_source_stream(const void *stream_read_fn, const void *stream, int req_sample_rate,
-                            void **_ctx, int *stereo) {
+                            void **_ctx, int *stereo, stream_seek_type seek_func) {
   // Allocate space for the information struct
   opus_ctx_t *ctx = heap_caps_calloc(sizeof(opus_ctx_t), 1, MALLOC_CAP_DMA);
   if (!ctx)

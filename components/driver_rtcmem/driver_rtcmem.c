@@ -1,66 +1,105 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include <sdkconfig.h>
-#include <rom/crc.h>
-#include <esp32/ulp.h>
-#include <esp_log.h>
-#include <esp_err.h>
-
-#include "driver/rtc_io.h"
-#include "include/driver_rtcmem.h"
+#include "driver_rtcmem.h"
+#include "esp_log.h"
+#include "esp_attr.h"
 
 #define TAG "rtcmem"
 
+#define STATIC static
+
 #define RTC_MEM_INT_SIZE 64
-#define RTC_MEM_STR_SIZE 512
+#define RTC_MEM_STR_SIZE 64
 
-static int *const rtc_mem_int = (int *const) (RTC_SLOW_MEM + CONFIG_ESP32_ULP_COPROC_RESERVE_MEM);
-static uint16_t *const rtc_mem_int_crc = (uint16_t *const) (rtc_mem_int + (sizeof(int) * RTC_MEM_INT_SIZE));
-static char *const rtc_mem_str = (char *const) (rtc_mem_int_crc + sizeof(uint16_t));
-static uint16_t *const rtc_mem_str_crc = (uint16_t *const) (rtc_mem_str + (RTC_MEM_STR_SIZE * sizeof(char)));
+// ---------------------------------------------------------------------------
+// RTC memory storage (modern ESP-IDF 5.x method)
+// ---------------------------------------------------------------------------
 
-esp_err_t driver_rtcmem_int_write(int pos, int val) {
-    if (pos >= RTC_MEM_INT_SIZE) return ESP_FAIL;
-    rtc_mem_int[pos] = val;
-    *rtc_mem_int_crc = crc16_le(0, (uint8_t const *)rtc_mem_int, RTC_MEM_INT_SIZE*sizeof(int));
+RTC_SLOW_ATTR static int  rtc_mem_int[RTC_MEM_INT_SIZE];
+RTC_SLOW_ATTR static char rtc_mem_str[RTC_MEM_STR_SIZE];
+
+// ---------------------------------------------------------------------------
+// Initialization (kept for API compatibility)
+// ---------------------------------------------------------------------------
+
+esp_err_t driver_rtcmem_init(void) {
+    // Nothing to initialize in IDF 5.x, but keep API stable
     return ESP_OK;
 }
 
-esp_err_t driver_rtcmem_int_read(int pos, int* val) {
-    if (pos >= RTC_MEM_INT_SIZE) return ESP_FAIL;
-    if (*rtc_mem_int_crc != crc16_le(0, (uint8_t const *)rtc_mem_int, RTC_MEM_INT_SIZE*sizeof(int))) return ESP_FAIL;
+// ---------------------------------------------------------------------------
+// Integer API
+// ---------------------------------------------------------------------------
+
+esp_err_t driver_rtcmem_int_write(int pos, int val) {
+    if (pos < 0 || pos >= RTC_MEM_INT_SIZE) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    rtc_mem_int[pos] = val;
+    return ESP_OK;
+}
+
+esp_err_t driver_rtcmem_int_read(int pos, int *val) {
+    if (!val) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (pos < 0 || pos >= RTC_MEM_INT_SIZE) {
+        *val = 0;
+        return ESP_ERR_INVALID_ARG;
+    }
     *val = rtc_mem_int[pos];
     return ESP_OK;
 }
 
-esp_err_t driver_rtcmem_string_write(const char* str) {
-    if (strlen(str) >= RTC_MEM_STR_SIZE) return ESP_FAIL;
-    memset(rtc_mem_str, 0, RTC_MEM_STR_SIZE*sizeof(char));
-    strcpy(rtc_mem_str, str);
-    *rtc_mem_str_crc = crc16_le(0, (uint8_t const *)rtc_mem_str, RTC_MEM_STR_SIZE);
+// ---------------------------------------------------------------------------
+// String API
+// ---------------------------------------------------------------------------
+
+esp_err_t driver_rtcmem_string_write(const char *str) {
+    if (!str) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    size_t len = strlen(str);
+    if (len > RTC_MEM_STR_SIZE) {
+        len = RTC_MEM_STR_SIZE;
+    }
+
+    memset(rtc_mem_str, 0, RTC_MEM_STR_SIZE);
+    memcpy(rtc_mem_str, str, len);
+
     return ESP_OK;
 }
 
-esp_err_t driver_rtcmem_string_read(const char** str) {
-    if (*rtc_mem_str_crc != crc16_le(0, (uint8_t const *)rtc_mem_str, RTC_MEM_STR_SIZE)) return ESP_FAIL;
+esp_err_t driver_rtcmem_string_read(const char **str) {
+    if (!str) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Return pointer directly into RTC memory
     *str = rtc_mem_str;
     return ESP_OK;
 }
 
-esp_err_t driver_rtcmem_clear() {
-    memset(rtc_mem_int, 0, RTC_MEM_INT_SIZE*sizeof(int));
-    memset(rtc_mem_str, 0, RTC_MEM_STR_SIZE*sizeof(char));
-    *rtc_mem_int_crc = 0;
-    *rtc_mem_str_crc = 0;
+// ---------------------------------------------------------------------------
+// Clear API
+// ---------------------------------------------------------------------------
+
+esp_err_t driver_rtcmem_clear(void) {
+    memset(rtc_mem_int, 0, sizeof(rtc_mem_int));
+    memset(rtc_mem_str, 0, sizeof(rtc_mem_str));
     return ESP_OK;
 }
 
+// ---------------------------------------------------------------------------
+// Optional debug dump
+// ---------------------------------------------------------------------------
 
-esp_err_t driver_rtcmem_init(void)
-{
-	//Empty
-	return ESP_OK;
+void driver_rtcmem_dump(void) {
+    ESP_LOGI(TAG, "RTC int values:");
+    for (int i = 0; i < RTC_MEM_INT_SIZE; i++) {
+        ESP_LOGI(TAG, "  [%02d] = %d", i, rtc_mem_int[i]);
+    }
+
+    ESP_LOGI(TAG, "RTC string:");
+    ESP_LOG_BUFFER_HEX(TAG, rtc_mem_str, RTC_MEM_STR_SIZE);
 }

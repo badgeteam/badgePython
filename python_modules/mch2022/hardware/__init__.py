@@ -1,5 +1,6 @@
 from machine import Pin
-import sdcard
+from machine import SDCard
+import uos
 
 PIN_SDPOWER = 19
 PIN_NEOPIXEL =  5
@@ -17,4 +18,5 @@ def disable_power():
 
 def mountsd():
     enable_power()
-    sdcard.mountsd()
+    sd = SDCard()
+    uos.mount(sd, "/sd")
