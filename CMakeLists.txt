@@ -9,5 +9,9 @@ unset(EXTMODS_INIT CACHE)
 
 set(EXTRA_COMPONENT_DIRS ./obsolete_components)
 
+set(MP_ROOT ${PROJECT_DIR}/components/micropython/micropython)
+set(MP_PORT_DIR ${PROJECT_DIR}/components/micropython/micropython/ports/esp32)
+set(MICROPY_BOARD_DIR ${MP_PORT_DIR}/boards/ESP32_GENERIC_P4)
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(badgepython)

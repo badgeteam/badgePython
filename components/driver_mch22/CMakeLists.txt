@@ -17,9 +17,6 @@ set(include
 
 #   REQUIRES micropython buses driver_display_ili9341
 
-# Compute the MicroPython root relative to this component
-set(MP_ROOT ${PROJECT_DIR}/../..)
-
 #message(STATUS ${MP_GENHDR})
 idf_component_register(
     SRCS "${srcs}"
@@ -27,7 +24,7 @@ idf_component_register(
     PRIV_INCLUDE_DIRS
         ${MP_ROOT}             # micropython/
         ${MP_ROOT}/py          # micropython/py
-        ${PROJECT_DIR}         # micropython/ports/esp32
+        ${MP_PORT_DIR}         # micropython/ports/esp32
         ${MICROPY_BOARD_DIR}   # board headers (mpconfigboard.h)
         ${CMAKE_CURRENT_LIST_DIR}/..
         ${BUILD_DIR}

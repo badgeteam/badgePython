@@ -79,14 +79,12 @@ set(includes
     "png"
 )
 
-set(MP_ROOT ${PROJECT_DIR}/components/micropython/micropython)
-
 idf_component_register(
 	SRCS "${srcs}"
     PRIV_INCLUDE_DIRS
         ${MP_ROOT}             # micropython/
         ${MP_ROOT}/py          # micropython/py
-        ${PROJECT_DIR}         # micropython/ports/esp32
+        ${MP_PORT_DIR}         # micropython/ports/esp32
         ${MICROPY_BOARD_DIR}   # board headers (mpconfigboard.h)
         ${CMAKE_CURRENT_LIST_DIR}/..
         ${BUILD_DIR}
