@@ -1,9 +1,6 @@
 [submodule "firmware/components/micropython/micropython"]
 	path = components/micropython/micropython
 	url = https://github.com/micropython/micropython.git
-[submodule "esp-idf"]
-	path = esp-idf
-	url = https://github.com/espressif/esp-idf.git
 [submodule "firmware/python_modules/micropython-lib"]
 	path = python_modules/micropython-lib
 	url = https://github.com/micropython/micropython-lib
